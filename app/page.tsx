@@ -139,8 +139,12 @@ export default function Home() {
 
 
           {/* HERO CONTENT */}
-          <div className="absolute inset-0 z-10 flex items-center">
-
+                <div
+                   className="absolute inset-0 z-10 flex items-center"
+              style={{
+                  transform: "translate(0px, 120px)",
+                        }}
+                      >
             <div className="w-full px-12 max-md:px-6">
 
               <div className="max-w-[600px]">
@@ -151,7 +155,7 @@ export default function Home() {
                   <span>🛡️</span>
 
                   <span className="ml-2">
-                    100+ Countries Official Visa Check
+                    100+ Countries Official Visa Check 
                   </span>
 
                 </div>
