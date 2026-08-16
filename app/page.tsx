@@ -142,7 +142,7 @@ export default function Home() {
                 <div
                    className="absolute inset-0 z-10 flex items-center"
               style={{
-                  transform: "translate(0px, 120px)",
+                  transform: "translate(0px, 100px)",
                         }}
                       >
             <div className="w-full px-12 max-md:px-6">
@@ -150,7 +150,7 @@ export default function Home() {
               <div className="max-w-[600px]">
 
                 {/* BADGE */}
-                <div className="mb-6 inline-flex items-center rounded-full border border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md">
+                <div className=" relative -top-2 mb-6 inline-flex items-center rounded-full border border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md">
 
                   <span>🛡️</span>
 
@@ -162,13 +162,13 @@ export default function Home() {
 
 
                 {/* TITLE */}
-                <h1 className="text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl">
+                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl">
 
                   Check Official{" "}
 
                   <span className="text-blue-600">
                     Visa Status
-                  </span>
+                  </span> 
 
                   <br />
 
@@ -178,7 +178,7 @@ export default function Home() {
 
 
                 {/* DESCRIPTION */}
-                <p className="mt-6 max-w-[600px] text-lg leading-7 text-gray-700">
+                <p className=" relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700">
 
                   Check your visa status directly from official
                   government sources. Fast, reliable and 100% secure.
@@ -187,7 +187,7 @@ export default function Home() {
 
 
                 {/* VISA CHECK BOX */}
-                <div className="mt-8 w-fit rounded-2xl bg-white p-2 shadow-xl">
+                <div className="mt-20 w-fit rounded-2xl bg-white p-2 shadow-xl">
 
                   <div className="flex items-center gap-2">
 
