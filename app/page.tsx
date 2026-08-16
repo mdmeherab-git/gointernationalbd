@@ -1,4 +1,16 @@
+"use client";
+
+import { useState } from "react";
+import { countries } from "./countries";
+
 export default function Home() {
+
+const [countrySearch, setCountrySearch] = useState("");
+
+  const filteredCountries = countries.filter((country) =>
+    country.name.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
   return (
     <main className="min-h-screen bg-white">
 
@@ -13,7 +25,7 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-4">
-            <span>Follow Us :</span>
+            <span>Follow Us :</span> 
             <span>Facebook</span>
             <span>YouTube</span>
             <span>Instagram</span>
@@ -262,25 +274,153 @@ export default function Home() {
         </div>
 
       </section>
+      {/* POPULAR COUNTRIES + SERVICES */}
+<section className="w-full bg-white py-8">
+  <div className="mx-[192px] max-md:mx-0 px-6">
 
+    {/* POPULAR COUNTRIES */}
+<div className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
 
-      {/* ================= SERVICES SECTION ================= */}
+  {/* HEADER */}
+  <div className="mb-5 flex items-center justify-between gap-4">
 
-      <section className="bg-white py-16">
+    <h2 className="text-xl font-bold text-[#0B2A55]">
+      Popular Countries
+    </h2>
 
-        <div className="mx-auto max-w-7xl px-6">
+    {/* SEARCH */}
+    <div className="relative z-20 w-full max-w-[280px]">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        🔍
+      </span>
 
-          <h2 className="text-center text-3xl font-bold text-[#071B41]">
-            Explore Our Services
-          </h2>
+      <input
+        type="text"
+        value={countrySearch}
+        onChange={(e) => setCountrySearch(e.target.value)}
+        placeholder="Search country..."
+        className="relative z-20 w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      />
+    </div>
 
-          <p className="mx-auto mt-3 max-w-2xl text-center text-gray-600">
-            Fast, reliable and secure immigration and visa assistance.
+  </div>
+
+  {/* COUNTRIES */}
+  <div className="overflow-x-auto pb-2">
+    <div className="flex min-w-max gap-6">
+
+      {filteredCountries.map((country) => (
+        <button
+          key={country.code}
+          type="button"
+          className="group w-[95px] flex-shrink-0 text-center"
+        >
+          <div className="mx-auto flex h-14 w-20 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-blue-300 group-hover:shadow-md">
+            <img
+              src={`/flags/${country.code}.svg`}
+              alt={country.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+
+          <p className="mt-2 whitespace-nowrap text-sm font-medium text-gray-700 group-hover:text-blue-600">
+            {country.name}
           </p>
+        </button>
+      ))}
 
+    </div>
+  </div>
+
+</div>
+
+
+    {/* SERVICES */}
+    <div className="mt-7 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+
+      {/* VISA CHECK */}
+      <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100 text-3xl">
+          📄
         </div>
 
-      </section>
+        <h3 className="text-lg font-bold text-[#0B2A55]">
+          Official Visa Check
+        </h3>
+
+        <p className="mt-2 text-sm leading-6 text-gray-600">
+          Check visa status from official government sources.
+        </p>
+
+        <button className="mt-5 font-semibold text-blue-600 hover:text-blue-700">
+          Check Now →
+        </button>
+      </div>
+
+
+      {/* AI ASSISTANT */}
+      <div className="rounded-2xl border border-green-100 bg-green-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl">
+          🤖
+        </div>
+
+        <h3 className="text-lg font-bold text-[#0B2A55]">
+          AI Visa Assistant
+        </h3>
+
+        <p className="mt-2 text-sm leading-6 text-gray-600">
+          Ask anything about visa, jobs, requirements and more.
+        </p>
+
+        <button className="mt-5 font-semibold text-green-600 hover:text-green-700">
+          Start Chat →
+        </button>
+      </div>
+
+
+      {/* JOBS */}
+      <div className="rounded-2xl border border-purple-100 bg-purple-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100 text-3xl">
+          💼
+        </div>
+
+        <h3 className="text-lg font-bold text-[#0B2A55]">
+          Job Circular
+        </h3>
+
+        <p className="mt-2 text-sm leading-6 text-gray-600">
+          Find latest overseas jobs from reliable sources.
+        </p>
+
+        <button className="mt-5 font-semibold text-purple-600 hover:text-purple-700">
+          View Jobs →
+        </button>
+      </div>
+
+
+      {/* TRACK APPLICATION */}
+      <div className="rounded-2xl border border-orange-100 bg-orange-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-orange-100 text-3xl">
+          📋
+        </div>
+
+        <h3 className="text-lg font-bold text-[#0B2A55]">
+          Track Application
+        </h3>
+
+        <p className="mt-2 text-sm leading-6 text-gray-600">
+          Track your visa or application status easily.
+        </p>
+
+        <button className="mt-5 font-semibold text-orange-600 hover:text-orange-700">
+          Track Now →
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</section> 
 
     </main>
   );
