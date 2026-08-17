@@ -6,10 +6,45 @@ import { countries } from "./countries";
 export default function Home() {
 
 const [countrySearch, setCountrySearch] = useState("");
+const [selectedCountry, setSelectedCountry] = useState("");
+const [visaType, setVisaType] = useState("");
+const [passportNumber, setPassportNumber] = useState("");
+const [saudiServicesOpen, setSaudiServicesOpen] = useState(false);
+const [malaysiaServicesOpen, setMalaysiaServicesOpen] = useState(false);
 
   const filteredCountries = countries.filter((country) =>
     country.name.toLowerCase().includes(countrySearch.toLowerCase())
   );
+  const handleVisaCheck = () => {
+  if (!selectedCountry) {
+    alert("Please select a country.");
+    return;
+  }
+
+  if (!visaType) {
+    alert("Please select a visa type.");
+    return;
+  }
+
+  if (!passportNumber.trim()) {
+    alert("Please enter your passport number.");
+    return;
+  }
+
+  if (selectedCountry === "sa") {
+  setSaudiServicesOpen(true);
+  return;
+}
+
+if (selectedCountry === "my") {
+  setMalaysiaServicesOpen(true);
+  return;
+}
+
+alert(
+  `Visa check for ${selectedCountry.toUpperCase()} is not connected yet.`
+);
+};
 
   return (
     <main className="min-h-screen bg-white">
@@ -162,7 +197,8 @@ const [countrySearch, setCountrySearch] = useState("");
               <div className="max-w-[600px]">
 
                 {/* BADGE */}
-                <div className=" relative -top-2 mb-6 inline-flex items-center rounded-full border border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md">
+                <div className=" relative -top-2 mb-6 inline-flex items-center rounded-full border 
+                border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md">
 
                   <span>🛡️</span>
 
@@ -204,58 +240,354 @@ const [countrySearch, setCountrySearch] = useState("");
                   <div className="flex items-center gap-2">
 
                     {/* COUNTRY */}
-                    <div className="flex h-14 w-36 items-center justify-between rounded-xl border border-gray-200 px-4 text-gray-700">
+                     <select
+                       value={selectedCountry}
+                        onChange={(e) => setSelectedCountry(e.target.value)}
+              className="h-14 w-36 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500"
+                    >
+                        <option value="">Select Country</option>
 
-                      <span>
-                        Select
-                        <br />
-                        Country
-                      </span>
+                     {countries.map((country) => (
+                         <option key={country.code} value={country.code}>
+                       {country.name}
+                        </option>
+                        ))}
+                     </select>
 
-                      <span>
-                       ⌄
-                      </span>
-
-                    </div>
-
-
-                    {/* VISA TYPE */}
-                    <div className="flex h-14 w-36 items-center justify-between rounded-xl border border-gray-200 px-4 text-gray-700">
-
-                      <span>
-                        Select Visa
-                        <br />
-                        Type
-                      </span>
-
-                      <span>
-                        ⌄
-                      </span>
-
-                    </div>
+                 {/* VISA TYPE */}
+                  <select
+                    value={visaType}
+                    onChange={(e) => setVisaType(e.target.value)}
+                 className="h-14 w-37 rounded-xl border border-gray-200 bg-white px-1 text-gray-700 outline-none focus:border-blue-500"
+                      >
+                      <option value="">Select Visa Type</option>
+                      <option value="work">Work Visa</option>
+                      <option value="tourist">Tourist Visa</option>
+                      <option value="student">Student Visa</option>
+                      <option value="business">Business Visa</option>
+                      <option value="family">Family Visa</option>
+                      <option value="transit">Transit Visa</option>
+                   </select>
 
 
                     {/* PASSPORT NUMBER */}
-                    <div className="flex h-14 w-52 items-center rounded-xl border border-gray-200 px-4 text-gray-300">
+                    <input
+                     type="text"
+                     value={passportNumber}
+                     onChange={(e) => setPassportNumber(e.target.value)}
+                     placeholder="Passport Number"
+                     className="h-14 w-52 rounded-xl border border-gray-200 bg-white px-4 text-gray-700 
+                     outline-none placeholder:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
 
-                      Passport Number
 
-                    </div>
-
-
-                    {/* CHECK BUTTON */}
-                    <button className="h-14 w-40 rounded-xl bg-blue-600 px-5 font-semibold text-white transition hover:bg-blue-700">
-
+                    <button
+                     type="button"
+                      onClick={handleVisaCheck}
+                     className="h-14 w-40 rounded-xl bg-blue-600 px-5 font-semibold text-white transition hover:bg-blue-700"
+                     >
                       🔍 Check Visa
                       <br />
-                      Now
-
+                     Now
                     </button>
 
                   </div>
 
+                  {saudiServicesOpen && (
+                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                         <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
 
-                  {/* SECURITY */}
+                         <div className="mb-5 flex items-center justify-between">
+                              <div>
+                                <h3 className="text-xl font-bold text-[#0B2A55]">
+                                 Saudi Arabia
+                           </h3>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Select a service to continue 
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setSaudiServicesOpen(false)}
+          className="text-2xl text-gray-400 hover:text-gray-700"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="space-y-3">
+
+        <a
+          href="https://visa.mofa.gov.sa/VisaPerson/GetApplicantData"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-500 hover:bg-blue-50"
+        >
+          <div>
+            <div className="font-semibold text-gray-800">
+              🛂 Saudi Visa Check
+            </div>
+            <div className="mt-1 text-xs text-gray-500">
+              Check Saudi visa information
+            </div>
+          </div>
+          <span className="text-blue-600">→</span>
+        </a>
+
+        <a
+          href="https://wafid.com/en/medical-status-search/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-green-500 hover:bg-green-50"
+        >
+          <div>
+            <div className="font-semibold text-gray-800">
+              🏥 Saudi Medical Check
+            </div>
+            <div className="mt-1 text-xs text-gray-500">
+              Check Wafid medical status
+            </div>
+          </div>
+          <span className="text-green-600">→</span>
+        </a>
+
+        <a
+          href="https://visa.mofa.gov.sa/VisaPerson/CheckMedicalResult"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-purple-500 hover:bg-purple-50"
+        >
+          <div>
+            <div className="font-semibold text-gray-800">
+              📋 Medical Update Check
+            </div>
+            <div className="mt-1 text-xs text-gray-500">
+              Check updated medical result
+            </div>
+          </div>
+          <span className="text-purple-600">→</span>
+        </a>
+
+        <a
+          href="https://visa.mofa.gov.sa/Enjaz/GetVisaInformation/Person"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-orange-500 hover:bg-orange-50"
+        >
+          <div>
+            <div className="font-semibold text-gray-800">
+              📄 Saudi Enjaz / Ocala Check
+            </div>
+            <div className="mt-1 text-xs text-gray-500">
+              Check Enjaz visa information
+            </div>
+          </div>
+          <span className="text-orange-600">→</span>
+        </a>
+
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setSaudiServicesOpen(false)}
+        className="mt-5 w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50"
+      >
+        Close
+      </button>
+
+     </div>
+   </div>
+  )}
+
+  {malaysiaServicesOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+      {/* HEADER */}
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-[#0B2A55]">
+            🇲🇾 Malaysia
+          </h3>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Select a service to continue
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setMalaysiaServicesOpen(false)}
+          className="text-2xl text-gray-400 hover:text-gray-700"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* VISA CHECK */}
+      <a
+        href="https://malaysiavisa.imi.gov.my/evisa/check-evisa"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mb-3 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 transition hover:border-blue-500 hover:bg-blue-50"
+      >
+        <div>
+          <div className="font-semibold text-gray-800">
+            🛂 Malaysia Visa Check
+          </div>
+
+          <div className="mt-1 text-xs text-gray-500">
+            Check Malaysia eVISA status
+          </div>
+        </div>
+
+        <span className="text-blue-600">→</span>
+      </a>
+
+      {/* MEDICAL CHECK */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+
+        <div className="mb-3">
+          <div className="font-semibold text-gray-800">
+            🏥 Medical Check
+          </div>
+
+          <div className="mt-1 text-xs text-gray-500">
+            Select medical center
+          </div>
+        </div>
+
+        {/* CURRENT MEDICAL CENTER */}
+        <a
+          href="https://rhmcdhk.com/malaysia-medical-report/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 transition hover:border-green-500 hover:bg-green-50"
+        >
+          <div>
+            <div className="text-sm font-medium text-gray-800">
+              RHMC Medical Check
+            </div>
+
+            <div className="mt-1 text-xs text-gray-500">
+              Check Malaysia medical report
+            </div>
+          </div>
+
+          <span className="text-green-600">→</span>
+        </a>
+
+      </div>
+
+      {/* CLOSE */}
+      <button
+        type="button"
+        onClick={() => setMalaysiaServicesOpen(false)}
+        className="mt-5 w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50"
+      >
+        Close
+      </button>
+
+    </div>
+  </div>
+)}
+
+{malaysiaServicesOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+      {/* HEADER */}
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-[#0B2A55]">
+            🇲🇾 Malaysia
+          </h3>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Select a service to continue
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setMalaysiaServicesOpen(false)}
+          className="text-2xl text-gray-400 hover:text-gray-700"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* VISA CHECK */}
+      <a
+        href="https://malaysiavisa.imi.gov.my/evisa/check-evisa"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mb-3 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 transition hover:border-blue-500 hover:bg-blue-50"
+      >
+        <div>
+          <div className="font-semibold text-gray-800">
+            🛂 Malaysia Visa Check
+          </div>
+
+          <div className="mt-1 text-xs text-gray-500">
+            Check Malaysia eVISA status
+          </div>
+        </div>
+
+        <span className="text-blue-600">→</span>
+      </a>
+
+      {/* MEDICAL CHECK */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+
+        <div className="mb-3">
+          <div className="font-semibold text-gray-800">
+            🏥 Medical Check
+          </div>
+
+          <div className="mt-1 text-xs text-gray-500">
+            Select medical center
+          </div>
+        </div>
+
+        {/* CURRENT MEDICAL CENTER */}
+        <a
+          href="https://rhmcdhk.com/malaysia-medical-report/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 transition hover:border-green-500 hover:bg-green-50"
+        >
+          <div>
+            <div className="text-sm font-medium text-gray-800">
+              RHMC Medical Check
+            </div>
+
+            <div className="mt-1 text-xs text-gray-500">
+              Check Malaysia medical report
+            </div>
+          </div>
+
+          <span className="text-green-600">→</span>
+        </a>
+
+      </div>
+
+      {/* CLOSE */}
+      <button
+        type="button"
+        onClick={() => setMalaysiaServicesOpen(false)}
+        className="mt-5 w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50"
+      >
+        Close
+      </button>
+
+    </div>
+  </div>
+)}
+
+              {/* SECURITY */}
                   <div className="mt-2 text-center text-xs text-gray-500">
 
                     🛡️ We never save your passport information.
@@ -275,11 +607,11 @@ const [countrySearch, setCountrySearch] = useState("");
 
       </section>
       {/* POPULAR COUNTRIES + SERVICES */}
-<section className="w-full bg-white py-8">
-  <div className="mx-[192px] max-md:mx-0 px-6">
+ <section className="w-full bg-white py-8">
+  <div className="mx-[165px] max-md:mx-0 px-6">
 
-    {/* POPULAR COUNTRIES */}
-<div className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
+    {/* POPULAR COUNTRIES */}  
+ <div className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
 
   {/* HEADER */}
   <div className="mb-5 flex items-center justify-between gap-4">
@@ -313,6 +645,13 @@ const [countrySearch, setCountrySearch] = useState("");
         <button
           key={country.code}
           type="button"
+
+            onClick={() => {
+               if (country.code === "my") {
+               setMalaysiaServicesOpen(true);
+               }
+             }}
+
           className="group w-[95px] flex-shrink-0 text-center"
         >
           <div className="mx-auto flex h-14 w-20 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-blue-300 group-hover:shadow-md">
