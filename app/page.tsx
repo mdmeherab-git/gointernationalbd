@@ -1,9 +1,124 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { countries } from "./countries";
 
 export default function Home() {
+
+const [currentTime, setCurrentTime] = useState("");
+
+useEffect(() => {
+  const updateTime = () => {
+    const now = new Date();
+
+    // Bangladesh Time
+    const dhakaDate = new Date(
+      now.toLocaleString("en-US", {
+        timeZone: "Asia/Dhaka",
+      })
+    ); 
+
+    const time = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Dhaka",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).format(now);
+
+    // Bangla months
+    const banglaMonths = [
+      "বৈশাখ",
+      "জ্যৈষ্ঠ",
+      "আষাঢ়",
+      "শ্রাবণ",
+      "ভাদ্র",
+      "আশ্বিন",
+      "কার্তিক",
+      "অগ্রহায়ণ",
+      "পৌষ",
+      "মাঘ",
+      "ফাল্গুন",
+      "চৈত্র",
+    ];
+
+    const year = dhakaDate.getFullYear();
+    const month = dhakaDate.getMonth();
+    const day = dhakaDate.getDate();
+
+    // Bangladesh Bangla Calendar starts on 14 April
+    const bengaliNewYear = new Date(year, 3, 14);
+
+    let banglaYear: number;
+    let daysFromNewYear: number;
+
+    if (dhakaDate >= bengaliNewYear) {
+      banglaYear = year - 593;
+      daysFromNewYear = Math.floor(
+        (dhakaDate.getTime() - bengaliNewYear.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+    } else {
+      const previousNewYear = new Date(year - 1, 3, 14);
+
+      banglaYear = year - 594;
+      daysFromNewYear = Math.floor(
+        (dhakaDate.getTime() - previousNewYear.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+    }
+
+    // Bangladesh revised Bangla calendar
+    const monthLengths = [
+      31, // Boishakh
+      31, // Joishtho
+      31, // Ashar
+      31, // Shraban
+      31, // Bhadra
+      30, // Ashwin
+      30, // Kartik
+      30, // Agrahayan
+      30, // Poush
+      30, // Magh
+      29, // Falgun
+      30, // Chaitra
+    ];
+
+    let banglaMonthIndex = 0;
+    let banglaDay = daysFromNewYear + 1;
+
+    for (let i = 0; i < monthLengths.length; i++) {
+      if (banglaDay <= monthLengths[i]) {
+        banglaMonthIndex = i;
+        break;
+      }
+
+      banglaDay -= monthLengths[i];
+    }
+
+    const toBanglaNumber = (number: number) => {
+      const digits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
+
+      return number
+        .toString()
+        .split("")
+        .map((digit) => digits[Number(digit)])
+        .join("");
+    };
+
+    const banglaDate = `${toBanglaNumber(
+      banglaDay
+    )} ${banglaMonths[banglaMonthIndex]}, ${toBanglaNumber(banglaYear)}`;
+
+    setCurrentTime(`${time} | ${banglaDate}`);
+  };
+
+  updateTime();
+
+  const timer = setInterval(updateTime, 1000);
+
+  return () => clearInterval(timer);
+}, []);
 
 const [countrySearch, setCountrySearch] = useState("");
 const [selectedCountry, setSelectedCountry] = useState("");
@@ -41,10 +156,10 @@ if (selectedCountry === "my") {
   return;
 }
 
-alert(
+ alert(
   `Visa check for ${selectedCountry.toUpperCase()} is not connected yet.`
-);
-};
+ );
+ };
 
   return (
     <main className="min-h-screen bg-white">
@@ -59,9 +174,23 @@ alert(
             <span>☎ +88 01872 32 75 75</span>
           </div>
 
+      <div className="flex items-center gap-2 text-white">
+  <span className="text-gray-300">🕐</span>
+  <span>{currentTime || "--:--:--"}</span>
+</div>
+
           <div className="flex items-center gap-4">
             <span>Follow Us :</span> 
-            <span>Facebook</span>
+
+            <a
+  href="https://www.facebook.com/share/14o1WjfT3XY/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="hover:text-blue-300 transition"
+    >
+   Facebook
+  </a>
+
             <span>YouTube</span>
             <span>Instagram</span>
             <span>LinkedIn</span>
@@ -409,7 +538,7 @@ alert(
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-[#0B2A55]">
-            🇲🇾 Malaysia
+             Malaysia
           </h3>
 
           <p className="mt-1 text-sm text-gray-500">
@@ -502,7 +631,7 @@ alert(
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-[#0B2A55]">
-            🇲🇾 Malaysia
+            Malaysia
           </h3>
 
           <p className="mt-1 text-sm text-gray-500">
@@ -631,7 +760,8 @@ alert(
         value={countrySearch}
         onChange={(e) => setCountrySearch(e.target.value)}
         placeholder="Search country..."
-        className="relative z-20 w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        className="relative z-20 w-full rounded-full border border-gray-200 bg-white py-2.5 
+        pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
       />
     </div>
 
@@ -677,51 +807,40 @@ alert(
     {/* SERVICES */}
     <div className="mt-7 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
 
-      {/* VISA CHECK */}
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100 text-3xl">
-          📄
-        </div>
+      {/* SKILL TRAINING */}
+<div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
 
-        <h3 className="text-lg font-bold text-[#0B2A55]">
-          Official Visa Check
-        </h3>
+  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100">
+  <img
+    src="/technical-training.svg"
+    alt="Technical Training"
+    className="h-10 w-10 object-contain"
+  />
+</div>
 
-        <p className="mt-2 text-sm leading-6 text-gray-600">
-          Check visa status from official government sources.
-        </p>
+  <h3 className="text-lg font-bold text-[#0B2A55]">
+    Skill Training
+  </h3>
 
-        <button className="mt-5 font-semibold text-blue-600 hover:text-blue-700">
-          Check Now →
-        </button>
-      </div>
+  <p className="mt-2 text-sm leading-6 text-gray-600">
+    Enroll in technical training programs and develop practical skills for your career.
+  </p>
 
+  <button className="mt-5 font-semibold text-blue-600 hover:text-blue-700">
+    Explore Training →
+  </button>
 
-      {/* AI ASSISTANT */}
-      <div className="rounded-2xl border border-green-100 bg-green-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl">
-          🤖
-        </div>
-
-        <h3 className="text-lg font-bold text-[#0B2A55]">
-          AI Visa Assistant
-        </h3>
-
-        <p className="mt-2 text-sm leading-6 text-gray-600">
-          Ask anything about visa, jobs, requirements and more.
-        </p>
-
-        <button className="mt-5 font-semibold text-green-600 hover:text-green-700">
-          Start Chat →
-        </button>
-      </div>
-
+</div>
 
       {/* JOBS */}
       <div className="rounded-2xl border border-purple-100 bg-purple-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
         <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100 text-3xl">
-          💼
-        </div>
+          <img
+    src="/technica-bage.svg"
+    alt="Technica bage"
+    className="h-10 w-10 object-contain"
+  />
+</div>
 
         <h3 className="text-lg font-bold text-[#0B2A55]">
           Job Circular
@@ -753,6 +872,25 @@ alert(
 
         <button className="mt-5 font-semibold text-orange-600 hover:text-orange-700">
           Track Now →
+        </button>
+      </div>
+
+      {/* AI ASSISTANT */}
+      <div className="rounded-2xl border border-green-100 bg-green-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl">
+          🤖
+        </div>
+
+        <h3 className="text-lg font-bold text-[#0B2A55]">
+          AI Visa Assistant
+        </h3>
+
+        <p className="mt-2 text-sm leading-6 text-gray-600">
+          Ask anything about visa, jobs, requirements and more.
+        </p>
+
+        <button className="mt-5 font-semibold text-green-600 hover:text-green-700">
+          Start Chat →
         </button>
       </div>
 
