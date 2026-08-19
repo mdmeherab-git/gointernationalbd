@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { countries } from "./countries";
 
 export default function Home() {
@@ -503,7 +504,8 @@ if (selectedCountry === "my") {
           href="https://visa.mofa.gov.sa/Enjaz/GetVisaInformation/Person"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-orange-500 hover:bg-orange-50"
+          className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 
+          hover:border-orange-500 hover:bg-orange-50"
         >
           <div>
             <div className="font-semibold text-gray-800">
@@ -560,7 +562,8 @@ if (selectedCountry === "my") {
         href="https://malaysiavisa.imi.gov.my/evisa/check-evisa"
         target="_blank"
         rel="noopener noreferrer"
-        className="mb-3 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 transition hover:border-blue-500 hover:bg-blue-50"
+        className="mb-3 flex items-center justify-between rounded-xl border border-gray-200 
+        bg-white p-4 transition hover:border-blue-500 hover:bg-blue-50"
       >
         <div>
           <div className="font-semibold text-gray-800">
@@ -833,7 +836,11 @@ if (selectedCountry === "my") {
 </div>
 
       {/* JOBS */}
-      <div className="rounded-2xl border border-purple-100 bg-purple-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+<Link
+  href="/jobs"
+  className="block rounded-2xl border border-purple-100 bg-purple-50 p-6 transition-all 
+  duration-300 hover:-translate-y-1 hover:shadow-lg"
+>
         <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100 text-3xl">
           <img
     src="/technica-bage.svg"
@@ -853,7 +860,7 @@ if (selectedCountry === "my") {
         <button className="mt-5 font-semibold text-purple-600 hover:text-purple-700">
           View Jobs →
         </button>
-      </div>
+      </Link>
 
 
       {/* TRACK APPLICATION */}
