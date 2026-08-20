@@ -3,8 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { countries } from "./countries";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { useLanguage } from "./context/LanguageContext";
 
 export default function Home() {
+  const { language, t } = useLanguage();
 
 const [currentTime, setCurrentTime] = useState("");
 
@@ -226,70 +229,72 @@ if (selectedCountry === "my") {
           {/* NAVIGATION */}
           <nav className="flex items-center gap-8 text-[17px]">
 
-            <a
-              href="#"
-              className="text-blue-600"
-            >
-              Home
-            </a>
+  <a
+    href="#"
+    className="text-blue-600"
+  >
+    {t.nav.home}
+  </a>
 
-            <a
-              href="#"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              Visa Check
-            </a>
+  <a
+    href="#"
+    className="text-gray-800 hover:text-blue-600"
+  >
+    {t.nav.visaCheck}
+  </a>
 
-            <a
-              href="#"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              AI Assistant
-            </a>
+  <a
+    href="#"
+    className="text-gray-800 hover:text-blue-600"
+  >
+    {t.nav.aiAssistant}
+  </a>
 
-            <a
-              href="#"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              Jobs
-            </a>
+  <a
+    href="#"
+    className="text-gray-800 hover:text-blue-600"
+  >
+    {t.nav.jobs}
+  </a>
 
-            <a
-              href="#"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              News
-            </a>
+  <a
+    href="#"
+    className="text-gray-800 hover:text-blue-600"
+  >
+    {t.nav.news}
+  </a>
 
-            <a
-              href="#"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              About Us
-            </a>
+  <a
+    href="#"
+    className="text-gray-800 hover:text-blue-600"
+  >
+    {t.nav.aboutUs}
+  </a>
 
-            <a
-              href="#"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              Contact
-            </a>
+  <a
+    href="#"
+    className="text-gray-800 hover:text-blue-600"
+  >
+    {t.nav.contact}
+  </a>
 
-          </nav>
+</nav>
 
 
-          {/* LOGIN / REGISTER */}
-          <div className="flex items-center gap-3">
+          {/* LANGUAGE / LOGIN / REGISTER */}
+<div className="flex items-center gap-3">
 
-            <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-gray-500">
-              Login
-            </button>
+  <LanguageSwitcher />
 
-            <button className="rounded-lg bg-blue-600 px-6 py-2.5 text-white hover:bg-blue-700">
-              Register
-            </button>
+  <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-gray-500">
+    Login
+  </button>
 
-          </div>
+  <button className="rounded-lg bg-blue-600 px-6 py-2.5 text-white hover:bg-blue-700">
+    Register
+  </button>
+
+</div>
 
         </div>
 
