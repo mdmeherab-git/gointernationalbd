@@ -170,7 +170,7 @@ if (selectedCountry === "my") {
 
       {/* ================= TOP BAR ================= */}
       <div className="bg-[#071B41] text-white text-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
+      <div className="mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:px-4">
 
           <div className="flex items-center gap-5">
             <span>✉ info@gointernationalbd.com</span>
@@ -183,7 +183,7 @@ if (selectedCountry === "my") {
   <span>{currentTime || "--:--:--"}</span>
 </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-15">
             <span>Follow Us :</span> 
 
             <a
@@ -205,26 +205,35 @@ if (selectedCountry === "my") {
 
 
       {/* ================= MAIN HEADER ================= */}
-      <header className="border-b border-gray-200 bg-white">
+<header className="border-b border-gray-200 bg-white">
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+  <div className="mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:px-4">
 
-          {/* LOGO */}
-          <div>
-            <div className="text-2xl font-bold tracking-tight">
-              <span className="text-[#0B4DBB]">
-                GO INTERNATIONAL
-              </span>{" "}
-              <span className="text-red-500">
-                BD
-              </span>
-            </div>
+    {/* ================= LOGO + COMPANY NAME ================= */}
+    <div className="flex items-center shrink-0">
 
-            <p className="mt-1 text-xs text-gray-600">
-              Official Visa Check & Immigration Assistant
-            </p>
-          </div>
+      {/* LOGO SPACE */}
+      <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center">
+        {/* এখানে Logo বসবে */}
+      </div>
 
+      {/* COMPANY NAME */}
+      <div>
+        <div className="text-2xl font-bold tracking-tight">
+          <span className="text-[#0B4DBB]">
+            GO INTERNATIONAL
+          </span>{" "}
+          <span className="text-red-500">
+            BD
+          </span>
+        </div>
+
+        <p className="mt-1 text-xs text-gray-600">
+          Official Visa Check & Immigration Assistant
+        </p>
+      </div>
+
+    </div>
 
           {/* NAVIGATION */}
           <nav className="flex items-center gap-8 text-[17px]">
