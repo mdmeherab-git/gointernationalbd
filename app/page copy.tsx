@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { countries } from "./countries";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { useLanguage } from "./context/LanguageContext";
 
 /* =========================================================
    TYPES
 ========================================================= */
-
-type Language = "bn" | "en";
 
 type NoticeSettings = {
   enabled: boolean;
@@ -106,7 +106,7 @@ const latestJobs: HomeJob[] = [
 ========================================================= */
 
 export default function Home() {
-  const [language, setLanguage] = useState<Language>("bn");
+  const { language, t } = useLanguage();
 
   const isBangla = language === "bn";
 
@@ -520,49 +520,49 @@ export default function Home() {
               href="/"
               className="text-blue-600"
             >
-              {isBangla ? "হোম" : "Home"}
+              {t.nav.home}
             </Link>
 
             <a
               href="#visa-check"
               className="text-gray-800 hover:text-blue-600"
             >
-              {isBangla ? "ভিসা চেক" : "Visa Check"}
+              {t.nav.visaCheck}
             </a>
 
             <a
               href="#ai-assistant"
               className="text-gray-800 hover:text-blue-600"
             >
-              {isBangla ? "AI সহকারী" : "AI Assistant"}
+              {t.nav.aiAssistant}
             </a>
 
             <Link
               href="/jobs"
               className="text-gray-800 hover:text-blue-600"
             >
-              {isBangla ? "চাকরি" : "Jobs"}
+              {t.nav.jobs}
             </Link>
 
             <a
               href="#news"
               className="text-gray-800 hover:text-blue-600"
             >
-              {isBangla ? "নিউজ" : "News"}
+              {t.nav.news}
             </a>
 
             <a
               href="#about"
               className="text-gray-800 hover:text-blue-600"
             >
-              {isBangla ? "আমাদের সম্পর্কে" : "About Us"}
+              {t.nav.aboutUs}
             </a>
 
             <a
               href="#contact"
               className="text-gray-800 hover:text-blue-600"
             >
-              {isBangla ? "যোগাযোগ" : "Contact"}
+              {t.nav.contact}
             </a>
 
           </nav>
@@ -571,17 +571,7 @@ export default function Home() {
 
           <div className="flex items-center gap-3">
 
-            <button
-              type="button"
-              onClick={() =>
-                setLanguage((current) =>
-                  current === "bn" ? "en" : "bn"
-                )
-              }
-              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              {isBangla ? "English" : "বাংলা"}
-            </button>
+            <LanguageSwitcher />
 
             <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-gray-500 hover:bg-gray-50">
               {isBangla ? "লগইন" : "Login"}
@@ -1819,21 +1809,21 @@ export default function Home() {
                   href="/"
                   className="block hover:text-white"
                 >
-                  {isBangla ? "হোম" : "Home"}
+                  {t.nav.home}
                 </Link>
 
                 <Link
                   href="/jobs"
                   className="block hover:text-white"
                 >
-                  {isBangla ? "চাকরি" : "Jobs"}
+                  {t.nav.jobs}
                 </Link>
 
                 <a
                   href="#visa-check"
                   className="block hover:text-white"
                 >
-                  {isBangla ? "ভিসা চেক" : "Visa Check"}
+                  {t.nav.visaCheck}
                 </a>
 
               </div>

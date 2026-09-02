@@ -1,26 +1,54 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+/* =========================================================
+   TYPES
+========================================================= */
 
 type Language = "bn" | "en";
 
 type Job = {
   id: number;
+
+  /* Admin-editable circular information */
   country: string;
+  countryDisplayName?: string;
   flag: string;
+
   category: string;
   title: string;
   sponsor: string;
+
   salary: string;
   vacancy: number;
   duty: string;
   accommodation: string;
   deadline: string;
   posted: string;
+
   description: string;
   requirements: string[];
+
+  /* Future Admin Circular Upload */
+  circularUrl?: string;
+  circularType?: "image" | "pdf";
+
   isNew?: boolean;
 };
+
+type Notice = {
+  id: number;
+  bn: string;
+  en: string;
+};
+
+/* =========================================================
+   JOB DATA
+   NOTE:
+   Later these records will come from Admin Dashboard/API.
+========================================================= */
 
 const jobs: Job[] = [
   {
@@ -189,9 +217,37 @@ const jobs: Job[] = [
   },
 ];
 
-/* =========================
+/* =========================================================
+   NOTICE BOARD
+   Later Admin Dashboard will manage these notices.
+========================================================= */
+
+const notices: Notice[] = [
+  {
+    id: 1,
+    bn: "সৌদি আরবের নতুন চাকরির সার্কুলার প্রকাশিত হয়েছে।",
+    en: "A new Saudi Arabia job circular has been published.",
+  },
+  {
+    id: 2,
+    bn: "আবেদন করার আগে সার্কুলারের সকল শর্ত ভালোভাবে যাচাই করুন।",
+    en: "Please verify all circular requirements before applying.",
+  },
+  {
+    id: 3,
+    bn: "ভিসা ও চাকরির তথ্যের জন্য শুধুমাত্র নির্ভরযোগ্য উৎস ব্যবহার করুন।",
+    en: "Use reliable sources for visa and employment information.",
+  },
+  {
+    id: 4,
+    bn: "নতুন চাকরির সুযোগ পেতে নিয়মিত Jobs page দেখুন।",
+    en: "Check the Jobs page regularly for new opportunities.",
+  },
+];
+
+/* =========================================================
    COUNTRY TRANSLATION
-========================= */
+========================================================= */
 
 const countryBN: Record<string, string> = {
   "Saudi Arabia": "সৌদি আরব",
@@ -201,9 +257,9 @@ const countryBN: Record<string, string> = {
   Oman: "ওমান",
 };
 
-/* =========================
+/* =========================================================
    CATEGORY TRANSLATION
-========================= */
+========================================================= */
 
 const categoryBN: Record<string, string> = {
   Driver: "ড্রাইভার",
@@ -216,9 +272,9 @@ const categoryBN: Record<string, string> = {
   Technician: "টেকনিশিয়ান",
 };
 
-/* =========================
+/* =========================================================
    REQUIREMENT TRANSLATION
-========================= */
+========================================================= */
 
 const requirementBN: Record<string, string> = {
   "Valid passport": "বৈধ পাসপোর্ট",
@@ -235,21 +291,22 @@ const requirementBN: Record<string, string> = {
   "Responsible attitude": "দায়িত্বশীল মনোভাব",
 };
 
-/* =========================
+/* =========================================================
    JOB TITLE TRANSLATION
-========================= */
+========================================================= */
 
 const titleBN: Record<string, string> = {
   Driver: "ড্রাইভার",
   "Factory Worker": "ফ্যাক্টরি কর্মী",
   Electrician: "ইলেকট্রিশিয়ান",
+  Plumber: "প্লাম্বার",
   Welder: "ওয়েল্ডার",
   Cleaner: "ক্লিনার",
 };
 
-/* =========================
+/* =========================================================
    DESCRIPTION TRANSLATION
-========================= */
+========================================================= */
 
 const descriptionBN: Record<string, string> = {
   "Experienced drivers are required for an overseas employment opportunity in Saudi Arabia.":
@@ -274,9 +331,9 @@ const descriptionBN: Record<string, string> = {
     "ওমানে সাধারণ পরিষ্কার-পরিচ্ছন্নতা ও রক্ষণাবেক্ষণের কাজের জন্য ক্লিনার প্রয়োজন।",
 };
 
-/* =========================
-   COUNTRY FILTER
-========================= */
+/* =========================================================
+   FILTER OPTIONS
+========================================================= */
 
 const countries = [
   "All Countries",
@@ -286,10 +343,6 @@ const countries = [
   "Qatar",
   "Oman",
 ];
-
-/* =========================
-   CATEGORY FILTER
-========================= */
 
 const categories = [
   "All Categories",
@@ -303,6 +356,10 @@ const categories = [
   "Technician",
 ];
 
+/* =========================================================
+   MAIN PAGE
+========================================================= */
+
 export default function JobsPage() {
   const [language, setLanguage] = useState<Language>("bn");
 
@@ -315,11 +372,14 @@ export default function JobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyJob, setApplyJob] = useState<Job | null>(null);
 
-  /* =========================
-     LANGUAGE HELPERS
-  ========================= */
+  /* Full Circular Viewer */
+  const [circularJob, setCircularJob] = useState<Job | null>(null);
 
   const isBangla = language === "bn";
+
+  /* =======================================================
+     LANGUAGE HELPERS
+  ======================================================= */
 
   const getCountryName = (value: string) => {
     return isBangla ? countryBN[value] || value : value;
@@ -341,9 +401,9 @@ export default function JobsPage() {
     return isBangla ? descriptionBN[value] || value : value;
   };
 
-  /* =========================
-     SEARCH
-  ========================= */
+  /* =======================================================
+     FILTER
+  ======================================================= */
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
@@ -378,9 +438,9 @@ export default function JobsPage() {
 
   const visibleJobs = filteredJobs.slice(startIndex, startIndex + 4);
 
-  /* =========================
+  /* =======================================================
      CAROUSEL
-  ========================= */
+  ======================================================= */
 
   const nextJobs = () => {
     if (filteredJobs.length <= 4) return;
@@ -398,9 +458,9 @@ export default function JobsPage() {
     });
   };
 
-  /* =========================
+  /* =======================================================
      RESET
-  ========================= */
+  ======================================================= */
 
   const resetFilters = () => {
     setSearch("");
@@ -408,6 +468,26 @@ export default function JobsPage() {
     setCategory("All Categories");
     setStartIndex(0);
   };
+
+  /* =======================================================
+     KEYBOARD ESC FOR MODALS
+  ======================================================= */
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      setSelectedJob(null);
+      setApplyJob(null);
+      setCircularJob(null);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   return (
     <main className="min-h-screen bg-[#f7f9fc] text-[#0B2A55]">
@@ -424,11 +504,23 @@ export default function JobsPage() {
 
           <div className="flex shrink-0 items-center">
 
-            {/* LOGO SPACE */}
+            {/* LOGO */}
 
-            <div className="mr-3 flex h-14 w-16 items-center justify-center">
-              {/* এখানে Logo বসবে */}
+            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center">
+
+              <Link href="/" aria-label="Go to Home">
+
+                <img
+                  src="/logo.svg"
+                  alt="GO International BD Logo"
+                  className="h-12 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90"
+                />
+
+              </Link>
+
             </div>
+
+            {/* COMPANY NAME */}
 
             <div>
 
@@ -445,9 +537,11 @@ export default function JobsPage() {
               </div>
 
               <p className="mt-1 text-xs text-gray-600">
+
                 {isBangla
                   ? "অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহায়তা"
                   : "Official Visa Check & Immigration Assistant"}
+
               </p>
 
             </div>
@@ -455,55 +549,55 @@ export default function JobsPage() {
           </div>
 
 
-          {/* NAVIGATION */}
+          {/* DESKTOP NAV */}
 
-          <nav className="hidden items-center gap-8 text-[16px] lg:flex">
+          <nav className="hidden items-center gap-7 text-[15px] lg:flex">
 
-            <a
+            <Link
               href="/"
-              className="text-gray-800 hover:text-blue-600"
+              className="text-gray-800 transition hover:text-blue-600"
             >
               {isBangla ? "হোম" : "Home"}
-            </a>
+            </Link>
 
             <a
               href="#"
-              className="text-gray-800 hover:text-blue-600"
+              className="text-gray-800 transition hover:text-blue-600"
             >
               {isBangla ? "ভিসা চেক" : "Visa Check"}
             </a>
 
             <a
               href="#"
-              className="text-gray-800 hover:text-blue-600"
+              className="text-gray-800 transition hover:text-blue-600"
             >
-              {isBangla ? "এআই সহায়ক" : "AI Assistant"}
+              {isBangla ? "AI সহকারী" : "AI Assistant"}
             </a>
 
-            <a
+            <Link
               href="/jobs"
-              className="text-blue-600"
+              className="font-semibold text-blue-600"
             >
               {isBangla ? "চাকরি" : "Jobs"}
-            </a>
+            </Link>
 
             <a
               href="#"
-              className="text-gray-800 hover:text-blue-600"
+              className="text-gray-800 transition hover:text-blue-600"
             >
-              {isBangla ? "সংবাদ" : "News"}
+              {isBangla ? "নিউজ" : "News"}
             </a>
 
             <a
               href="#"
-              className="text-gray-800 hover:text-blue-600"
+              className="text-gray-800 transition hover:text-blue-600"
             >
               {isBangla ? "আমাদের সম্পর্কে" : "About Us"}
             </a>
 
             <a
               href="#"
-              className="text-gray-800 hover:text-blue-600"
+              className="text-gray-800 transition hover:text-blue-600"
             >
               {isBangla ? "যোগাযোগ" : "Contact"}
             </a>
@@ -511,26 +605,26 @@ export default function JobsPage() {
           </nav>
 
 
-          {/* LANGUAGE + LOGIN */}
+          {/* LANGUAGE + REGISTER */}
 
           <div className="flex items-center gap-3">
 
-            <select
-              value={language}
-              onChange={(e) =>
-                setLanguage(e.target.value as Language)
+            <button
+              type="button"
+              onClick={() =>
+                setLanguage((current) =>
+                  current === "bn" ? "en" : "bn"
+                )
               }
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-[#0B2A55] outline-none"
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:border-blue-300 hover:text-blue-600"
             >
-              <option value="en">English</option>
-              <option value="bn">বাংলা</option>
-            </select>
-
-            <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-gray-600">
-              {isBangla ? "লগইন" : "Login"}
+              {isBangla ? "English" : "বাংলা"}
             </button>
 
-            <button className="rounded-lg bg-blue-600 px-5 py-2.5 text-white hover:bg-blue-700">
+            <button
+              type="button"
+              className="hidden rounded-lg bg-[#0B4DBB] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#093f98] sm:block"
+            >
               {isBangla ? "রেজিস্টার" : "Register"}
             </button>
 
@@ -551,13 +645,14 @@ export default function JobsPage() {
 
           <div className="relative overflow-hidden rounded-b-2xl border-b border-gray-200 bg-[#f8fafc] px-6 py-10 md:px-10 md:py-14">
 
-            {/* ভবিষ্যতে এখানে background image বসানো যাবে */}
+            {/* Future background image area */}
 
             <div className="max-w-3xl">
 
               <span className="mb-4 inline-flex rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
 
                 🌍{" "}
+
                 {isBangla
                   ? "বিদেশে কর্মসংস্থানের সুযোগ"
                   : "Overseas Employment Opportunities"}
@@ -599,7 +694,7 @@ export default function JobsPage() {
 
           <div className="grid gap-4 lg:grid-cols-3">
 
-            {/* SEARCH INPUT */}
+            {/* SEARCH */}
 
             <div className="relative">
 
@@ -618,7 +713,7 @@ export default function JobsPage() {
                     ? "চাকরি, দেশ বা ক্যাটাগরি খুঁজুন..."
                     : "Search job, country or category..."
                 }
-                className="w-full rounded-xl border border-gray-300 py-3 pl-11 pr-4 text-sm outline-none focus:border-blue-500"
+                className="w-full rounded-xl border border-gray-300 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-blue-500"
               />
 
             </div>
@@ -638,17 +733,21 @@ export default function JobsPage() {
                   setCountry(e.target.value);
                   setStartIndex(0);
                 }}
-                className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-10 text-sm outline-none focus:border-blue-500"
+                className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-10 text-sm outline-none transition focus:border-blue-500"
               >
 
                 {countries.map((x) => (
+
                   <option key={x} value={x}>
+
                     {x === "All Countries"
                       ? isBangla
                         ? "সকল দেশ"
                         : "All Countries"
                       : getCountryName(x)}
+
                   </option>
+
                 ))}
 
               </select>
@@ -674,17 +773,21 @@ export default function JobsPage() {
                   setCategory(e.target.value);
                   setStartIndex(0);
                 }}
-                className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-10 text-sm outline-none focus:border-blue-500"
+                className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-10 text-sm outline-none transition focus:border-blue-500"
               >
 
                 {categories.map((x) => (
+
                   <option key={x} value={x}>
+
                     {x === "All Categories"
                       ? isBangla
                         ? "সকল ক্যাটাগরি"
                         : "All Categories"
                       : getCategoryName(x)}
+
                   </option>
+
                 ))}
 
               </select>
@@ -722,8 +825,9 @@ export default function JobsPage() {
               category !== "All Categories") && (
 
               <button
+                type="button"
                 onClick={resetFilters}
-                className="text-sm font-semibold text-blue-600"
+                className="text-sm font-semibold text-blue-600 hover:text-blue-700"
               >
                 {isBangla
                   ? "ফিল্টার পরিষ্কার করুন"
@@ -740,7 +844,7 @@ export default function JobsPage() {
 
 
       {/* =====================================================
-          JOBS
+          JOB CIRCULARS
       ====================================================== */}
 
       <section className="mx-[192px] px-0 py-10 max-md:mx-4">
@@ -748,9 +852,11 @@ export default function JobsPage() {
         <div className="mb-6">
 
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
+
             {isBangla
               ? "সর্বশেষ সুযোগ"
               : "Latest Opportunities"}
+
           </p>
 
           <div className="mt-1 flex items-end justify-between">
@@ -767,9 +873,7 @@ export default function JobsPage() {
 
               {filteredJobs.length}{" "}
 
-              {isBangla
-                ? "টি চাকরি পাওয়া গেছে"
-                : "Jobs Found"}
+              {isBangla ? "টি চাকরি" : "Jobs Found"}
 
             </p>
 
@@ -777,8 +881,6 @@ export default function JobsPage() {
 
         </div>
 
-
-        {/* NO JOB */}
 
         {filteredJobs.length === 0 ? (
 
@@ -797,8 +899,9 @@ export default function JobsPage() {
             </h3>
 
             <button
+              type="button"
               onClick={resetFilters}
-              className="mt-5 rounded-xl bg-blue-600 px-5 py-3 font-bold text-white"
+              className="mt-5 rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
             >
               {isBangla
                 ? "ফিল্টার পরিষ্কার করুন"
@@ -811,13 +914,15 @@ export default function JobsPage() {
 
           <div className="relative">
 
-            {/* LEFT ARROW */}
+            {/* LEFT */}
 
             {filteredJobs.length > 4 && (
 
               <button
+                type="button"
                 onClick={previousJobs}
-                className="absolute -left-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border bg-white text-2xl text-blue-600 shadow-lg lg:flex"
+                className="absolute -left-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-2xl text-blue-600 shadow-lg hover:bg-blue-50 lg:flex"
+                aria-label="Previous jobs"
               >
                 ‹
               </button>
@@ -825,7 +930,7 @@ export default function JobsPage() {
             )}
 
 
-            {/* JOB GRID */}
+            {/* CARDS */}
 
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
 
@@ -833,7 +938,7 @@ export default function JobsPage() {
 
                 <article
                   key={job.id}
-                  className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl"
                 >
 
                   {/* CARD HEADER */}
@@ -846,19 +951,23 @@ export default function JobsPage() {
 
                         <div className="flex items-center gap-2">
 
-                          {/* FLAG / SA / MY COMPLETELY REMOVED */}
+                          <span className="text-2xl">
+                            {job.flag}
+                          </span>
 
                           <h3 className="text-lg font-bold">
-                            {getCountryName(job.country)}
+
+                            {getCountryName(
+                              job.countryDisplayName || job.country
+                            )}
+
                           </h3>
 
                         </div>
 
                         <p className="mt-1 text-xs text-gray-500">
 
-                          {isBangla
-                            ? "স্পনসর: "
-                            : "Sponsor: "}
+                          {isBangla ? "স্পনসর: " : "Sponsor: "}
 
                           <span className="font-semibold text-blue-600">
                             {job.sponsor}
@@ -872,9 +981,7 @@ export default function JobsPage() {
                       {job.isNew && (
 
                         <span className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700">
-
                           {isBangla ? "নতুন" : "NEW"}
-
                         </span>
 
                       )}
@@ -884,41 +991,82 @@ export default function JobsPage() {
                   </div>
 
 
-                  {/* CIRCULAR PREVIEW */}
+                  {/* =================================================
+                      CIRCULAR PREVIEW
+                  ================================================== */}
 
-                  <div className="mx-4 mt-4 flex h-52 items-center justify-center rounded-xl border border-[#0B2A55] bg-gradient-to-br from-gray-50 to-blue-50">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (job.circularUrl) {
+                        setCircularJob(job);
+                      } else {
+                        setSelectedJob(job);
+                      }
+                    }}
+                    className="mx-4 mt-4 block w-[calc(100%-2rem)] text-left"
+                    aria-label={
+                      isBangla
+                        ? "সার্কুলার দেখুন"
+                        : "View circular"
+                    }
+                  >
 
-                    <div className="text-center">
+                    <div className="flex h-64 w-full items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-[#f8fafc]">
 
-                      <div className="text-5xl">
-                        📄
-                      </div>
+                      {job.circularUrl && job.circularType === "image" ? (
 
-                      <p className="mt-3 font-bold">
-                        {getCountryName(job.country)}
-                      </p>
+                        <img
+                          src={job.circularUrl}
+                          alt={
+                            isBangla
+                              ? `${getCountryName(job.country)} সার্কুলার`
+                              : `${job.country} job circular`
+                          }
+                          className="h-full w-full object-contain"
+                        />
 
-                      <p className="mt-1 text-xs text-gray-500">
+                      ) : (
 
-                        {getCategoryName(job.category)}{" "}
+                        <div className="text-center">
 
-                        {isBangla
-                          ? "চাকরির সার্কুলার"
-                          : "Job Circular"}
+                          <div className="text-5xl">
+                            📄
+                          </div>
 
-                      </p>
+                          <p className="mt-3 font-bold">
 
-                      <span className="mt-3 inline-block rounded-full bg-white px-3 py-1 text-[11px] text-gray-500 shadow-sm">
+                            {getCountryName(
+                              job.countryDisplayName || job.country
+                            )}
 
-                        {isBangla
-                          ? "সার্কুলার দেখুন"
-                          : "Circular Preview"}
+                          </p>
 
-                      </span>
+                          <p className="mt-1 text-xs text-gray-500">
+
+                            {getCategoryName(job.category)}{" "}
+
+                            {isBangla
+                              ? "চাকরির সার্কুলার"
+                              : "Job Circular"}
+
+                          </p>
+
+                          <span className="mt-3 inline-block rounded-full bg-white px-3 py-1 text-[11px] text-gray-500 shadow-sm">
+
+                            {isBangla
+                              ? "সার্কুলার প্রিভিউ"
+                              : "Circular Preview"}
+
+                          </span>
+
+                        </div>
+
+                      )}
 
                     </div>
 
-                  </div>
+                  </button>
 
 
                   {/* CATEGORY */}
@@ -986,8 +1134,9 @@ export default function JobsPage() {
                   <div className="grid grid-cols-2 gap-2 p-5">
 
                     <button
+                      type="button"
                       onClick={() => setSelectedJob(job)}
-                      className="rounded-xl border border-blue-200 bg-blue-50 px-2 py-3 text-xs font-bold text-blue-700"
+                      className="rounded-xl border border-blue-200 bg-blue-50 px-2 py-3 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
                     >
                       {isBangla
                         ? "বিস্তারিত দেখুন"
@@ -996,8 +1145,9 @@ export default function JobsPage() {
 
 
                     <button
+                      type="button"
                       onClick={() => setApplyJob(job)}
-                      className="rounded-xl bg-blue-600 px-2 py-3 text-xs font-bold text-white"
+                      className="rounded-xl bg-blue-600 px-2 py-3 text-xs font-bold text-white transition hover:bg-blue-700"
                     >
                       {isBangla
                         ? "আবেদন করুন"
@@ -1013,13 +1163,15 @@ export default function JobsPage() {
             </div>
 
 
-            {/* RIGHT ARROW */}
+            {/* RIGHT */}
 
             {filteredJobs.length > 4 && (
 
               <button
+                type="button"
                 onClick={nextJobs}
-                className="absolute -right-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border bg-white text-2xl text-blue-600 shadow-lg lg:flex"
+                className="absolute -right-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-2xl text-blue-600 shadow-lg hover:bg-blue-50 lg:flex"
+                aria-label="Next jobs"
               >
                 ›
               </button>
@@ -1037,8 +1189,10 @@ export default function JobsPage() {
 
                   <button
                     key={job.id}
+                    type="button"
                     onClick={() => setStartIndex(i)}
-                    className={`h-2.5 rounded-full ${
+                    aria-label={`Go to job ${i + 1}`}
+                    className={`h-2.5 rounded-full transition-all ${
                       i === startIndex
                         ? "w-7 bg-blue-600"
                         : "w-2.5 bg-gray-300"
@@ -1054,6 +1208,89 @@ export default function JobsPage() {
           </div>
 
         )}
+
+      </section>
+
+
+      {/* =====================================================
+          NOTICE BOARD
+      ====================================================== */}
+
+      <section className="mx-[192px] pb-10 max-md:mx-4">
+
+        <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+
+          {/* NOTICE HEADER */}
+
+          <div className="flex items-center border-b border-blue-100 bg-blue-50">
+
+            <div className="flex shrink-0 items-center gap-2 bg-[#0B4DBB] px-5 py-4 text-sm font-bold text-white">
+
+              <span className="text-lg">
+                📢
+              </span>
+
+              <span>
+                {isBangla
+                  ? "বিশেষ নোটিশ"
+                  : "Special Notice"}
+              </span>
+
+            </div>
+
+            <div className="h-7 w-px bg-blue-200" />
+
+            <div className="px-4 text-xs font-medium text-blue-700">
+
+              {isBangla
+                ? "গুরুত্বপূর্ণ তথ্য"
+                : "Important Information"}
+
+            </div>
+
+          </div>
+
+
+          {/* AUTO SCROLLING NOTICE */}
+
+          <div className="relative h-[92px] overflow-hidden bg-white">
+
+            <div
+              className="notice-scroll absolute left-0 right-0 top-0"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.animationPlayState = "paused";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.animationPlayState = "running";
+              }}
+            >
+
+              {[...notices, ...notices].map((notice, index) => (
+
+                <div
+                  key={`${notice.id}-${index}`}
+                  className="flex min-h-[46px] items-center gap-3 px-5 text-sm text-gray-700"
+                >
+
+                  <span className="text-blue-600">
+                    🔔
+                  </span>
+
+                  <span>
+                    {isBangla
+                      ? notice.bn
+                      : notice.en}
+                  </span>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </div>
+
+        </div>
 
       </section>
 
@@ -1079,7 +1316,7 @@ export default function JobsPage() {
               "🔄",
               isBangla ? "নিয়মিত আপডেট" : "Regular Updates",
               isBangla
-                ? "নতুন চাকরির সুযোগ নিয়মিত যোগ করা যেতে পারে।"
+                ? "নতুন সুযোগ নিয়মিত যোগ করা যেতে পারে।"
                 : "New opportunities can be added regularly.",
             ],
 
@@ -1095,7 +1332,7 @@ export default function JobsPage() {
               "🔔",
               isBangla ? "আপডেট থাকুন" : "Stay Updated",
               isBangla
-                ? "নতুন চাকরির সুযোগের জন্য নিয়মিত দেখুন।"
+                ? "নতুন সুযোগের জন্য নিয়মিত দেখুন।"
                 : "Check regularly for new opportunities.",
             ],
           ].map(([icon, title, text], i) => (
@@ -1131,6 +1368,123 @@ export default function JobsPage() {
 
 
       {/* =====================================================
+          CIRCULAR VIEWER
+      ====================================================== */}
+
+      {circularJob && (
+
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 px-2 py-3 sm:px-5 sm:py-5"
+          onClick={() => setCircularJob(null)}
+        >
+
+          <div
+            className="relative flex h-full max-h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            {/* VIEWER HEADER */}
+
+            <div className="flex shrink-0 items-center justify-between border-b px-4 py-3 sm:px-6">
+
+              <div>
+
+                <h2 className="text-base font-bold text-[#0B2A55] sm:text-lg">
+
+                  {getCountryName(
+                    circularJob.countryDisplayName ||
+                    circularJob.country
+                  )}
+
+                </h2>
+
+                <p className="mt-0.5 text-xs text-gray-500">
+
+                  {getTitle(circularJob.title)}
+
+                </p>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCircularJob(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-xl text-gray-500 transition hover:bg-gray-200 hover:text-gray-800"
+                aria-label="Close circular viewer"
+              >
+                ×
+              </button>
+
+            </div>
+
+
+            {/* VIEWER BODY */}
+
+            <div className="min-h-0 flex-1 overflow-auto bg-[#eef1f5] p-3 sm:p-5">
+
+              {circularJob.circularUrl &&
+              circularJob.circularType === "pdf" ? (
+
+                <iframe
+                  src={circularJob.circularUrl}
+                  title="Job Circular PDF"
+                  className="h-full min-h-[650px] w-full rounded-lg bg-white"
+                />
+
+              ) : circularJob.circularUrl ? (
+
+                <div className="flex min-h-full items-start justify-center">
+
+                  <img
+                    src={circularJob.circularUrl}
+                    alt="Job Circular"
+                    className="h-auto max-w-full rounded-lg bg-white object-contain shadow-md"
+                  />
+
+                </div>
+
+              ) : (
+
+                <div className="flex min-h-full items-center justify-center">
+
+                  <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
+
+                    <div className="text-6xl">
+                      📄
+                    </div>
+
+                    <h3 className="mt-4 text-lg font-bold">
+
+                      {isBangla
+                        ? "সার্কুলার এখনো আপলোড করা হয়নি"
+                        : "Circular has not been uploaded yet"}
+
+                    </h3>
+
+                    <p className="mt-2 text-sm text-gray-500">
+
+                      {isBangla
+                        ? "Admin Dashboard থেকে Circular Upload করলে এখানে দেখা যাবে।"
+                        : "The uploaded circular from Admin Dashboard will appear here."}
+
+                    </p>
+
+                  </div>
+
+                </div>
+
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* =====================================================
           DETAILS MODAL
       ====================================================== */}
 
@@ -1146,7 +1500,7 @@ export default function JobsPage() {
             onClick={(e) => e.stopPropagation()}
           >
 
-            {/* MODAL HEADER */}
+            {/* HEADER */}
 
             <div className="flex items-center justify-between border-b px-6 py-5">
 
@@ -1154,7 +1508,12 @@ export default function JobsPage() {
 
                 <h2 className="text-xl font-bold text-[#0B2A55]">
 
-                  {getCountryName(selectedJob.country)}
+                  {selectedJob.flag}{" "}
+
+                  {getCountryName(
+                    selectedJob.countryDisplayName ||
+                    selectedJob.country
+                  )}
 
                 </h2>
 
@@ -1167,7 +1526,6 @@ export default function JobsPage() {
 
               </div>
 
-
               <button
                 type="button"
                 onClick={() => setSelectedJob(null)}
@@ -1179,36 +1537,84 @@ export default function JobsPage() {
             </div>
 
 
-            {/* MODAL BODY */}
+            {/* BODY */}
 
             <div className="p-6">
 
-              <div className="rounded-xl bg-gray-50 p-8 text-center">
+              {/* CIRCULAR PREVIEW */}
 
-                <div className="text-6xl">
-                  📄
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedJob(null);
+
+                  if (selectedJob.circularUrl) {
+                    setCircularJob(selectedJob);
+                  }
+                }}
+                className="block w-full"
+              >
+
+                <div className="flex min-h-[240px] w-full items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-[#f8fafc]">
+
+                  {selectedJob.circularUrl &&
+                  selectedJob.circularType === "image" ? (
+
+                    <img
+                      src={selectedJob.circularUrl}
+                      alt="Job Circular"
+                      className="max-h-[500px] w-full object-contain"
+                    />
+
+                  ) : (
+
+                    <div className="text-center">
+
+                      <div className="text-6xl">
+                        📄
+                      </div>
+
+                      <h3 className="mt-4 text-xl font-bold">
+
+                        {getCountryName(
+                          selectedJob.countryDisplayName ||
+                          selectedJob.country
+                        )}{" "}
+
+                        {isBangla
+                          ? "চাকরির সার্কুলার"
+                          : "Job Circular"}
+
+                      </h3>
+
+                      <p className="mt-1 text-sm text-gray-500">
+
+                        {getCategoryName(selectedJob.category)}
+
+                      </p>
+
+                      <span className="mt-4 inline-block rounded-full bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700">
+
+                        {selectedJob.circularUrl
+                          ? isBangla
+                            ? "সার্কুলার দেখুন"
+                            : "View Circular"
+                          : isBangla
+                            ? "সার্কুলার শীঘ্রই আসবে"
+                            : "Circular Coming Soon"}
+
+                      </span>
+
+                    </div>
+
+                  )}
+
                 </div>
 
-                <h3 className="mt-4 text-xl font-bold">
-
-                  {getCountryName(selectedJob.country)}{" "}
-
-                  {isBangla
-                    ? "চাকরির সার্কুলার"
-                    : "Job Circular"}
-
-                </h3>
-
-                <p className="mt-1 text-sm text-gray-500">
-
-                  {getCategoryName(selectedJob.category)}
-
-                </p>
-
-              </div>
+              </button>
 
 
-              {/* JOB INFO */}
+              {/* INFO GRID */}
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
 
@@ -1326,6 +1732,7 @@ export default function JobsPage() {
               {/* APPLY */}
 
               <button
+                type="button"
                 onClick={() => {
                   setSelectedJob(null);
                   setApplyJob(selectedJob);
@@ -1380,17 +1787,21 @@ export default function JobsPage() {
 
                 <p className="mt-1 text-xs text-gray-500">
 
-                  {getCountryName(applyJob.country)} —{" "}
+                  {getCountryName(
+                    applyJob.countryDisplayName ||
+                    applyJob.country
+                  )}{" "}
+                  —{" "}
                   {getTitle(applyJob.title)}
 
                 </p>
 
               </div>
 
-
               <button
+                type="button"
                 onClick={() => setApplyJob(null)}
-                className="text-2xl text-gray-400"
+                className="text-2xl text-gray-400 hover:text-gray-700"
               >
                 ×
               </button>
@@ -1425,7 +1836,6 @@ export default function JobsPage() {
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
               />
 
-
               <input
                 required
                 type="tel"
@@ -1437,7 +1847,6 @@ export default function JobsPage() {
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
               />
 
-
               <input
                 type="email"
                 placeholder={
@@ -1448,27 +1857,23 @@ export default function JobsPage() {
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
               />
 
-
               <textarea
                 rows={4}
                 placeholder={
                   isBangla
-                    ? "আপনার বার্তা লিখুন"
+                    ? "বার্তা"
                     : "Message"
                 }
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
               />
 
-
               <button
                 type="submit"
                 className="w-full rounded-xl bg-blue-600 px-5 py-3.5 font-bold text-white hover:bg-blue-700"
               >
-
                 {isBangla
                   ? "আবেদন জমা দিন"
                   : "Submit Application"}
-
               </button>
 
             </form>
@@ -1478,6 +1883,39 @@ export default function JobsPage() {
         </div>
 
       )}
+
+
+      {/* =====================================================
+          NOTICE BOARD ANIMATION
+      ====================================================== */}
+
+      <style jsx>{`
+        .notice-scroll {
+          animation: noticeScroll 16s linear infinite;
+        }
+
+        @keyframes noticeScroll {
+          0% {
+            transform: translateY(0);
+          }
+
+          45% {
+            transform: translateY(-92px);
+          }
+
+          50% {
+            transform: translateY(-92px);
+          }
+
+          95% {
+            transform: translateY(-184px);
+          }
+
+          100% {
+            transform: translateY(-184px);
+          }
+        }
+      `}</style>
 
     </main>
   );
