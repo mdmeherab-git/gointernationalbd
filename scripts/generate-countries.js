@@ -1,8 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const flagsDir = path.join(__dirname, "../../public/flags");
-const countriesFile = path.join(__dirname, "../countries.ts");
+const flagsDir = path.join(__dirname, "../public/flags");
+const countriesFile = path.join(__dirname, "../app/countries.ts");
 
 // আপনার পছন্দের প্রথম দেশগুলোর ক্রম
 const customOrder = [

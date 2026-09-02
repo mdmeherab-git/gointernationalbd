@@ -606,7 +606,11 @@ export default function Home() {
         className="w-full bg-white"
       >
 
-        <div className="relative mx-[192px] max-md:mx-0">
+        <div className="mx-[192px] max-md:mx-0">
+
+          {/* IMAGE + TEXT OVERLAY */}
+
+          <div className="relative">
 
           <img
             src="/hero.png"
@@ -614,12 +618,7 @@ export default function Home() {
             className="block h-auto w-full"
           />
 
-          <div
-            className="absolute inset-0 z-10 flex items-center"
-            style={{
-              transform: "translate(0px, 100px)",
-            }}
-          >
+          <div className="py-8 xl:absolute xl:inset-0 xl:z-10 xl:flex xl:items-center xl:py-0">
 
             <div className="w-full px-12 max-md:px-6">
 
@@ -627,7 +626,7 @@ export default function Home() {
 
                 {/* BADGE */}
 
-                <div className="relative -top-2 mb-6 inline-flex items-center rounded-full border border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md">
+                <div className="relative -top-2 mb-6 inline-flex items-center rounded-full border border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md max-md:top-0 max-md:mb-4">
 
                   <span>🛡️</span>
 
@@ -641,16 +640,18 @@ export default function Home() {
 
                 {/* TITLE */}
 
-                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl">
+                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl max-md:top-0 max-md:text-3xl">
 
                   {isBangla ? (
                     <>
-                      অফিসিয়াল{" "}
+                      অফিসিয়াল{" "}
                       <span className="text-blue-600">
                         ভিসা স্ট্যাটাস
                       </span>
                       <br />
-                      একাধিক দেশের জন্য চেক করুন
+                      <span className="whitespace-nowrap">
+                        একাধিক দেশে চেক করুন
+                      </span>
                     </>
                   ) : (
                     <>
@@ -667,7 +668,7 @@ export default function Home() {
 
                 {/* DESCRIPTION */}
 
-                <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700">
+                <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700 max-md:top-0">
 
                   {isBangla
                     ? "অফিসিয়াল সরকারি উৎস থেকে সরাসরি আপনার ভিসার স্ট্যাটাস চেক করুন। দ্রুত, নির্ভরযোগ্য ও নিরাপদ।"
@@ -675,11 +676,13 @@ export default function Home() {
 
                 </p>
 
+                </div>
+
                 {/* VISA CHECK BOX */}
 
-                <div className="mt-20 w-fit rounded-2xl bg-white p-2 shadow-xl">
+                <div className="mt-8 w-full max-w-[600px] xl:max-w-[760px] rounded-2xl bg-white p-2 shadow-xl xl:relative xl:top-32">
 
-                  <div className="flex items-center gap-2 max-md:flex-col">
+                  <div className="flex flex-wrap items-stretch gap-2 max-md:flex-col">
 
                     {/* COUNTRY */}
 
@@ -688,7 +691,7 @@ export default function Home() {
                       onChange={(e) =>
                         setSelectedCountry(e.target.value)
                       }
-                      className="h-14 w-36 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500"
+                      className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:w-full max-md:flex-none"
                     >
 
                       <option value="">
@@ -715,7 +718,7 @@ export default function Home() {
                       onChange={(e) =>
                         setVisaType(e.target.value)
                       }
-                      className="h-14 w-37 rounded-xl border border-gray-200 bg-white px-1 text-gray-700 outline-none focus:border-blue-500"
+                      className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:w-full max-md:flex-none"
                     >
 
                       <option value="">
@@ -775,7 +778,7 @@ export default function Home() {
                           ? "পাসপোর্ট নম্বর"
                           : "Passport Number"
                       }
-                      className="h-14 w-52 rounded-xl border border-gray-200 bg-white px-4 text-gray-700 outline-none placeholder:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="h-14 min-w-[180px] flex-1 rounded-xl border border-gray-200 bg-white px-4 text-gray-700 outline-none placeholder:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-md:w-full max-md:flex-none"
                     />
 
                     {/* BUTTON */}
@@ -783,7 +786,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleVisaCheck}
-                      className="h-14 w-40 rounded-xl bg-blue-600 px-5 font-semibold text-white transition hover:bg-blue-700"
+                      className="h-14 min-w-[160px] shrink-0 rounded-xl bg-blue-600 px-5 text-sm font-semibold leading-tight text-white transition hover:bg-blue-700 max-md:w-full"
                     >
                       🔍{" "}
                       {isBangla
