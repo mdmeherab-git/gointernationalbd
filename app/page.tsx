@@ -822,9 +822,9 @@ export default function Home() {
       =================================================== */}
 
       {notice.enabled && (
-        <section className="w-full bg-white px-6 py-3">
+        <section className="w-full bg-white py-3">
 
-          <div className="mx-auto flex max-w-[1400px] overflow-hidden rounded-xl border border-blue-100 bg-blue-50 shadow-sm">
+  <div className="mx-[192px] flex overflow-hidden rounded-xl border border-blue-100 bg-blue-50 shadow-sm max-md:mx-4">
 
             <div className="z-10 flex shrink-0 items-center bg-[#0B4DBB] px-5 py-3 font-semibold text-white shadow-md">
 
