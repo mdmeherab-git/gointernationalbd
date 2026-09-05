@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { countries } from "./countries";
+import CvAndNoticeSection from "../components/CvAndNoticeSection";
 
 /* =========================================================
    TYPES
@@ -1250,6 +1251,12 @@ export default function Home() {
         </div>
 
       </section>
+
+      {/* ===================================================
+          CV BUILDER + NOTICE BOARD
+      =================================================== */}
+
+      <CvAndNoticeSection isBangla={isBangla} />
 
       {/* ===================================================
           FEATURED CIRCULARS
