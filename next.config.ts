@@ -9,9 +9,10 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 
-// Makes local `next dev` expose the Cloudflare bindings declared in
-// wrangler.jsonc (D1 `DB`, R2 `UPLOADS`, secrets) via getCloudflareContext().
-// Safe no-op when the Cloudflare adapter is not installed / configured.
+// In local `next dev`, this exposes the Cloudflare bindings from wrangler.jsonc
+// (D1 `DB`, R2 `UPLOADS`) via getCloudflareContext(). It is an internal no-op in
+// production builds (Vercel included) — there the app talks to D1 / R2 over
+// their HTTP APIs instead, see lib/cf.ts.
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 initOpenNextCloudflareForDev();

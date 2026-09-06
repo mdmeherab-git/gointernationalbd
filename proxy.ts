@@ -13,16 +13,19 @@ export const config = {
   matcher: ["/admin/:path*"],
 };
 
-async function readSecret(req: NextRequest): Promise<string | undefined> {
+async function readSecret(): Promise<string | undefined> {
+  // Vercel / Node: the secret is a normal env var.
+  if (process.env.ADMIN_SESSION_SECRET) return process.env.ADMIN_SESSION_SECRET;
+  // Cloudflare Workers: pull it from the request context.
   try {
     const mod = await import("@opennextjs/cloudflare");
     const { env } = await mod.getCloudflareContext({ async: true });
     const secret = (env as unknown as Record<string, unknown>).ADMIN_SESSION_SECRET;
     if (typeof secret === "string" && secret) return secret;
   } catch {
-    /* adapter not available (plain next dev without bindings) */
+    /* adapter not available */
   }
-  return process.env.ADMIN_SESSION_SECRET;
+  return undefined;
 }
 
 export async function proxy(req: NextRequest) {
@@ -32,7 +35,7 @@ export async function proxy(req: NextRequest) {
   if (pathname === "/admin/login") return NextResponse.next();
 
   const token = req.cookies.get(ADMIN_COOKIE)?.value;
-  const secret = await readSecret(req);
+  const secret = await readSecret();
 
   const ok = secret
     ? await verifySessionToken(token, secret)
