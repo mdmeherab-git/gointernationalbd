@@ -1,0 +1,15 @@
+# Copy this file to `.dev.vars` (git-ignored) for local development.
+# These become Cloudflare bindings via getCloudflareContext().env in `next dev`.
+
+NEXTJS_ENV=development
+
+# The single password used to log in to /admin
+ADMIN_PASSWORD=change-me-now
+
+# Any long random string — used to sign the admin session cookie.
+# Generate one with:  node -e "console.log(crypto.randomUUID()+crypto.randomUUID())"
+ADMIN_SESSION_SECRET=replace-with-a-long-random-string
+
+# For production, set these as encrypted secrets instead:
+#   npx wrangler secret put ADMIN_PASSWORD
+#   npx wrangler secret put ADMIN_SESSION_SECRET

@@ -20,7 +20,7 @@ type NoticeSettings = {
 };
 
 type FeaturedCircular = {
-  id: number;
+  id: string | number;
   country: string;
   title: string;
   imageUrl: string;
@@ -28,7 +28,7 @@ type FeaturedCircular = {
 };
 
 type HomeJob = {
-  id: number;
+  id: string | number;
   country: string;
   flag: string;
   position: string;
@@ -274,45 +274,104 @@ export default function Home() {
     useState<FeaturedCircular | null>(null);
 
   /* =======================================================
+     POPULAR COUNTRIES + LATEST JOBS (Admin Dashboard driven)
+  ======================================================= */
+
+  const [popularCountries, setPopularCountries] = useState<
+    { code: string; name: string }[]
+  >(countries.slice(0, 15));
+
+  const [homeJobs, setHomeJobs] = useState<HomeJob[]>(latestJobs);
+
+  /* =======================================================
      LOAD ADMIN DATA
-     
-     Future Admin Dashboard can save:
-     go_home_notice_settings
-     go_featured_circulars
+     Managed from /admin — falls back to the bundled samples
+     whenever the API / database is not available.
   ======================================================= */
 
   useEffect(() => {
-    try {
-      const savedNotice = localStorage.getItem(
-        "go_home_notice_settings"
-      );
+    const ac = new AbortController();
+    const json = (url: string) =>
+      fetch(url, { signal: ac.signal }).then((r) => {
+        if (!r.ok) throw new Error("bad response");
+        return r.json();
+      });
 
-      if (savedNotice) {
-        const parsedNotice = JSON.parse(savedNotice);
-
+    json("/api/site-settings")
+      .then((d) => {
+        const s = d?.settings;
+        if (!s) return;
         setNotice({
-          ...defaultNotice,
-          ...parsedNotice,
+          enabled: !!s.noticeEnabled,
+          bangla: s.noticeBn || defaultNotice.bangla,
+          english: s.noticeEn || defaultNotice.english,
+          speed: Number(s.noticeSpeed) || defaultNotice.speed,
+          direction: s.noticeDirection === "right" ? "right" : "left",
         });
-      }
+      })
+      .catch(() => {});
 
-      const savedCirculars = localStorage.getItem(
-        "go_featured_circulars"
-      );
+    json("/api/circulars?featured=1")
+      .then((d) => {
+        const list = Array.isArray(d?.circulars) ? d.circulars : [];
+        setFeaturedCirculars(
+          list.map(
+            (c: {
+              id: string;
+              country: string;
+              title: string;
+              featuredImageUrl?: string | null;
+              circularUrl?: string | null;
+            }) => ({
+              id: c.id,
+              country: c.country,
+              title: c.title,
+              imageUrl: c.featuredImageUrl || c.circularUrl || "",
+              active: true,
+            }),
+          ),
+        );
+      })
+      .catch(() => {});
 
-      if (savedCirculars) {
-        const parsedCirculars = JSON.parse(savedCirculars);
-
-        if (Array.isArray(parsedCirculars)) {
-          setFeaturedCirculars(parsedCirculars);
+    json("/api/popular-countries")
+      .then((d) => {
+        if (Array.isArray(d?.countries) && d.countries.length > 0) {
+          setPopularCountries(d.countries);
         }
-      }
-    } catch (error) {
-      console.error(
-        "Unable to load Home Page admin settings:",
-        error
-      );
-    }
+      })
+      .catch(() => {});
+
+    json("/api/circulars?limit=6")
+      .then((d) => {
+        const list = Array.isArray(d?.circulars) ? d.circulars : [];
+        if (list.length > 0) {
+          setHomeJobs(
+            list.map(
+              (c: {
+                id: string;
+                country: string;
+                flag: string;
+                title: string;
+                salary: string;
+                vacancy: number;
+                deadline: string;
+              }) => ({
+                id: c.id,
+                country: c.country,
+                flag: c.flag,
+                position: c.title,
+                salary: c.salary,
+                vacancy: c.vacancy,
+                deadline: c.deadline,
+              }),
+            ),
+          );
+        }
+      })
+      .catch(() => {});
+
+    return () => ac.abort();
   }, []);
 
   /* =======================================================
@@ -320,12 +379,12 @@ export default function Home() {
   ======================================================= */
 
   const filteredCountries = useMemo(() => {
-    return countries.filter((country) =>
+    return popularCountries.filter((country) =>
       country.name
         .toLowerCase()
         .includes(countrySearch.toLowerCase())
     );
-  }, [countrySearch]);
+  }, [countrySearch, popularCountries]);
 
   /* =======================================================
      VISA CHECK
@@ -651,7 +710,7 @@ export default function Home() {
                       </span>
                       <br />
                       <span className="whitespace-nowrap">
-                        একাধিক দেশে চেক করুন
+                         চেক করুন
                       </span>
                     </>
                   ) : (
@@ -799,12 +858,6 @@ export default function Home() {
 
                   </div>
 
-                  <div className="mt-2 text-center text-xs text-gray-500">
-                    🛡️{" "}
-                    {isBangla
-                      ? "আমরা আপনার পাসপোর্ট তথ্য সংরক্ষণ করি না। এটি সম্পূর্ণ নিরাপদ।"
-                      : "We never save your passport information. It's 100% secure."}
-                  </div>
 
                 </div>
 
@@ -978,40 +1031,6 @@ export default function Home() {
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
 
-            {/* SKILL TRAINING */}
-
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100">
-
-                <img
-                  src="/technical-training.svg"
-                  alt="Technical Training"
-                  className="h-10 w-10 object-contain"
-                />
-
-              </div>
-
-              <h3 className="text-lg font-bold text-[#0B2A55]">
-                {isBangla
-                  ? "দক্ষতা প্রশিক্ষণ"
-                  : "Skill Training"}
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                {isBangla
-                  ? "প্রযুক্তিগত প্রশিক্ষণে অংশ নিয়ে আপনার ক্যারিয়ারের জন্য প্রয়োজনীয় বাস্তব দক্ষতা তৈরি করুন।"
-                  : "Enroll in technical training programs and develop practical skills for your career."}
-              </p>
-
-              <button className="mt-5 font-semibold text-blue-600 hover:text-blue-700">
-                {isBangla
-                  ? "প্রশিক্ষণ দেখুন →"
-                  : "Explore Training →"}
-              </button>
-
-            </div>
-
             {/* JOBS */}
 
             <Link
@@ -1048,6 +1067,42 @@ export default function Home() {
               </div>
 
             </Link>
+
+            {/* SKILL TRAINING */}
+
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100">
+
+                <img
+                  src="/technical-training.svg"
+                  alt="Technical Training"
+                  className="h-10 w-10 object-contain"
+                />
+
+              </div>
+
+              <h3 className="text-lg font-bold text-[#0B2A55]">
+                {isBangla
+                  ? "দক্ষতা প্রশিক্ষণ"
+                  : "Skill Training"}
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                {isBangla
+                  ? "প্রযুক্তিগত প্রশিক্ষণে অংশ নিয়ে আপনার ক্যারিয়ারের জন্য প্রয়োজনীয় বাস্তব দক্ষতা তৈরি করুন।"
+                  : "Enroll in technical training programs and develop practical skills for your career."}
+              </p>
+
+              <button className="mt-5 font-semibold text-blue-600 hover:text-blue-700">
+                {isBangla
+                  ? "প্রশিক্ষণ দেখুন →"
+                  : "Explore Training →"}
+              </button>
+
+            </div>
+
+            
 
             {/* TRACK APPLICATION */}
 
@@ -1162,7 +1217,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
 
-            {latestJobs.map((job) => (
+            {homeJobs.map((job) => (
 
               <div
                 key={job.id}

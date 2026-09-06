@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 type Language = "bn" | "en";
 
 type Job = {
-  id: number;
+  id: string | number;
 
   /* Admin-editable circular information */
   country: string;
@@ -50,7 +50,7 @@ type Notice = {
    Later these records will come from Admin Dashboard/API.
 ========================================================= */
 
-const jobs: Job[] = [
+const SAMPLE_JOBS: Job[] = [
   {
     id: 1,
     country: "Saudi Arabia",
@@ -375,7 +375,80 @@ export default function JobsPage() {
   /* Full Circular Viewer */
   const [circularJob, setCircularJob] = useState<Job | null>(null);
 
+  /* Job list — managed from /admin, falls back to the bundled sample. */
+  const [jobs, setJobs] = useState<Job[]>(SAMPLE_JOBS);
+
+  /* Apply form state */
+  const [applyForm, setApplyForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    message: "",
+  });
+  const [applyBusy, setApplyBusy] = useState(false);
+  const [applyDone, setApplyDone] = useState(false);
+  const [applyError, setApplyError] = useState("");
+
   const isBangla = language === "bn";
+
+  useEffect(() => {
+    const ac = new AbortController();
+    fetch("/api/circulars", { signal: ac.signal })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("bad"))))
+      .then((d) => {
+        const list = Array.isArray(d?.circulars) ? d.circulars : [];
+        if (list.length === 0) return;
+        setJobs(
+          list.map(
+            (c: {
+              id: string;
+              country: string;
+              countryCode: string;
+              flag: string;
+              category: string;
+              title: string;
+              sponsor: string;
+              salary: string;
+              vacancy: number;
+              duty: string;
+              accommodation: string;
+              deadline: string;
+              posted: string;
+              description: string;
+              requirements: string[];
+              circularUrl: string | null;
+              circularType: "image" | "pdf" | null;
+            }): Job => ({
+              id: c.id,
+              country: c.country,
+              flag: c.flag,
+              category: c.category,
+              title: c.title,
+              sponsor: c.sponsor,
+              salary: c.salary,
+              vacancy: c.vacancy,
+              duty: c.duty,
+              accommodation: c.accommodation,
+              deadline: c.deadline,
+              posted: c.posted,
+              description: c.description,
+              requirements: c.requirements ?? [],
+              circularUrl: c.circularUrl ?? undefined,
+              circularType: c.circularType ?? undefined,
+            }),
+          ),
+        );
+      })
+      .catch(() => {});
+    return () => ac.abort();
+  }, []);
+
+  const openApply = (job: Job) => {
+    setApplyForm({ name: "", phone: "", email: "", message: "" });
+    setApplyDone(false);
+    setApplyError("");
+    setApplyJob(job);
+  };
 
   /* =======================================================
      LANGUAGE HELPERS
@@ -434,7 +507,7 @@ export default function JobsPage() {
         (category === "All Categories" || job.category === category)
       );
     });
-  }, [search, country, category]);
+  }, [jobs, search, country, category]);
 
   const visibleJobs = filteredJobs.slice(startIndex, startIndex + 4);
 
@@ -1146,7 +1219,7 @@ export default function JobsPage() {
 
                     <button
                       type="button"
-                      onClick={() => setApplyJob(job)}
+                      onClick={() => openApply(job)}
                       className="rounded-xl bg-blue-600 px-2 py-3 text-xs font-bold text-white transition hover:bg-blue-700"
                     >
                       {isBangla
@@ -1734,8 +1807,9 @@ export default function JobsPage() {
               <button
                 type="button"
                 onClick={() => {
+                  const job = selectedJob;
                   setSelectedJob(null);
-                  setApplyJob(selectedJob);
+                  if (job) openApply(job);
                 }}
                 className="mt-7 w-full rounded-xl bg-blue-600 px-5 py-3.5 font-bold text-white hover:bg-blue-700"
               >
@@ -1811,72 +1885,126 @@ export default function JobsPage() {
 
             {/* FORM */}
 
-            <form
-              className="space-y-4 p-6"
-              onSubmit={(e) => {
-                e.preventDefault();
-
-                alert(
-                  isBangla
-                    ? "আপনার আবেদন ফর্ম প্রস্তুত হয়েছে।"
-                    : "Application form is ready."
-                );
-
-                setApplyJob(null);
-              }}
-            >
-
-              <input
-                required
-                placeholder={
-                  isBangla
-                    ? "পূর্ণ নাম"
-                    : "Full Name"
-                }
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <input
-                required
-                type="tel"
-                placeholder={
-                  isBangla
-                    ? "মোবাইল নম্বর"
-                    : "Phone Number"
-                }
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <input
-                type="email"
-                placeholder={
-                  isBangla
-                    ? "ইমেইল ঠিকানা"
-                    : "Email Address"
-                }
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <textarea
-                rows={4}
-                placeholder={
-                  isBangla
-                    ? "বার্তা"
-                    : "Message"
-                }
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-blue-600 px-5 py-3.5 font-bold text-white hover:bg-blue-700"
+            {applyDone ? (
+              <div className="p-8 text-center">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-2xl">
+                  ✓
+                </div>
+                <p className="text-sm font-semibold text-gray-700">
+                  {isBangla
+                    ? "আপনার আবেদন জমা হয়েছে। আমরা শীঘ্রই যোগাযোগ করব।"
+                    : "Your application has been submitted. We will contact you soon."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setApplyJob(null)}
+                  className="mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700"
+                >
+                  {isBangla ? "বন্ধ করুন" : "Close"}
+                </button>
+              </div>
+            ) : (
+              <form
+                className="space-y-4 p-6"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setApplyBusy(true);
+                  setApplyError("");
+                  try {
+                    const res = await fetch("/api/applications", {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({
+                        circular_id: applyJob ? String(applyJob.id) : null,
+                        job_title: applyJob?.title ?? "",
+                        job_country: applyJob?.country ?? "",
+                        applicant_name: applyForm.name,
+                        phone: applyForm.phone,
+                        email: applyForm.email,
+                        message: applyForm.message,
+                      }),
+                    });
+                    const data = (await res.json().catch(() => ({}))) as {
+                      error?: string;
+                    };
+                    if (!res.ok) {
+                      setApplyError(
+                        data.error ||
+                          (isBangla ? "জমা দেওয়া যায়নি" : "Could not submit"),
+                      );
+                      return;
+                    }
+                    setApplyDone(true);
+                    setApplyForm({ name: "", phone: "", email: "", message: "" });
+                  } catch {
+                    setApplyError(
+                      isBangla ? "সংযোগে সমস্যা" : "Network error",
+                    );
+                  } finally {
+                    setApplyBusy(false);
+                  }
+                }}
               >
-                {isBangla
-                  ? "আবেদন জমা দিন"
-                  : "Submit Application"}
-              </button>
+                <input
+                  required
+                  value={applyForm.name}
+                  onChange={(e) =>
+                    setApplyForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  placeholder={isBangla ? "পূর্ণ নাম" : "Full Name"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
+                />
 
-            </form>
+                <input
+                  required
+                  type="tel"
+                  value={applyForm.phone}
+                  onChange={(e) =>
+                    setApplyForm((f) => ({ ...f, phone: e.target.value }))
+                  }
+                  placeholder={isBangla ? "মোবাইল নম্বর" : "Phone Number"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
+                />
+
+                <input
+                  type="email"
+                  value={applyForm.email}
+                  onChange={(e) =>
+                    setApplyForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                  placeholder={isBangla ? "ইমেইল ঠিকানা" : "Email Address"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
+                />
+
+                <textarea
+                  rows={4}
+                  value={applyForm.message}
+                  onChange={(e) =>
+                    setApplyForm((f) => ({ ...f, message: e.target.value }))
+                  }
+                  placeholder={isBangla ? "বার্তা" : "Message"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
+                />
+
+                {applyError && (
+                  <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
+                    {applyError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={applyBusy}
+                  className="w-full rounded-xl bg-blue-600 px-5 py-3.5 font-bold text-white hover:bg-blue-700 disabled:opacity-60"
+                >
+                  {applyBusy
+                    ? "..."
+                    : isBangla
+                      ? "আবেদন জমা দিন"
+                      : "Submit Application"}
+                </button>
+              </form>
+            )}
 
           </div>
 

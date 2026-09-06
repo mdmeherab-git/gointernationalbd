@@ -1,0 +1,50 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gointernationalbd",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2024-12-30",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "gointernationalbd"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+
+  // ---------------------------------------------------------------------------
+  // Cloudflare D1 (SQLite) — the admin dashboard database.
+  // Run `npx wrangler d1 create gib-db` and paste the printed database_id below.
+  // ---------------------------------------------------------------------------
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gib-db",
+      "database_id": "ac62c76f-ec7d-4e8f-a940-6a0b6d902a12",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // ---------------------------------------------------------------------------
+  // Cloudflare R2 — uploaded circular images / PDFs (UPLOADS) and the
+  // OpenNext incremental-cache bucket (NEXT_INC_CACHE_R2_BUCKET).
+  // Run: `npx wrangler r2 bucket create gib-uploads`
+  //      `npx wrangler r2 bucket create gib-cache`
+  // ---------------------------------------------------------------------------
+  "r2_buckets": [
+    {
+      "binding": "UPLOADS",
+      "bucket_name": "gib-uploads"
+    },
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "gib-cache"
+    }
+  ]
+}

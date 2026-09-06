@@ -8,3 +8,10 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// Makes local `next dev` expose the Cloudflare bindings declared in
+// wrangler.jsonc (D1 `DB`, R2 `UPLOADS`, secrets) via getCloudflareContext().
+// Safe no-op when the Cloudflare adapter is not installed / configured.
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
+initOpenNextCloudflareForDev();
