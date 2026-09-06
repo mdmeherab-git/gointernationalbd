@@ -117,6 +117,9 @@ export default function CvBuilder({ isBangla }: { isBangla: boolean }) {
   const [cvData, setCvData] = useState<CvData>(emptyCvData);
   const [generating, setGenerating] = useState(false);
   const [generatingDocsOnly, setGeneratingDocsOnly] = useState(false);
+  const [cleanDownloadOpen, setCleanDownloadOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoError, setPromoError] = useState("");
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
   const [attachments, setAttachments] = useState<{ id: string; type: string; file: File | null; fileName: string }[]>([]);
 
@@ -233,20 +236,44 @@ export default function CvBuilder({ isBangla }: { isBangla: boolean }) {
     URL.revokeObjectURL(url);
   }
 
+  const buildPdfBytes = async (showWatermark: boolean) => {
+    const { pdf } = await import("@react-pdf/renderer");
+    const { default: CvPdfDocument } = await import("./CvPdfDocument");
+    const cvBlob = await pdf(<CvPdfDocument data={cvData} showWatermark={showWatermark} />).toBlob();
+    const cvBytes = await cvBlob.arrayBuffer();
+    const validAttachments = attachments.filter((a) => a.file) as { id: string; type: string; file: File }[];
+    let finalBytes: Uint8Array = new Uint8Array(cvBytes);
+
+    if (validAttachments.length > 0) {
+      const { mergeCvWithDocuments } = await import("../utils/mergeCvDocuments");
+      finalBytes = await mergeCvWithDocuments(cvBytes, validAttachments);
+    }
+    return finalBytes;
+  };
+
   const handleGeneratePdf = async () => {
     setGenerating(true);
     try {
-      const { pdf } = await import("@react-pdf/renderer");
-      const { default: CvPdfDocument } = await import("./CvPdfDocument");
-      const cvBlob = await pdf(<CvPdfDocument data={cvData} showWatermark />).toBlob();
-      const cvBytes = await cvBlob.arrayBuffer();
-      const validAttachments = attachments.filter((a) => a.file) as { id: string; type: string; file: File }[];
-      let finalBytes: Uint8Array = new Uint8Array(cvBytes);
-      if (validAttachments.length > 0) {
-        const { mergeCvWithDocuments } = await import("../utils/mergeCvDocuments");
-        finalBytes = await mergeCvWithDocuments(cvBytes, validAttachments);
-      }
+      const finalBytes = await buildPdfBytes(true);
       downloadPdfBytes(finalBytes, `${cvData.fullName || "cv"}.pdf`);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerateCleanPdf = async () => {
+    if (promoCode.trim() !== "327575") {
+      setPromoError(isBangla ? "সঠিক প্রমো কোড দিন।" : "Please enter the correct promo code.");
+      return;
+    }
+
+    setPromoError("");
+    setGenerating(true);
+    try {
+      const finalBytes = await buildPdfBytes(false);
+      downloadPdfBytes(finalBytes, `${cvData.fullName || "cv"}-clean.pdf`);
+      setCleanDownloadOpen(false);
+      setPromoCode("");
     } finally {
       setGenerating(false);
     }
@@ -566,9 +593,59 @@ export default function CvBuilder({ isBangla }: { isBangla: boolean }) {
               {generating ? (isBangla ? "তৈরি হচ্ছে..." : "Generating...") : (isBangla ? "📄 PDF ডাউনলোড করুন" : "📄 Download PDF")}
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => { setPromoError(""); setPromoCode(""); setCleanDownloadOpen(true); }}
+            className="w-full rounded-xl border border-teal-200 bg-teal-50 px-5 py-3 text-sm font-semibold text-teal-700 hover:bg-teal-100"
+          >
+            {isBangla ? "🔓 লোগো ছাড়া PDF ডাউনলোড" : "🔓 Download PDF without logo"}
+          </button>
+
           <p className="text-center text-xs text-gray-400">
-            {isBangla ? "GO INTERNATIONAL BD ওয়াটারমার্ক সহ · সম্পূর্ণ ফ্রি" : "Includes GO INTERNATIONAL BD watermark · Completely free"}
+            {isBangla ? "সাধারণ ডাউনলোডে আপনার লোগো ২% opacity watermark হিসেবে থাকবে।" : "Normal download includes your logo as a 5% opacity watermark."}
           </p>
+
+          {cleanDownloadOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+              <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+                <h3 className="text-base font-bold text-[#0B2A55]">
+                  {isBangla ? "লোগো ছাড়া PDF ডাউনলোড" : "Download PDF without logo"}
+                </h3>
+                <p className="mt-2 text-xs text-gray-500">
+                  {isBangla ? "লোগো ছাড়া PDF পেতে প্রমো কোড দিন।" : "Enter the promo code to download without the logo."}
+                </p>
+                <input
+                  autoFocus
+                  value={promoCode}
+                  onChange={(e) => { setPromoCode(e.target.value); setPromoError(""); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleGenerateCleanPdf(); }}
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder={isBangla ? "প্রমো কোড" : "Promo code"}
+                  className="mt-4 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-teal-500"
+                />
+                {promoError && <p className="mt-2 text-xs font-semibold text-red-500">{promoError}</p>}
+                <div className="mt-5 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setCleanDownloadOpen(false); setPromoCode(""); setPromoError(""); }}
+                    className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-600"
+                  >
+                    {isBangla ? "বাতিল" : "Cancel"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={generating}
+                    onClick={handleGenerateCleanPdf}
+                    className="flex-1 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+                  >
+                    {generating ? (isBangla ? "তৈরি হচ্ছে..." : "Generating...") : (isBangla ? "ডাউনলোড" : "Download")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
