@@ -716,18 +716,18 @@ export default function Home() {
           <img
             src="/hero.png"
             alt="Go International BD Travel"
-            className="block h-auto w-full max-md:h-[600px] max-md:object-cover max-md:object-[50%_35%]"
+            className="block h-auto w-full"
           />
 
-          <div className="py-8 max-md:absolute max-md:inset-0 max-md:z-10 max-md:flex max-md:flex-col max-md:justify-center max-md:bg-white/65 max-md:py-0 xl:absolute xl:inset-0 xl:z-10 xl:flex xl:items-center xl:py-0">
+          <div className="py-8 max-md:py-0 xl:absolute xl:inset-0 xl:z-10 xl:flex xl:items-center xl:py-0">
 
-            <div className="w-full px-12 max-md:px-6">
+            <div className="w-full px-12 max-md:px-4">
 
-              <div className="max-w-[600px] max-md:max-w-none">
+              <div className="max-w-[600px] max-md:absolute max-md:left-4 max-md:top-2.5 max-md:z-10 max-md:max-w-[62%] max-md:drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]">
 
                 {/* BADGE */}
 
-                <div className="relative -top-2 mb-6 inline-flex items-center rounded-full border border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md max-md:top-0 max-md:mb-4">
+                <div className="relative -top-2 mb-6 inline-flex items-center rounded-full border border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md max-md:top-0 max-md:mb-1.5 max-md:px-2 max-md:py-0.5 max-md:text-[8px] max-md:shadow-sm">
 
                   <span>🛡️</span>
 
@@ -741,7 +741,7 @@ export default function Home() {
 
                 {/* TITLE */}
 
-                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl max-md:top-0 max-md:text-3xl">
+                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl max-md:top-0 max-md:text-[13px] max-md:leading-tight">
 
                   {isBangla ? (
                     <>
@@ -769,7 +769,7 @@ export default function Home() {
 
                 {/* DESCRIPTION */}
 
-                <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700 max-md:top-0 max-md:mt-3 max-md:text-sm max-md:leading-6">
+                <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700 max-md:top-0 max-md:mt-1 max-md:text-[8px] max-md:leading-tight">
 
                   {isBangla
                     ? "অফিসিয়াল সরকারি উৎস থেকে সরাসরি আপনার ভিসার স্ট্যাটাস চেক করুন। দ্রুত, নির্ভরযোগ্য ও নিরাপদ।"
@@ -781,9 +781,9 @@ export default function Home() {
 
                 {/* VISA CHECK BOX */}
 
-                <div className="mt-8 w-full max-w-[600px] xl:max-w-[760px] rounded-2xl bg-white p-2 shadow-xl max-md:mt-5 xl:relative xl:top-32">
+                <div className="mt-8 w-full max-w-[600px] xl:max-w-[760px] rounded-2xl bg-white p-2 shadow-xl max-md:mt-0 max-md:-translate-y-7 max-md:p-1.5 xl:relative xl:top-32">
 
-                  <div className="flex flex-wrap items-stretch gap-2 max-md:flex-col">
+                  <div className="flex flex-wrap items-stretch gap-2 max-md:grid max-md:grid-cols-2 max-md:gap-1.5">
 
                     {/* COUNTRY */}
 
@@ -792,7 +792,7 @@ export default function Home() {
                       onChange={(e) =>
                         setSelectedCountry(e.target.value)
                       }
-                      className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:w-full max-md:flex-none"
+                      className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
                     >
 
                       <option value="">
@@ -819,7 +819,7 @@ export default function Home() {
                       onChange={(e) =>
                         setVisaType(e.target.value)
                       }
-                      className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:w-full max-md:flex-none"
+                      className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
                     >
 
                       <option value="">
@@ -879,7 +879,7 @@ export default function Home() {
                           ? "পাসপোর্ট নম্বর"
                           : "Passport Number"
                       }
-                      className="h-14 min-w-[180px] flex-1 rounded-xl border border-gray-200 bg-white px-4 text-gray-700 outline-none placeholder:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-md:w-full max-md:flex-none"
+                      className="h-14 min-w-[180px] flex-1 rounded-xl border border-gray-200 bg-white px-4 text-gray-700 outline-none placeholder:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
                     />
 
                     {/* BUTTON */}
@@ -887,7 +887,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleVisaCheck}
-                      className="h-14 min-w-[160px] shrink-0 rounded-xl bg-blue-600 px-5 text-sm font-semibold leading-tight text-white transition hover:bg-blue-700 max-md:w-full"
+                      className="h-14 min-w-[160px] shrink-0 rounded-xl bg-blue-600 px-5 text-sm font-semibold leading-tight text-white transition hover:bg-blue-700 max-md:h-10 max-md:min-w-0 max-md:px-1 max-md:text-[10px] max-md:leading-none"
                     >
                       🔍{" "}
                       {isBangla
