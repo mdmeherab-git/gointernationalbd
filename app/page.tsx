@@ -723,7 +723,7 @@ export default function Home() {
 
             <div className="w-full px-12 max-md:px-4">
 
-              <div className="max-w-[600px] max-md:absolute max-md:left-4 max-md:top-2.5 max-md:z-10 max-md:max-w-[62%] max-md:drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]">
+              <div className="max-w-[600px] max-md:absolute max-md:left-4 max-md:top-2.5 max-md:z-10 max-md:max-w-[67%] max-md:drop-shadow-[0_1px_2px_rgba(255,255,255,0.95)]">
 
                 {/* BADGE */}
 
@@ -741,7 +741,7 @@ export default function Home() {
 
                 {/* TITLE */}
 
-                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl max-md:top-0 max-md:text-[13px] max-md:leading-tight">
+                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl max-md:top-0 max-md:text-[17px] max-md:leading-tight">
 
                   {isBangla ? (
                     <>
@@ -769,10 +769,10 @@ export default function Home() {
 
                 {/* DESCRIPTION */}
 
-                <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700 max-md:top-0 max-md:mt-1 max-md:text-[8px] max-md:leading-tight">
+                <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700 max-md:top-0 max-md:mt-1.5 max-md:text-[8px] max-md:font-medium max-md:leading-snug max-md:text-balance">
 
                   {isBangla
-                    ? "অফিসিয়াল সরকারি উৎস থেকে সরাসরি আপনার ভিসার স্ট্যাটাস চেক করুন। দ্রুত, নির্ভরযোগ্য ও নিরাপদ।"
+                    ? "সরকারি উৎস থেকে সরাসরি আপনার ভিসার স্ট্যাটাস চেক করুন। দ্রুত, নির্ভরযোগ্য ও নিরাপদ।"
                     : "Check your visa status directly from official government sources. Fast, reliable and 100% secure."}
 
                 </p>
@@ -781,7 +781,7 @@ export default function Home() {
 
                 {/* VISA CHECK BOX */}
 
-                <div className="mt-8 w-full max-w-[600px] xl:max-w-[760px] rounded-2xl bg-white p-2 shadow-xl max-md:mt-0 max-md:-translate-y-7 max-md:p-1.5 xl:relative xl:top-32">
+                <div className="mt-8 w-full max-w-[600px] xl:max-w-[760px] rounded-2xl bg-white p-2 shadow-xl max-md:mt-3 max-md:p-1.5 xl:relative xl:top-32">
 
                   <div className="flex flex-wrap items-stretch gap-2 max-md:grid max-md:grid-cols-2 max-md:gap-1.5">
 
