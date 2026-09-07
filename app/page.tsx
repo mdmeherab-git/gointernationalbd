@@ -256,6 +256,9 @@ export default function Home() {
   const [malaysiaServicesOpen, setMalaysiaServicesOpen] =
     useState(false);
 
+  /* Mobile header dropdown (⋮) — Login / Register */
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   /* =======================================================
      NOTICE SETTINGS
   ======================================================= */
@@ -530,13 +533,13 @@ export default function Home() {
 
       <header className="border-b border-gray-200 bg-white">
 
-        <div className="mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:flex-col max-md:items-start max-md:gap-2 max-md:px-4">
+        <div className="relative mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4">
 
           {/* LOGO + COMPANY */}
 
-          <div className="flex shrink-0 items-center max-md:min-w-0 max-md:max-w-full">
+          <div className="flex shrink-0 items-center max-md:min-w-0 max-md:shrink">
 
-            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center">
+            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-2 max-md:h-9 max-md:w-11">
 
               <Link
                 href="/"
@@ -553,7 +556,7 @@ export default function Home() {
 
             <div>
 
-              <div className="text-2xl font-bold tracking-tight max-md:text-base">
+              <div className="text-2xl font-bold tracking-tight max-md:text-sm">
                 <span className="text-[#0B4DBB]">
                   GO INTERNATIONAL
                 </span>{" "}
@@ -562,7 +565,7 @@ export default function Home() {
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-gray-600 max-md:text-[10px] max-md:leading-tight">
+              <p className="mt-1 text-xs text-gray-600 max-md:hidden">
                 {isBangla
                   ? "অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহকারী"
                   : "Official Visa Check & Immigration Assistant"}
@@ -629,7 +632,7 @@ export default function Home() {
 
           {/* LANGUAGE / LOGIN */}
 
-          <div className="flex items-center gap-3 max-md:w-full max-md:gap-2">
+          <div className="flex shrink-0 items-center gap-3 max-md:gap-1.5">
 
             <button
               type="button"
@@ -638,20 +641,58 @@ export default function Home() {
                   current === "bn" ? "en" : "bn"
                 )
               }
-              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 max-md:px-3 max-md:py-2 max-md:text-xs"
+              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 max-md:px-2.5 max-md:py-1.5 max-md:text-[11px]"
             >
               {isBangla ? "English" : "বাংলা"}
             </button>
 
-            <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-gray-500 hover:bg-gray-50 max-md:flex-1 max-md:px-3 max-md:py-2 max-md:text-xs">
+            <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-gray-500 hover:bg-gray-50 max-md:hidden">
               {isBangla ? "লগইন" : "Login"}
             </button>
 
-            <button className="rounded-lg bg-blue-600 px-6 py-2.5 text-white hover:bg-blue-700 max-md:flex-1 max-md:px-3 max-md:py-2 max-md:text-xs">
+            <button className="rounded-lg bg-blue-600 px-6 py-2.5 text-white hover:bg-blue-700 max-md:hidden">
               {isBangla ? "রেজিস্টার" : "Register"}
             </button>
 
+            {/* Mobile only: three-dot menu */}
+            <button
+              type="button"
+              aria-label="Menu"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="hidden h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-xl leading-none text-gray-700 hover:bg-gray-50 max-md:flex"
+            >
+              ⋮
+            </button>
+
           </div>
+
+          {/* Mobile dropdown: Login / Register */}
+          {mobileMenuOpen && (
+            <>
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setMobileMenuOpen(false)}
+                className="fixed inset-0 z-40 hidden max-md:block"
+              />
+              <div className="absolute right-4 top-full z-50 mt-1 hidden w-44 flex-col gap-2 rounded-xl border border-gray-200 bg-white p-2.5 shadow-lg max-md:flex">
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  {isBangla ? "লগইন" : "Login"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  {isBangla ? "রেজিস্টার" : "Register"}
+                </button>
+              </div>
+            </>
+          )}
 
         </div>
 
