@@ -545,7 +545,7 @@ export default function Home() {
 
           <div className="flex shrink-0 items-center max-md:min-w-0 max-md:flex-1">
 
-            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-2.5 max-md:h-14 max-md:w-16">
+            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-2.5 max-md:h-10 max-md:w-12">
 
               <Link
                 href="/"
@@ -554,15 +554,15 @@ export default function Home() {
                 <img
                   src="/logo.svg"
                   alt="GO International BD Logo"
-                  className="h-30 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90 max-md:h-14"
+                  className="h-30 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90"
                 />
               </Link>
 
             </div>
 
-            <div className="max-md:min-w-0 max-md:flex-1 max-md:text-center">
+            <div>
 
-              <div className="text-2xl font-bold tracking-tight max-md:text-base max-md:leading-tight">
+              <div className="text-2xl font-bold tracking-tight max-md:text-sm">
                 <span className="text-[#0B4DBB]">
                   GO INTERNATIONAL
                 </span>{" "}
@@ -571,7 +571,7 @@ export default function Home() {
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-gray-600 max-md:mt-0.5 max-md:text-[10px] max-md:leading-tight">
+              <p className="mt-1 text-xs text-gray-600 max-md:mt-0.5 max-md:text-[9px] max-md:leading-tight">
                 {isBangla
                   ? "অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহকারী"
                   : "Official Visa Check & Immigration Assistant"}
@@ -752,7 +752,7 @@ export default function Home() {
                   {isBangla ? (
                     <>
                       অফিসিয়াল{" "}
-                      <span className="text-amber-500">
+                      <span className="text-blue-600">
                         ভিসা স্ট্যাটাস
                       </span>
                       <br />
@@ -763,7 +763,7 @@ export default function Home() {
                   ) : (
                     <>
                       Check Official{" "}
-                      <span className="text-amber-500">
+                      <span className="text-blue-600">
                         Visa Status
                       </span>
                       <br />
