@@ -530,11 +530,11 @@ export default function Home() {
 
       <header className="border-b border-gray-200 bg-white">
 
-        <div className="mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:px-4">
+        <div className="mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:flex-col max-md:items-start max-md:gap-2 max-md:px-4">
 
           {/* LOGO + COMPANY */}
 
-          <div className="flex shrink-0 items-center">
+          <div className="flex shrink-0 items-center max-md:min-w-0 max-md:max-w-full">
 
             <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center">
 
@@ -553,7 +553,7 @@ export default function Home() {
 
             <div>
 
-              <div className="text-2xl font-bold tracking-tight">
+              <div className="text-2xl font-bold tracking-tight max-md:text-base">
                 <span className="text-[#0B4DBB]">
                   GO INTERNATIONAL
                 </span>{" "}
@@ -562,7 +562,7 @@ export default function Home() {
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-gray-600">
+              <p className="mt-1 text-xs text-gray-600 max-md:text-[10px] max-md:leading-tight">
                 {isBangla
                   ? "অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহকারী"
                   : "Official Visa Check & Immigration Assistant"}
@@ -629,7 +629,7 @@ export default function Home() {
 
           {/* LANGUAGE / LOGIN */}
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 max-md:w-full max-md:gap-2">
 
             <button
               type="button"
@@ -638,16 +638,16 @@ export default function Home() {
                   current === "bn" ? "en" : "bn"
                 )
               }
-              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 max-md:px-3 max-md:py-2 max-md:text-xs"
             >
               {isBangla ? "English" : "বাংলা"}
             </button>
 
-            <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-gray-500 hover:bg-gray-50">
+            <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-gray-500 hover:bg-gray-50 max-md:flex-1 max-md:px-3 max-md:py-2 max-md:text-xs">
               {isBangla ? "লগইন" : "Login"}
             </button>
 
-            <button className="rounded-lg bg-blue-600 px-6 py-2.5 text-white hover:bg-blue-700">
+            <button className="rounded-lg bg-blue-600 px-6 py-2.5 text-white hover:bg-blue-700 max-md:flex-1 max-md:px-3 max-md:py-2 max-md:text-xs">
               {isBangla ? "রেজিস্টার" : "Register"}
             </button>
 
