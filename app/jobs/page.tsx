@@ -378,6 +378,9 @@ export default function JobsPage() {
   /* Job list — managed from /admin, falls back to the bundled sample. */
   const [jobs, setJobs] = useState<Job[]>(SAMPLE_JOBS);
 
+  /* Mobile header dropdown (⋮) — Login / Register */
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   /* Apply form state */
   const [applyForm, setApplyForm] = useState({
     name: "",
@@ -571,15 +574,15 @@ export default function JobsPage() {
 
       <header className="border-b border-gray-200 bg-white">
 
-        <div className="mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:px-4">
+        <div className="relative mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4">
 
           {/* LOGO + COMPANY */}
 
-          <div className="flex shrink-0 items-center">
+          <div className="flex shrink-0 items-center max-md:min-w-0 max-md:flex-1">
 
             {/* LOGO */}
 
-            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center">
+            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-2.5 max-md:h-10 max-md:w-12">
 
               <Link href="/" aria-label="Go to Home">
 
@@ -595,9 +598,9 @@ export default function JobsPage() {
 
             {/* COMPANY NAME */}
 
-            <div>
+            <div className="max-md:min-w-0 max-md:flex-1 max-md:text-center">
 
-              <div className="text-2xl font-bold tracking-tight">
+              <div className="text-2xl font-bold tracking-tight max-md:text-sm">
 
                 <span className="text-[#0B4DBB]">
                   GO INTERNATIONAL
@@ -609,7 +612,7 @@ export default function JobsPage() {
 
               </div>
 
-              <p className="mt-1 text-xs text-gray-600">
+              <p className="mt-1 text-xs text-gray-600 max-md:mt-0.5 max-md:text-[9px] max-md:leading-tight">
 
                 {isBangla
                   ? "অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহায়তা"
@@ -680,7 +683,7 @@ export default function JobsPage() {
 
           {/* LANGUAGE + REGISTER */}
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3 max-md:gap-1.5">
 
             <button
               type="button"
@@ -696,12 +699,50 @@ export default function JobsPage() {
 
             <button
               type="button"
-              className="hidden rounded-lg bg-[#0B4DBB] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#093f98] sm:block"
+              className="hidden rounded-lg bg-[#0B4DBB] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#093f98] md:block"
             >
               {isBangla ? "রেজিস্টার" : "Register"}
             </button>
 
+            {/* Mobile only: three-dot menu */}
+            <button
+              type="button"
+              aria-label="Menu"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="hidden h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-xl leading-none text-gray-700 hover:bg-gray-50 max-md:flex"
+            >
+              ⋮
+            </button>
+
           </div>
+
+          {/* Mobile dropdown: Login / Register */}
+          {mobileMenuOpen && (
+            <>
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setMobileMenuOpen(false)}
+                className="fixed inset-0 z-40 hidden max-md:block"
+              />
+              <div className="absolute right-4 top-full z-50 mt-1 hidden w-44 flex-col gap-2 rounded-xl border border-gray-200 bg-white p-2.5 shadow-lg max-md:flex">
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  {isBangla ? "লগইন" : "Login"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg bg-[#0B4DBB] px-3 py-2 text-sm font-semibold text-white hover:bg-[#093f98]"
+                >
+                  {isBangla ? "রেজিস্টার" : "Register"}
+                </button>
+              </div>
+            </>
+          )}
 
         </div>
 
