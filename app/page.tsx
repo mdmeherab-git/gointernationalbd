@@ -560,7 +560,7 @@ export default function Home() {
 
             </div>
 
-            <div>
+            <div className="max-md:min-w-0 max-md:flex-1 max-md:text-center">
 
               <div className="text-2xl font-bold tracking-tight max-md:text-sm">
                 <span className="text-[#0B4DBB]">
