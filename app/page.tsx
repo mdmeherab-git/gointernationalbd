@@ -539,13 +539,13 @@ export default function Home() {
 
       <header className="border-b border-gray-200 bg-white">
 
-        <div className="relative mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4 max-md:py-1">
+        <div className="relative mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4 max-md:py-0.5">
 
           {/* LOGO + COMPANY */}
 
           <div className="flex shrink-0 items-center max-md:min-w-0 max-md:flex-1">
 
-            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-1.5 max-md:h-12 max-md:w-12">
+            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-1.5 max-md:h-14 max-md:w-14">
 
               <Link
                 href="/"
@@ -554,7 +554,7 @@ export default function Home() {
                 <img
                   src="/logo.svg"
                   alt="GO International BD Logo"
-                  className="h-30 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90 max-md:h-12"
+                  className="h-30 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90 max-md:h-14"
                 />
               </Link>
 
