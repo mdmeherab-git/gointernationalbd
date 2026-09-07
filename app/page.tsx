@@ -729,7 +729,7 @@ export default function Home() {
 
             <div className="w-full px-12 max-md:px-4">
 
-              <div className="max-w-[600px] max-md:absolute max-md:left-4 max-md:top-2.5 max-md:z-10 max-md:max-w-[67%] max-md:drop-shadow-[0_1px_2px_rgba(255,255,255,0.95)]">
+              <div className="max-w-[600px] max-md:absolute max-md:left-4 max-md:top-2.5 max-md:z-10 max-md:max-w-[67%]">
 
                 {/* BADGE */}
 
@@ -747,7 +747,7 @@ export default function Home() {
 
                 {/* TITLE */}
 
-                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl max-md:top-0 max-md:text-[17px] max-md:leading-tight">
+                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl max-md:top-0 max-md:text-[19px] max-md:leading-tight">
 
                   {isBangla ? (
                     <>
