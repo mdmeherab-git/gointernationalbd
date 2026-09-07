@@ -537,9 +537,9 @@ export default function Home() {
 
           {/* LOGO + COMPANY */}
 
-          <div className="flex shrink-0 items-center max-md:min-w-0 max-md:shrink">
+          <div className="flex shrink-0 items-center max-md:min-w-0 max-md:flex-1">
 
-            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-2 max-md:h-9 max-md:w-11">
+            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-2.5 max-md:h-10 max-md:w-12">
 
               <Link
                 href="/"
@@ -565,7 +565,7 @@ export default function Home() {
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-gray-600 max-md:hidden">
+              <p className="mt-1 text-xs text-gray-600 max-md:mt-0.5 max-md:text-[9px] max-md:leading-tight">
                 {isBangla
                   ? "অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহকারী"
                   : "Official Visa Check & Immigration Assistant"}
