@@ -280,9 +280,11 @@ export default function Home() {
      POPULAR COUNTRIES + LATEST JOBS (Admin Dashboard driven)
   ======================================================= */
 
-  const [popularCountries, setPopularCountries] = useState<
+  /* Countries pinned to the front of the strip, chosen from /admin.
+     The rest of the world follows in the default order. */
+  const [pinnedCountries, setPinnedCountries] = useState<
     { code: string; name: string }[]
-  >(countries.slice(0, 15));
+  >([]);
 
   const [homeJobs, setHomeJobs] = useState<HomeJob[]>(latestJobs);
 
@@ -339,8 +341,8 @@ export default function Home() {
 
     json("/api/popular-countries")
       .then((d) => {
-        if (Array.isArray(d?.countries) && d.countries.length > 0) {
-          setPopularCountries(d.countries);
+        if (Array.isArray(d?.countries)) {
+          setPinnedCountries(d.countries);
         }
       })
       .catch(() => {});
@@ -382,12 +384,16 @@ export default function Home() {
   ======================================================= */
 
   const filteredCountries = useMemo(() => {
-    return popularCountries.filter((country) =>
-      country.name
-        .toLowerCase()
-        .includes(countrySearch.toLowerCase())
+    const pinnedCodes = new Set(pinnedCountries.map((c) => c.code));
+    const merged = [
+      ...pinnedCountries,
+      ...countries.filter((c) => !pinnedCodes.has(c.code)),
+    ];
+    const query = countrySearch.toLowerCase();
+    return merged.filter((country) =>
+      country.name.toLowerCase().includes(query)
     );
-  }, [countrySearch, popularCountries]);
+  }, [countrySearch, pinnedCountries]);
 
   /* =======================================================
      VISA CHECK

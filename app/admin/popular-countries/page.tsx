@@ -108,8 +108,8 @@ export default function PopularCountriesPage() {
       <PageHeader
         title={t("জনপ্রিয় দেশ", "Popular Countries")}
         subtitle={t(
-          "হোম পেজের “জনপ্রিয় দেশসমূহ” সারির ক্রম ও দৃশ্যমানতা নিয়ন্ত্রণ করুন।",
-          "Control the order and visibility of the home page 'Popular Countries' strip.",
+          "এই দেশগুলো হোম পেজের “জনপ্রিয় দেশসমূহ” সারিতে সবার প্রথমে দেখানো হবে। বাকি সব দেশ এর পরে স্বাভাবিক ক্রমে থাকবে।",
+          "These countries lead the home page 'Popular Countries' strip. Every other country follows after them in the default order.",
         )}
         action={
           <Btn onClick={save} disabled={saving || !dirty}>
@@ -195,8 +195,8 @@ export default function PopularCountriesPage() {
 
       <p className="mt-3 text-xs text-gray-400">
         {t(
-          "টিপ: উপরের ১৫টি দেশ হোম পেজে সবার আগে দেখানো হয়।",
-          "Tip: the first 15 visible countries lead the home page strip.",
+          "টিপ: এখানে যত খুশি দেশ যোগ করুন — এরা সারির শুরুতে থাকবে, বাকি সব দেশ (২৫০+) নিজে থেকেই এর পরে দেখাবে। “লুকানো” করলে সেই দেশ আর প্রথমে থাকবে না, তবে বাকিদের সাথে থেকে যাবে।",
+          "Tip: add as many as you like — they sit at the start of the strip, and every other country (250+) shows automatically after them. Marking one “hidden” just un-pins it; it still appears with the rest.",
         )}
       </p>
     </>
