@@ -554,15 +554,15 @@ export default function Home() {
                 <img
                   src="/logo.svg"
                   alt="GO International BD Logo"
-                  className="h-30 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90"
+                  className="h-16 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90 max-md:h-12"
                 />
               </Link>
 
             </div>
 
-            <div className="max-md:min-w-0 max-md:flex-1 max-md:text-center">
+            <div>
 
-              <div className="text-2xl font-bold tracking-tight max-md:text-sm">
+              <div className="text-2xl font-bold tracking-tight max-md:text-lg">
                 <span className="text-[#0B4DBB]">
                   GO INTERNATIONAL
                 </span>{" "}
@@ -571,7 +571,7 @@ export default function Home() {
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-gray-600 max-md:mt-0.5 max-md:text-[9px] max-md:leading-tight">
+              <p className="mt-1 text-xs text-gray-600 max-md:mt-0.5 max-md:text-[10px] max-md:leading-tight">
                 {isBangla
                   ? "অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহকারী"
                   : "Official Visa Check & Immigration Assistant"}
