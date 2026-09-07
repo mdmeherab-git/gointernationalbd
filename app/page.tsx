@@ -716,14 +716,14 @@ export default function Home() {
           <img
             src="/hero.png"
             alt="Go International BD Travel"
-            className="block h-auto w-full"
+            className="block h-auto w-full max-md:h-[600px] max-md:object-cover max-md:object-[50%_35%]"
           />
 
-          <div className="py-8 xl:absolute xl:inset-0 xl:z-10 xl:flex xl:items-center xl:py-0">
+          <div className="py-8 max-md:absolute max-md:inset-0 max-md:z-10 max-md:flex max-md:flex-col max-md:justify-center max-md:bg-white/65 max-md:py-0 xl:absolute xl:inset-0 xl:z-10 xl:flex xl:items-center xl:py-0">
 
             <div className="w-full px-12 max-md:px-6">
 
-              <div className="max-w-[600px]">
+              <div className="max-w-[600px] max-md:max-w-none">
 
                 {/* BADGE */}
 
@@ -769,7 +769,7 @@ export default function Home() {
 
                 {/* DESCRIPTION */}
 
-                <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700 max-md:top-0">
+                <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700 max-md:top-0 max-md:mt-3 max-md:text-sm max-md:leading-6">
 
                   {isBangla
                     ? "অফিসিয়াল সরকারি উৎস থেকে সরাসরি আপনার ভিসার স্ট্যাটাস চেক করুন। দ্রুত, নির্ভরযোগ্য ও নিরাপদ।"
@@ -781,7 +781,7 @@ export default function Home() {
 
                 {/* VISA CHECK BOX */}
 
-                <div className="mt-8 w-full max-w-[600px] xl:max-w-[760px] rounded-2xl bg-white p-2 shadow-xl xl:relative xl:top-32">
+                <div className="mt-8 w-full max-w-[600px] xl:max-w-[760px] rounded-2xl bg-white p-2 shadow-xl max-md:mt-5 xl:relative xl:top-32">
 
                   <div className="flex flex-wrap items-stretch gap-2 max-md:flex-col">
 
