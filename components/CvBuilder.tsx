@@ -109,9 +109,64 @@ async function smartCropToSquare(file: File): Promise<string> {
   return canvas.toDataURL("image/jpeg", 0.9);
 }
 
+/* Loads an image file, crops the BOTTOM portion (where the passport MRZ
+   code lines sit), upscales it and boosts contrast in grayscale so the
+   in-browser OCR has a clean, high-contrast strip to read. */
+async function cropMrzZone(file: File): Promise<HTMLCanvasElement> {
+  const dataUrl: string = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("read failed"));
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new window.Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("image decode failed"));
+    el.src = dataUrl;
+  });
+
+  // MRZ occupies roughly the bottom ~32% of a passport photo page.
+  const cropFrac = 0.32;
+  const srcY = Math.floor(img.height * (1 - cropFrac));
+  const srcH = Math.max(1, img.height - srcY);
+  const srcW = Math.max(1, img.width);
+
+  // Aim for ~1100px wide (helps small phone photos), between 1.4x and 3x.
+  const scale = Math.min(3, Math.max(1.4, 1100 / srcW));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(srcW * scale);
+  canvas.height = Math.round(srcH * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+
+  ctx.drawImage(img, 0, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
+
+  // grayscale + contrast stretch
+  try {
+    const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const d = frame.data;
+    const contrast = 1.4;
+    const intercept = 128 * (1 - contrast);
+    for (let i = 0; i < d.length; i += 4) {
+      const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      const v = Math.max(0, Math.min(255, g * contrast + intercept));
+      d[i] = d[i + 1] = d[i + 2] = v;
+    }
+    ctx.putImageData(frame, 0, 0);
+  } catch {
+    /* cross-origin / tainted canvas — fall back to the plain crop */
+  }
+
+  return canvas;
+}
+
 export default function CvBuilder({ isBangla }: { isBangla: boolean }) {
   const [step, setStep] = useState<"upload" | "form">("upload");
   const [extracting, setExtracting] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState(0);
   const [extractError, setExtractError] = useState<string | null>(null);
   const [lowConfidenceWarning, setLowConfidenceWarning] = useState<string | null>(null);
   const [cvData, setCvData] = useState<CvData>(emptyCvData);
@@ -131,46 +186,119 @@ export default function CvBuilder({ isBangla }: { isBangla: boolean }) {
 
   const handlePassportUpload = async (file: File) => {
     setExtracting(true);
+    setOcrProgress(0);
     setExtractError(null);
     setLowConfidenceWarning(null);
-    try {
-      const formData = new FormData();
-      formData.append("passport", file);
-      const res = await fetch("/api/extract-mrz", { method: "POST", body: formData });
-      const json = await res.json();
 
-      if (!res.ok) {
-        setExtractError(json.error || (isBangla ? "তথ্য বের করা যায়নি" : "Could not read passport details"));
-        setExtracting(false);
+    type OcrWorker = Awaited<
+      ReturnType<typeof import("tesseract.js")["createWorker"]>
+    >;
+    let worker: OcrWorker | null = null;
+
+    try {
+      // 1. Crop + clean the MRZ strip in the browser (nothing is uploaded).
+      const canvas = await cropMrzZone(file);
+
+      // 2. Run OCR in a Web Worker, restricted to the MRZ character set.
+      const { createWorker, PSM } = await import("tesseract.js");
+      worker = await createWorker("eng", undefined, {
+        logger: (m: { status?: string; progress?: number }) => {
+          if (m.status === "recognizing text" && typeof m.progress === "number") {
+            setOcrProgress(Math.round(m.progress * 100));
+          }
+        },
+      });
+      await worker.setParameters({
+        tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<",
+        tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+      });
+
+      const { data } = await worker.recognize(canvas);
+
+      // 3. Normalise OCR output to two 44-char TD3 lines.
+      const TD3 = 44;
+      const toTd3 = (line: string) =>
+        line.length > TD3 ? line.slice(0, TD3) : line.padEnd(TD3, "<");
+
+      const candidateLines = (data.text || "")
+        .split("\n")
+        .map((l) => l.replace(/\s/g, "").toUpperCase())
+        .filter((l) => l.length >= 30);
+
+      if (candidateLines.length < 2) {
+        setExtractError(
+          isBangla
+            ? "MRZ (পাসপোর্টের নিচের কোডেড অংশ) পড়া যায়নি। ভালো আলোয়, স্পষ্ট ও সোজা করে ছবি তুলে আবার চেষ্টা করুন।"
+            : "Couldn't read the MRZ code lines. Retake the photo in good light — flat, sharp and straight.",
+        );
         return;
       }
 
-      const f = json.fields || {};
-      const extra = json.extra || {};
-      const newlyAutoFilled = new Set<string>();
+      const mrzLines = candidateLines.slice(-2).map(toTd3);
 
-      if (json.lowConfidenceWarning) setLowConfidenceWarning(json.lowConfidenceWarning);
+      // 4. Parse with checksum validation (throws on non-MRZ input).
+      const { parse } = await import("mrz");
+      let result: ReturnType<typeof parse>;
+      try {
+        result = parse(mrzLines);
+      } catch {
+        setExtractError(
+          isBangla
+            ? "MRZ সঠিকভাবে পড়া যায়নি। আরও স্পষ্ট একটি ছবি দিয়ে আবার চেষ্টা করুন।"
+            : "The MRZ couldn't be parsed. Please try a clearer photo.",
+        );
+        return;
+      }
 
+      // 5. Fill the same fields the old server route filled.
+      const f = result.fields;
+      const filled = new Set<string>();
       setCvData((prev) => {
-        const next = {
-          ...prev,
-          fullName: [f.firstName, f.lastName].filter(Boolean).join(" "),
-          dateOfBirth: f.birthDate || "",
-          nationality: f.nationality || "",
-        };
-        if (extra.fatherName?.value) { next.fatherName = extra.fatherName.value; newlyAutoFilled.add("fatherName"); }
-        if (extra.motherName?.value) { next.motherName = extra.motherName.value; newlyAutoFilled.add("motherName"); }
-        if (extra.address?.value) { next.presentAddress = extra.address.value; newlyAutoFilled.add("presentAddress"); }
-        if (extra.phone?.value && !prev.phone) { next.phone = extra.phone.value; newlyAutoFilled.add("phone"); }
+        const next = { ...prev };
+        const name = [f.firstName, f.lastName]
+          .filter((v): v is string => !!v)
+          .join(" ");
+        if (name) {
+          next.fullName = name;
+          filled.add("fullName");
+        }
+        if (f.birthDate) {
+          next.dateOfBirth = f.birthDate;
+          filled.add("dateOfBirth");
+        }
+        if (f.nationality) {
+          next.nationality = f.nationality;
+          filled.add("nationality");
+        }
         return next;
       });
 
-      setAutoFilledFields(newlyAutoFilled);
+      if (!result.valid) {
+        setLowConfidenceWarning(
+          isBangla
+            ? "তথ্য পড়া হয়েছে তবে পুরোপুরি নিশ্চিত নয় — নিচে ভালো করে যাচাই করুন।"
+            : "Details were read but not fully verified — please double-check them below.",
+        );
+      }
+
+      setAutoFilledFields(filled);
       setStep("form");
     } catch {
-      setExtractError(isBangla ? "প্রসেস করার সময় সমস্যা হয়েছে, আবার চেষ্টা করুন" : "Something went wrong, please try again");
+      setExtractError(
+        isBangla
+          ? "প্রসেস করার সময় সমস্যা হয়েছে, আবার চেষ্টা করুন"
+          : "Something went wrong, please try again",
+      );
     } finally {
+      if (worker) {
+        try {
+          await worker.terminate();
+        } catch {
+          /* ignore */
+        }
+      }
       setExtracting(false);
+      setOcrProgress(0);
     }
   };
 
@@ -326,7 +454,11 @@ export default function CvBuilder({ isBangla }: { isBangla: boolean }) {
           {extracting && (
             <p className="mt-4 flex items-center justify-center gap-2 text-sm text-teal-600">
               <Spinner />
-              {isBangla ? "তথ্য বের করা হচ্ছে... একটু অপেক্ষা করুন" : "Extracting details... please wait"}
+              {isBangla
+                ? "তথ্য বের করা হচ্ছে"
+                : "Reading passport"}
+              {ocrProgress > 0 ? ` ${ocrProgress}%` : "..."}
+              {isBangla ? " (প্রথমবার একটু সময় লাগে)" : " (first run takes a moment)"}
             </p>
           )}
           {extractError && <p className="mt-4 rounded-lg bg-red-50 p-3 text-center text-sm text-red-600">{extractError}</p>}
