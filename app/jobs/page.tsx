@@ -589,7 +589,7 @@ export default function JobsPage() {
                 <img
                   src="/logo.svg"
                   alt="GO International BD Logo"
-                  className="h-12 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90 max-md:h-25"
+                  className="h-28 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90 max-md:h-25"
                 />
 
               </Link>
