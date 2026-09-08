@@ -25,6 +25,33 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Notice Board — notices scroll continuously from bottom to top.
+   The list is rendered twice back-to-back, so translating up by 50%
+   loops seamlessly. Pauses on hover. */
+@keyframes notice-vscroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.notice-vscroll {
+  animation: notice-vscroll 24s linear infinite;
+  will-change: transform;
+}
+
+.notice-vscroll:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notice-vscroll {
+    animation: none;
+  }
+}
+
 /* Mobile only (<768px): the site is a light-only design, so keep the page
    background white even when the phone is in dark mode, and never allow a
    stray element to create sideways scrolling. Desktop is untouched. */

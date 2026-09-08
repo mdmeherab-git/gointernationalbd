@@ -75,8 +75,29 @@ export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
       .finally(() => setLoading(false));
   }, []);
 
+  const renderNotice = (notice: Notice, key: string) => (
+    <div key={key} className="flex items-start gap-2 py-3">
+      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
+
+      <div className="flex-1">
+        <p className="text-sm leading-6 text-gray-800">
+          {isBangla ? notice.title_bn : notice.title_en}
+        </p>
+
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+          <span>📅 {notice.notice_date}</span>
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${TAG_STYLES[notice.tag_type]}`}
+          >
+            {isBangla ? notice.tag_label_bn : notice.tag_label_en}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-xl md:p-8">
+    <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-xl md:p-8">
 
       <div className="mb-4 flex items-center gap-2">
         <span className="text-lg text-green-600">📋</span>
@@ -86,41 +107,47 @@ export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
       </div>
 
       {loading && (
-        <p className="py-6 text-center text-sm text-gray-400">
+        <p className="flex-1 py-6 text-center text-sm text-gray-400">
           {isBangla ? "লোড হচ্ছে..." : "Loading..."}
         </p>
       )}
 
       {!loading && notices.length === 0 && (
-        <p className="py-6 text-center text-sm text-gray-400">
+        <p className="flex-1 py-6 text-center text-sm text-gray-400">
           {isBangla ? "এখন কোনো নোটিস নেই" : "No notices right now"}
         </p>
       )}
 
-      <div className="flex-1 divide-y divide-gray-100">
-        {notices.map((notice) => (
-          <div key={notice.id} className="flex items-start gap-2 py-3 first:pt-0">
-            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
-
-            <div className="flex-1">
-              <p className="text-sm leading-6 text-gray-800">
-                {isBangla ? notice.title_bn : notice.title_en}
-              </p>
-
-              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                <span>📅 {notice.notice_date}</span>
-                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${TAG_STYLES[notice.tag_type]}`}>
-                  {isBangla ? notice.tag_label_bn : notice.tag_label_en}
-                </span>
-              </div>
-            </div>
+      {!loading && notices.length > 0 && (
+        <div className="relative h-[300px] lg:h-auto lg:min-h-0 lg:flex-1">
+          {/* The track is absolutely positioned so its (tall, repeated)
+              height never pushes the card taller — the card takes its
+              height from the CV builder beside it, and the track just
+              scrolls inside this clipped box. */}
+          <div className="absolute inset-0 overflow-hidden">
+            {(() => {
+              // Repeat the list enough that one half of the track always
+              // overflows the box, so translateY(-50%) loops seamlessly
+              // even with only a few short notices.
+              const reps = Math.max(4, Math.ceil(10 / notices.length));
+              const half = Array.from({ length: reps }, () => notices).flat();
+              return (
+                <div className="notice-vscroll divide-y divide-gray-100">
+                  {half.map((n, i) => renderNotice(n, `a-${n.id}-${i}`))}
+                  {half.map((n, i) => renderNotice(n, `b-${n.id}-${i}`))}
+                </div>
+              );
+            })()}
           </div>
-        ))}
-      </div>
+
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-5 bg-gradient-to-b from-white to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-5 bg-gradient-to-t from-white to-transparent" />
+        </div>
+      )}
 
       <button
         type="button"
-        className="mt-4 w-full rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-green-700"
+        className="mt-4 w-full shrink-0 rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-green-700"
       >
         {isBangla ? "সকল নোটিশ দেখুন →" : "View All Notices →"}
       </button>
