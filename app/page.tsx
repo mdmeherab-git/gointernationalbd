@@ -539,42 +539,50 @@ export default function Home() {
 
       <header className="border-b border-gray-200 bg-white">
 
-        <div className="relative mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4 max-md:py-0.5">
+        <div className="relative mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4">
 
           {/* LOGO + COMPANY */}
 
           <div className="flex shrink-0 items-center max-md:min-w-0 max-md:flex-1">
 
-            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-1.5 max-md:h-14 max-md:w-14">
+            {/* LOGO */}
 
-              <Link
-                href="/"
-                aria-label="Go to Home"
-              >
+            <div className="mr-3 flex h-12 w-24 shrink-0 items-center justify-center max-md:mr-2.5 max-md:h-10 max-md:w-12">
+
+              <Link href="/" aria-label="Go to Home">
+
                 <img
                   src="/logo.svg"
                   alt="GO International BD Logo"
-                  className="h-30 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90 max-md:h-14"
+                  className="h-12 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-90 max-md:h-20"
                 />
+
               </Link>
 
             </div>
 
+            {/* COMPANY NAME */}
+
             <div className="max-md:min-w-0 max-md:flex-1 max-md:text-center">
 
-              <div className="text-2xl font-bold tracking-tight max-md:text-[15px]">
+              <div className="text-2xl font-bold tracking-tight max-md:text-lg">
+
                 <span className="text-[#0B4DBB]">
                   GO INTERNATIONAL
                 </span>{" "}
+
                 <span className="text-red-500">
                   BD
                 </span>
+
               </div>
 
               <p className="mt-1 text-xs text-gray-600 max-md:mt-0.5 max-md:text-[9px] max-md:leading-tight">
+
                 {isBangla
-                  ? "অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহকারী"
+                  ? "অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহায়তা"
                   : "Official Visa Check & Immigration Assistant"}
+
               </p>
 
             </div>
