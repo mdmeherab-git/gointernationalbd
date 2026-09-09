@@ -112,12 +112,12 @@ const styles = StyleSheet.create({
   },
 
   piLabel: {
-    fontSize: 8.5,
+    fontSize: 9.5,
     color: MUTED,
   },
 
   piValue: {
-    fontSize: 8.7,
+    fontSize: 9.7,
     fontWeight: 700,
     color: DARK,
   },
@@ -182,6 +182,23 @@ function clip(value: unknown, max: number) {
   return text.length <= max
     ? text
     : `${text.slice(0, Math.max(1, max - 1)).trim()}…`;
+}
+
+
+/* ---------------- AUTO-FIT LEFT HEADER TEXT ---------------- */
+function fitHeaderFontSize(
+  value: string,
+  maxSize: number,
+  minSize: number,
+  maxCharsAtMaxSize: number,
+) {
+  const length = value.trim().length;
+  if (!length) return maxSize;
+
+  // Approximate uppercase text width so long names/titles shrink
+  // instead of being clipped or leaving the mint panel.
+  const size = (maxSize * maxCharsAtMaxSize) / Math.max(length, 1);
+  return Math.max(minSize, Math.min(maxSize, size));
 }
 
 /* ---------------- INLINE ICONS ---------------- */
@@ -357,12 +374,12 @@ export default function CvPdfDocument({
   const PI_ROWS_TOP = 84;
   const PI_ROW_H = 14.5;
 
-  const JOB_TOP = 261;
-  const JOB_ROWS_TOP = 298;
+  const JOB_TOP = 285;
+  const JOB_ROWS_TOP = 322;
   const JOB_ENTRY_H = 44;
 
-  const SKILLS_TOP = 452;
-  const SKILLS_ROWS_TOP = 488;
+  const SKILLS_TOP = 482;
+  const SKILLS_ROWS_TOP = 518;
   const SKILL_ROW_H = 21;
 
   const BOTTOM_TOP = 625;
@@ -380,6 +397,9 @@ export default function CvPdfDocument({
     ["Marital Status", data.maritalStatus],
     ["Sex", data.sex],
     ["Blood Group", data.bloodGroup],
+    ["Passport Number", data.passportNumber],
+    ["Passport Issue", data.passportIssue],
+    ["Passport Expiry", data.passportExpiry],
   ];
 
   return (
@@ -398,26 +418,50 @@ export default function CvPdfDocument({
                 width: 445,
                 height: 350,
                 objectFit: "contain",
-                opacity: 0.03,
+                opacity: 0.02,
               }}
             />
           )}
 
           {/* ================= LEFT COLUMN ================= */}
 
-          <View style={box(50, 50, 190, 30)}>
-            <Text style={styles.name}>
-              {clip((data.fullName || "YOUR NAME").toUpperCase(), 22)}
+          <View style={{ ...box(19, 50, 215, 30), alignItems: "center", justifyContent: "center" }}>
+            <Text
+              wrap={false}
+              style={{
+                ...styles.name,
+                textAlign: "center",
+                fontSize: fitHeaderFontSize(
+                  (data.fullName || "YOUR NAME").toUpperCase(),
+                  23,
+                  13,
+                  14,
+                ),
+              }}
+            >
+              {(data.fullName || "YOUR NAME").toUpperCase()}
             </Text>
           </View>
 
-          <View style={box(51, 81, 190, 20)}>
-            <Text style={styles.title}>
-              {clip((data.jobTitle || "PROFESSIONAL").toUpperCase(), 32)}
+          <View style={{ ...box(19, 81, 215, 20), alignItems: "center", justifyContent: "center" }}>
+            <Text
+              wrap={false}
+              style={{
+                ...styles.title,
+                textAlign: "center",
+                fontSize: fitHeaderFontSize(
+                  (data.jobTitle || "PROFESSIONAL").toUpperCase(),
+                  11.2,
+                  7.5,
+                  28,
+                ),
+              }}
+            >
+              {(data.jobTitle || "PROFESSIONAL").toUpperCase()}
             </Text>
           </View>
 
-          <View style={box(69, 116, 145, 145)}>
+          <View style={box(54, 116, 145, 145)}>
             {data.photo ? (
               <Image
                 src={data.photo}
@@ -442,99 +486,99 @@ export default function CvPdfDocument({
             )}
           </View>
 
-          <IconBadge name="person" x={72} y={298} />
-          <View style={box(105, 300, 130, 24)}>
-            <Text style={styles.heading}>CONTACT ME</Text>
+          <IconBadge name="person" x={61} y={298} />
+          <View style={box(94, 300, 125, 24)}>
+            <Text style={{ ...styles.heading, textAlign: "center" }}>CONTACT ME</Text>
           </View>
 
-          <IconBadge name="phone" x={78} y={337} size={14} />
-          <View style={box(101, 335, 120, 17)}>
-            <Text style={styles.leftText}>{clip(data.phone, 18)}</Text>
+          <IconBadge name="phone" x={61} y={337} size={14} />
+          <View style={box(81, 335, 125, 17)}>
+            <Text style={{ ...styles.leftText, textAlign: "center" }}>{clip(data.phone, 18)}</Text>
           </View>
 
-          <IconBadge name="web" x={78} y={360} size={14} />
-          <View style={box(101, 358, 120, 17)}>
-            <Text style={styles.leftText}>{clip(data.email, 28)}</Text>
+          <IconBadge name="web" x={61} y={360} size={14} />
+          <View style={box(81, 358, 125, 17)}>
+            <Text style={{ ...styles.leftText, textAlign: "center" }}>{clip(data.email, 28)}</Text>
           </View>
 
-          <IconBadge name="location" x={78} y={383} size={14} />
-          <View style={box(101, 381, 121, 29)}>
-            <Text style={styles.leftText}>{clip(data.presentAddress, 32)}</Text>
+          <IconBadge name="location" x={61} y={383} size={14} />
+          <View style={box(81, 381, 125, 29)}>
+            <Text style={{ ...styles.leftText, textAlign: "center" }}>{clip(data.presentAddress, 32)}</Text>
           </View>
 
-          <View style={{ ...styles.line, left: 61, top: 423, width: 157 }} />
+          <View style={{ ...styles.line, left: 52, top: 435, width: 149 }} />
 
-          <IconBadge name="education" x={72} y={441} />
-          <View style={box(105, 443, 125, 24)}>
-            <Text style={styles.heading}>EDUCATION</Text>
+          <IconBadge name="education" x={64} y={441} />
+          <View style={box(97, 443, 125, 24)}>
+            <Text style={{ ...styles.heading, textAlign: "center" }}>EDUCATION</Text>
           </View>
 
-          <View style={box(52, 482, 174, 18)}>
+          <View style={box(39, 482, 175, 18)}>
             <Text style={{ ...styles.leftBold, textAlign: "center" }}>
               {clip(education[0]?.institution, 26)}
             </Text>
           </View>
-          <View style={box(52, 502, 174, 17)}>
+          <View style={box(39, 502, 175, 17)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
               {clip(education[0]?.level, 28)}
             </Text>
           </View>
-          <View style={box(52, 520, 174, 17)}>
+          <View style={box(39, 520, 175, 17)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
               {clip(education[0]?.year, 14)}
             </Text>
           </View>
 
-          <View style={box(52, 547, 174, 18)}>
+          <View style={box(39, 547, 175, 18)}>
             <Text style={{ ...styles.leftBold, textAlign: "center" }}>
               {clip(education[1]?.institution, 26)}
             </Text>
           </View>
-          <View style={box(52, 567, 174, 17)}>
+          <View style={box(39, 567, 175, 17)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
               {clip(education[1]?.level, 28)}
             </Text>
           </View>
-          <View style={box(52, 585, 174, 17)}>
+          <View style={box(39, 585, 175, 17)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
               {clip(education[1]?.year, 14)}
             </Text>
           </View>
 
-          <View style={{ ...styles.line, left: 61, top: 614, width: 157 }} />
+          <View style={{ ...styles.line, left: 52, top: 627, width: 149 }} />
 
-          <IconBadge name="references" x={72} y={633} />
-          <View style={box(105, 635, 125, 24)}>
-            <Text style={styles.heading}>REFERENCES</Text>
+          <IconBadge name="references" x={60} y={633} />
+          <View style={box(93, 635, 128, 24)}>
+            <Text style={{ ...styles.heading, textAlign: "center" }}>REFERENCES</Text>
           </View>
 
-          <View style={box(52, 673, 174, 18)}>
+          <View style={box(39, 673, 175, 18)}>
             <Text style={{ ...styles.leftBold, textAlign: "center" }}>
               {clip(references[0]?.name, 22)}
             </Text>
           </View>
-          <View style={box(52, 693, 174, 16)}>
+          <View style={box(39, 693, 175, 16)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
               {clip(references[0]?.phone ? `Tel: ${references[0].phone}` : "", 25)}
             </Text>
           </View>
-          <View style={box(52, 711, 174, 16)}>
+          <View style={box(39, 711, 175, 16)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
               {clip(references[0]?.email, 26)}
             </Text>
           </View>
 
-          <View style={box(52, 737, 174, 18)}>
+          <View style={box(39, 737, 175, 18)}>
             <Text style={{ ...styles.leftBold, textAlign: "center" }}>
               {clip(references[1]?.name, 22)}
             </Text>
           </View>
-          <View style={box(52, 757, 174, 16)}>
+          <View style={box(39, 757, 175, 16)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
               {clip(references[1]?.phone ? `Tel: ${references[1].phone}` : "", 25)}
             </Text>
           </View>
-          <View style={box(52, 775, 174, 16)}>
+          <View style={box(39, 775, 175, 16)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
               {clip(references[1]?.email, 26)}
             </Text>
@@ -558,14 +602,14 @@ export default function CvPdfDocument({
                 flexDirection: "row",
               }}
             >
-              <Text style={{ ...styles.piLabel, width: 94 }}>{label}</Text>
-              <Text style={{ ...styles.piValue, width: RIGHT_W - 96 }}>
+              <Text style={{ ...styles.piLabel, width: 105 }}>{label}</Text>
+              <Text style={{ ...styles.piValue, width: RIGHT_W - 107 }}>
                 {clip(value, 32)}
               </Text>
             </View>
           ))}
 
-          <View style={{ ...styles.line, left: RIGHT, top: 244, width: RIGHT_W }} />
+          <View style={{ ...styles.line, left: RIGHT, top: 278, width: RIGHT_W }} />
 
           {/* ================= RIGHT: JOB EXPERIENCE ================= */}
 
@@ -610,7 +654,7 @@ export default function CvPdfDocument({
             );
           })}
 
-          <View style={{ ...styles.line, left: RIGHT, top: 437, width: RIGHT_W }} />
+          <View style={{ ...styles.line, left: RIGHT, top: 445, width: RIGHT_W }} />
 
           {/* ================= RIGHT: SKILLS ================= */}
 
@@ -665,7 +709,7 @@ export default function CvPdfDocument({
             );
           })}
 
-          <View style={{ ...styles.line, left: RIGHT, top: 603, width: RIGHT_W }} />
+          <View style={{ ...styles.line, left: RIGHT, top: 619, width: RIGHT_W }} />
 
           {/* ================= RIGHT: LANGUAGE + HOBBIES ================= */}
 

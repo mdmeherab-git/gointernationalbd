@@ -159,6 +159,9 @@ export type CvData = {
   maritalStatus: string;
   sex: string;
   bloodGroup: string;
+  passportNumber: string;
+  passportIssue: string;
+  passportExpiry: string;
   aboutMe: string;
 
   workExperience: WorkExperience[];
@@ -185,6 +188,9 @@ export const emptyCvData: CvData = {
   maritalStatus: "",
   sex: "",
   bloodGroup: "",
+  passportNumber: "",
+  passportIssue: "",
+  passportExpiry: "",
   aboutMe: "",
   workExperience: [
     { id: "job-1", position: "", company: "", startDate: "", endDate: "", description: "" },
@@ -240,4 +246,6 @@ export const MAX_LEN = {
   hobby: 22,
   personalInfoValue: 32,
   fatherMotherName: 26,
+  passportNumber: 18,
+  passportDate: 14,
 };
