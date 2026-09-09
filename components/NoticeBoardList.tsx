@@ -97,7 +97,7 @@ export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
   );
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-xl md:p-8">
+    <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-xl md:p-8">
 
       <div className="mb-4 flex items-center gap-2">
         <span className="text-lg text-green-600">📋</span>
@@ -107,23 +107,22 @@ export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
       </div>
 
       {loading && (
-        <p className="flex-1 py-6 text-center text-sm text-gray-400">
+        <p className="py-6 text-center text-sm text-gray-400">
           {isBangla ? "লোড হচ্ছে..." : "Loading..."}
         </p>
       )}
 
       {!loading && notices.length === 0 && (
-        <p className="flex-1 py-6 text-center text-sm text-gray-400">
+        <p className="py-6 text-center text-sm text-gray-400">
           {isBangla ? "এখন কোনো নোটিস নেই" : "No notices right now"}
         </p>
       )}
 
       {!loading && notices.length > 0 && (
-        <div className="relative h-[300px] lg:h-auto lg:min-h-0 lg:flex-1">
-          {/* The track is absolutely positioned so its (tall, repeated)
-              height never pushes the card taller — the card takes its
-              height from the CV builder beside it, and the track just
-              scrolls inside this clipped box. */}
+        <div className="relative h-[300px] sm:h-[360px]">
+          {/* Fixed-height window — independent of the CV builder beside it.
+              The repeated track is absolutely positioned and clipped, and
+              scrolls continuously upward inside this box. */}
           <div className="absolute inset-0 overflow-hidden">
             {(() => {
               // Repeat the list enough that one half of the track always
