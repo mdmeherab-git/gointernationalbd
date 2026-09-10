@@ -3,17 +3,16 @@
 import NoticeBoardList from "./NoticeBoardList";
 
 /* =========================================================
-   Notice Board — shown on its own, centred, at a comfortable
-   reading width. (The CV builder used to sit beside it; it now
-   opens from the "সিভি তৈরি করুন" card in Quick Services.)
+   Notice Board — full section width, matching the rest of
+   the site's content sections (mx-[165px] px-6). The CV
+   builder that used to sit beside it now opens from the
+   "সিভি তৈরি করুন" card in Quick Services.
 ========================================================= */
 
 export default function CvAndNoticeSection({ isBangla }: { isBangla: boolean }) {
   return (
-    <section className="mx-[192px] py-10 max-md:mx-4">
-      <div className="mx-auto max-w-2xl">
-        <NoticeBoardList isBangla={isBangla} />
-      </div>
+    <section className="mx-[165px] px-6 py-10 max-md:mx-0">
+      <NoticeBoardList isBangla={isBangla} />
     </section>
   );
 }

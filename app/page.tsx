@@ -1394,7 +1394,7 @@ export default function Home() {
       {cvOpen && (
         <section
           id="cv-builder-section"
-          className="mx-[192px] scroll-mt-24 pb-10 max-md:mx-4"
+          className="mx-[165px] scroll-mt-24 px-6 pb-10 max-md:mx-0"
         >
           <CvBuilder isBangla={isBangla} />
         </section>
