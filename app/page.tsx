@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { countries } from "./countries";
 import CvAndNoticeSection from "../components/CvAndNoticeSection";
+import CvBuilder from "../components/CvBuilder";
 
 /* =========================================================
    TYPES
@@ -258,6 +259,19 @@ export default function Home() {
 
   /* Mobile header dropdown (⋮) — Login / Register */
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  /* CV builder — launched from the Quick Services card, then behaves
+     exactly as before (upload passport / skip / fill form / download PDF). */
+  const [cvOpen, setCvOpen] = useState(false);
+
+  const openCvBuilder = () => {
+    setCvOpen(true);
+    requestAnimationFrame(() => {
+      document
+        .getElementById("cv-builder-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   /* =======================================================
      NOTICE SETTINGS
@@ -1187,33 +1201,37 @@ export default function Home() {
 
             </div>
 
-            {/* AI */}
+            {/* CV BUILDER — same card design; only the icon & text changed */}
 
             <div
-              id="ai-assistant"
+              id="cv-builder"
               className="rounded-2xl border border-green-100 bg-green-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
             >
 
               <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl">
-                🤖
+                📄
               </div>
 
               <h3 className="text-lg font-bold text-[#0B2A55]">
                 {isBangla
-                  ? "AI ভিসা সহকারী"
-                  : "AI Visa Assistant"}
+                  ? "সিভি তৈরি করুন"
+                  : "Build Your CV"}
               </h3>
 
               <p className="mt-2 text-sm leading-6 text-gray-600">
                 {isBangla
-                  ? "ভিসা, চাকরি, প্রয়োজনীয় কাগজপত্র এবং আরও অনেক কিছু সম্পর্কে প্রশ্ন করুন।"
-                  : "Ask anything about visa, jobs, requirements and more."}
+                  ? "নিজের জন্য এক পেজের প্রফেশনাল সিভি তৈরি করুন — সম্পূর্ণ ফ্রি।"
+                  : "Create a one-page professional CV for yourself — completely free."}
               </p>
 
-              <button className="mt-5 font-semibold text-green-600 hover:text-green-700">
+              <button
+                type="button"
+                onClick={openCvBuilder}
+                className="mt-5 font-semibold text-green-600 hover:text-green-700"
+              >
                 {isBangla
-                  ? "চ্যাট শুরু করুন →"
-                  : "Start Chat →"}
+                  ? "সিভি তৈরি করুন →"
+                  : "Create CV →"}
               </button>
 
             </div>
@@ -1363,10 +1381,24 @@ export default function Home() {
       </section>
 
       {/* ===================================================
-          CV BUILDER + NOTICE BOARD
+          NOTICE BOARD
       =================================================== */}
 
       <CvAndNoticeSection isBangla={isBangla} />
+
+      {/* ===================================================
+          CV BUILDER — opens from the "সিভি তৈরি করুন" quick card;
+          behaves exactly as before once shown.
+      =================================================== */}
+
+      {cvOpen && (
+        <section
+          id="cv-builder-section"
+          className="mx-[192px] scroll-mt-24 pb-10 max-md:mx-4"
+        >
+          <CvBuilder isBangla={isBangla} />
+        </section>
+      )}
 
       {/* ===================================================
           FEATURED CIRCULARS
@@ -1692,7 +1724,7 @@ export default function Home() {
           AI VISA ASSISTANT
       =================================================== */}
 
-      <section className="w-full bg-white py-14">
+      <section id="ai-assistant" className="w-full bg-white py-14">
 
         <div className="mx-[165px] px-6 max-md:mx-0">
 
