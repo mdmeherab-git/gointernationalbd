@@ -774,7 +774,7 @@ export default function Home() {
                   {isBangla ? (
                     <>
                       অফিসিয়াল{" "}
-                      <span className="text-blue-600">
+                      <span className="text-blue-800">
                         ভিসা স্ট্যাটাস
                       </span>
                       <br />
@@ -1201,46 +1201,51 @@ export default function Home() {
 
             </div>
 
-            {/* CV BUILDER — same card design; only the icon & text changed */}
+            {/* CV BUILDER — FULL CARD CLICKABLE */}
 
-            <div
-              id="cv-builder"
-              className="rounded-2xl border border-green-100 bg-green-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-            >
+<div
+  id="cv-builder"
+  role="button"
+  tabIndex={0}
+  onClick={openCvBuilder}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openCvBuilder();
+    }
+  }}
+  className="group w-full cursor-pointer rounded-2xl border border-green-100 bg-green-50 p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
+>
 
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl">
-                📄
-              </div>
+  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl transition-transform duration-300 group-hover:scale-105">
+    📄
+  </div>
 
-              <h3 className="text-lg font-bold text-[#0B2A55]">
-                {isBangla
-                  ? "সিভি তৈরি করুন"
-                  : "Build Your CV"}
-              </h3>
+  <h3 className="text-lg font-bold text-[#0B2A55]">
+    {isBangla
+      ? "সিভি তৈরি করুন"
+      : "Build Your CV"}
+  </h3>
 
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                {isBangla
-                  ? "নিজের জন্য এক পেজের প্রফেশনাল সিভি তৈরি করুন — সম্পূর্ণ ফ্রি।"
-                  : "Create a one-page professional CV for yourself — completely free."}
-              </p>
+  <p className="mt-2 text-sm leading-6 text-gray-600">
+    {isBangla
+      ? "নিজের জন্য এক পেজের প্রফেশনাল সিভি তৈরি করুন — সম্পূর্ণ ফ্রি।"
+      : "Create a one-page professional CV for yourself — completely free."}
+  </p>
 
-              <button
-                type="button"
-                onClick={openCvBuilder}
-                className="mt-5 font-semibold text-green-600 hover:text-green-700"
-              >
-                {isBangla
-                  ? "সিভি তৈরি করুন →"
-                  : "Create CV →"}
-              </button>
+  <div className="mt-5 font-semibold text-green-600 transition-colors duration-200 group-hover:text-green-700">
+    {isBangla
+      ? "সিভি তৈরি করুন →"
+      : "Create CV →"}
+  </div>
 
-            </div>
+</div>
 
-          </div>
+</div>
 
-        </div>
+</div>
 
-      </section>
+</section>
 
       {/* ===================================================
           LATEST JOB CIRCULARS

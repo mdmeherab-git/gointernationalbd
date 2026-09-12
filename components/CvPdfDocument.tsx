@@ -425,38 +425,50 @@ export default function CvPdfDocument({
 
           {/* ================= LEFT COLUMN ================= */}
 
-          <View style={{ ...box(19, 50, 215, 30), alignItems: "center", justifyContent: "center" }}>
-            <Text
-              wrap={false}
-              style={{
-                ...styles.name,
-                textAlign: "center",
-                fontSize: fitHeaderFontSize(
-                  (data.fullName || "YOUR NAME").toUpperCase(),
-                  23,
-                  13,
-                  14,
-                ),
-              }}
-            >
-              {(data.fullName || "YOUR NAME").toUpperCase()}
-            </Text>
-          </View>
+<View
+  style={{
+    ...box(19, 50, 215, 30),
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+>
+  <Text
+    wrap={false}
+    style={{
+      ...styles.name,
+      textAlign: "center",
+      fontSize: fitHeaderFontSize(
+        (data.fullName || "YOUR NAME").toUpperCase(),
+        23,
+        9.5,
+        11,
+      ),
+    }}
+  >
+    {(data.fullName || "YOUR NAME").toUpperCase()}
+  </Text>
+</View>
 
-          <View style={{ ...box(19, 81, 215, 20), alignItems: "center", justifyContent: "center" }}>
-            <Text
-              wrap={false}
-              style={{
-                ...styles.title,
-                textAlign: "center",
-                fontSize: fitHeaderFontSize(
-                  (data.jobTitle || "PROFESSIONAL").toUpperCase(),
-                  11.2,
-                  7.5,
-                  28,
-                ),
-              }}
-            >
+<View
+  style={{
+    ...box(19, 81, 215, 20),
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+>
+  <Text
+    wrap={false}
+    style={{
+      ...styles.title,
+      textAlign: "center",
+      fontSize: fitHeaderFontSize(
+        (data.jobTitle || "PROFESSIONAL").toUpperCase(),
+        11.2,
+        7.5,
+        28,
+      ),
+    }}
+  >
               {(data.jobTitle || "PROFESSIONAL").toUpperCase()}
             </Text>
           </View>
