@@ -259,6 +259,7 @@ export default function Home() {
 
   /* Mobile header dropdown (⋮) — Login / Register */
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   /* CV builder — launched from the Quick Services card, then behaves
      exactly as before (upload passport / skip / fill form / download PDF). */
@@ -658,69 +659,104 @@ export default function Home() {
 
           </nav>
 
-          {/* LANGUAGE / LOGIN */}
+          {/* LANGUAGE / PROFILE */}
 
-          <div className="flex shrink-0 items-center gap-3 max-md:gap-1.5">
+<div className="flex shrink-0 items-center gap-3 max-md:gap-1.5">
 
-            <button
-              type="button"
-              onClick={() =>
-                setLanguage((current) =>
-                  current === "bn" ? "en" : "bn"
-                )
-              }
-              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 max-md:px-2.5 max-md:py-1.5 max-md:text-[11px]"
+  {/* LANGUAGE */}
+  <button
+    type="button"
+    onClick={() =>
+      setLanguage((current) =>
+        current === "bn" ? "en" : "bn"
+      )
+    }
+    className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 max-md:px-2.5 max-md:py-1.5 max-md:text-[11px]"
+  >
+    {isBangla ? "English" : "বাংলা"}
+  </button>
+
+  {/* PROFILE */}
+  <div className="relative">
+
+    <button
+      type="button"
+      aria-label="Profile"
+      onClick={() => setProfileMenuOpen((v) => !v)}
+      className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-gray-300 bg-gray-100 text-gray-600 transition hover:border-blue-400 hover:bg-gray-50 max-md:h-9 max-md:w-9"
+    >
+      <span className="text-2xl max-md:text-xl">
+        👤
+      </span>
+    </button>
+
+    {/* PROFILE DROPDOWN */}
+    {profileMenuOpen && (
+      <>
+        <button
+          type="button"
+          aria-label="Close profile menu"
+          onClick={() => setProfileMenuOpen(false)}
+          className="fixed inset-0 z-40"
+        />
+
+        <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+
+          {/* Guest Profile */}
+          <div className="border-b border-gray-100 px-4 py-4">
+            <div className="flex items-center gap-3">
+
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-2xl">
+                👤
+              </div>
+
+              <div className="min-w-0">
+                <p className="font-semibold text-[#0B2A55]">
+                  {isBangla ? "অতিথি ব্যবহারকারী" : "Guest User"}
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  {isBangla
+                    ? "Login করুন অথবা Account তৈরি করুন"
+                    : "Login or create an account"}
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+          {/* LOGIN */}
+          <div className="p-2">
+
+            <a
+              href="/login"
+              onClick={() => setProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              {isBangla ? "English" : "বাংলা"}
-            </button>
-
-            <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-gray-500 hover:bg-gray-50 max-md:hidden">
+              <span>🔐</span>
               {isBangla ? "লগইন" : "Login"}
-            </button>
+            </a>
 
-            <button className="rounded-lg bg-blue-600 px-6 py-2.5 text-white hover:bg-blue-700 max-md:hidden">
-              {isBangla ? "রেজিস্টার" : "Register"}
-            </button>
-
-            {/* Mobile only: three-dot menu */}
-            <button
-              type="button"
-              aria-label="Menu"
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              className="hidden h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-xl leading-none text-gray-700 hover:bg-gray-50 max-md:flex"
+            {/* REGISTER */}
+            <a
+              href="/register"
+              onClick={() => setProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              ⋮
-            </button>
+              <span>📝</span>
+              {isBangla ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account"}
+            </a>
 
           </div>
 
-          {/* Mobile dropdown: Login / Register */}
-          {mobileMenuOpen && (
-            <>
-              <button
-                type="button"
-                aria-label="Close menu"
-                onClick={() => setMobileMenuOpen(false)}
-                className="fixed inset-0 z-40 hidden max-md:block"
-              />
-              <div className="absolute right-4 top-full z-50 mt-1 hidden w-44 flex-col gap-2 rounded-xl border border-gray-200 bg-white p-2.5 shadow-lg max-md:flex">
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                >
-                  {isBangla ? "লগইন" : "Login"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  {isBangla ? "রেজিস্টার" : "Register"}
-                </button>
-              </div>
-            </>
-          )}
+        </div>
+      
+      </>
+    )}
+
+  </div>
+
+</div>
 
         </div>
 
