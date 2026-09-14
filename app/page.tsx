@@ -494,7 +494,61 @@ export default function Home() {
   /* =======================================================
      RETURN
   ======================================================= */
+const [currentUser, setCurrentUser] = useState<{
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string;
+  profilePhotoKey: string;
+} | null>(null);
 
+const [authLoading, setAuthLoading] = useState(true);
+
+useEffect(() => {
+  let cancelled = false;
+
+  async function loadCurrentUser() {
+    try {
+      const res = await fetch("/api/auth/me", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      const data = (await res.json().catch(() => ({}))) as {
+        authenticated?: boolean;
+        user?: {
+          id: string;
+          name: string;
+          email: string | null;
+          phone: string;
+          profilePhotoKey: string;
+        } | null;
+      };
+
+      if (!cancelled) {
+        setCurrentUser(
+          data.authenticated && data.user
+            ? data.user
+            : null,
+        );
+      }
+    } catch {
+      if (!cancelled) {
+        setCurrentUser(null);
+      }
+    } finally {
+      if (!cancelled) {
+        setAuthLoading(false);
+      }
+    }
+  }
+
+  loadCurrentUser();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
   return (
     <main className="min-h-screen bg-white">
 
@@ -685,24 +739,176 @@ export default function Home() {
       onClick={() => setProfileMenuOpen((v) => !v)}
       className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-gray-300 bg-gray-100 text-gray-600 transition hover:border-blue-400 hover:bg-gray-50 max-md:h-9 max-md:w-9"
     >
-      <span className="text-2xl max-md:text-xl">
-        👤
-      </span>
+      {currentUser?.profilePhotoKey ? (
+  <img
+    src="/api/auth/profile-photo"
+    alt={currentUser.name}
+    className="h-full w-full object-cover"
+  />
+) : (
+  <span className="text-2xl max-md:text-xl">
+    👤
+  </span>
+)}
     </button>
 
     {/* PROFILE DROPDOWN */}
-    {profileMenuOpen && (
-      <>
-        <button
-          type="button"
-          aria-label="Close profile menu"
-          onClick={() => setProfileMenuOpen(false)}
-          className="fixed inset-0 z-40"
-        />
 
-        <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+{profileMenuOpen && (
+  <>
+    <button
+      type="button"
+      aria-label="Close profile menu"
+      onClick={() => setProfileMenuOpen(false)}
+      className="fixed inset-0 z-40"
+    />
 
-          {/* Guest Profile */}
+    <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+
+      {currentUser ? (
+        <>
+          {/* LOGGED IN USER */}
+          <div className="border-b border-gray-100 px-4 py-4">
+            <div className="flex items-center gap-3">
+
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-2xl">
+                {currentUser.profilePhotoKey ? (
+                  <img
+                    src="/api/auth/profile-photo"
+                    alt={currentUser.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  "👤"
+                )}
+              </div>
+
+              <div className="min-w-0">
+
+                <p className="truncate font-semibold text-[#0B2A55]">
+                  {currentUser.name}
+                </p>
+
+                <p className="truncate text-xs text-gray-500">
+                  {currentUser.email || currentUser.phone}
+                </p>
+
+              </div>
+
+            </div>
+          </div>
+
+          {/* USER MENU */}
+          <div className="p-2">
+
+            <Link
+              href="/account/profile"
+              onClick={() => setProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <span>👤</span>
+              {isBangla ? "আমার প্রোফাইল" : "My Profile"}
+            </Link>
+
+            <Link
+              href="/account/cv"
+              onClick={() => setProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <span>📄</span>
+              {isBangla ? "আমার CV" : "My CV"}
+            </Link>
+
+            <Link
+              href="/account/applications"
+              onClick={() => setProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <span>💼</span>
+              {isBangla ? "আমার আবেদন" : "My Applications"}
+            </Link>
+
+            <Link
+              href="/account/visa-status"
+              onClick={() => setProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <span>🌍</span>
+              {isBangla ? "ভিসা স্ট্যাটাস" : "Visa Status"}
+            </Link>
+
+            <Link
+              href="/account/documents"
+              onClick={() => setProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <span>📋</span>
+              {isBangla ? "আমার ডকুমেন্টস" : "My Documents"}
+            </Link>
+
+            <Link
+              href="/account/notifications"
+              onClick={() => setProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <span>🔔</span>
+              {isBangla ? "নোটিফিকেশন" : "Notifications"}
+            </Link>
+
+            <Link
+              href="/account/settings"
+              onClick={() => setProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <span>⚙️</span>
+              {isBangla ? "অ্যাকাউন্ট সেটিংস" : "Account Settings"}
+            </Link>
+
+          </div>
+
+          {/* LOGOUT */}
+<div className="border-t border-gray-100 p-2">
+
+  <button
+    type="button"
+    onClick={async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      try {
+        const res = await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          throw new Error("Logout failed");
+        }
+
+        setCurrentUser(null);
+        setProfileMenuOpen(false);
+
+        window.location.href = "/";
+      } catch (error) {
+        console.error("Logout error:", error);
+        alert("Logout করা যায়নি। আবার চেষ্টা করুন।");
+      }
+    }}
+    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+  >
+    <span>🚪</span>
+    {isBangla ? "লগআউট" : "Logout"}
+  </button>
+
+</div>
+        </>
+      ) : (
+        <>
+          {/* GUEST PROFILE */}
           <div className="border-b border-gray-100 px-4 py-4">
             <div className="flex items-center gap-3">
 
@@ -711,8 +917,11 @@ export default function Home() {
               </div>
 
               <div className="min-w-0">
+
                 <p className="font-semibold text-[#0B2A55]">
-                  {isBangla ? "অতিথি ব্যবহারকারী" : "Guest User"}
+                  {isBangla
+                    ? "অতিথি ব্যবহারকারী"
+                    : "Guest User"}
                 </p>
 
                 <p className="text-xs text-gray-500">
@@ -720,39 +929,42 @@ export default function Home() {
                     ? "Login করুন অথবা Account তৈরি করুন"
                     : "Login or create an account"}
                 </p>
+
               </div>
 
             </div>
           </div>
 
-          {/* LOGIN */}
+          {/* GUEST MENU */}
           <div className="p-2">
 
-            <a
-              href="/login"
+            <Link
+              href="/account/login"
               onClick={() => setProfileMenuOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               <span>🔐</span>
               {isBangla ? "লগইন" : "Login"}
-            </a>
+            </Link>
 
-            {/* REGISTER */}
-            <a
+            <Link
               href="/register"
               onClick={() => setProfileMenuOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               <span>📝</span>
-              {isBangla ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account"}
-            </a>
+              {isBangla
+                ? "অ্যাকাউন্ট তৈরি করুন"
+                : "Create Account"}
+            </Link>
 
           </div>
+        </>
+      )}
 
-        </div>
-      
-      </>
-    )}
+    </div>
+  </>
+)}
 
   </div>
 
