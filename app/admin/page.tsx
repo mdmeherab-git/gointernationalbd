@@ -10,6 +10,7 @@ import {
   PageHeader,
   StatCard,
   StatusBadge,
+  UserAvatar,
 } from "@/components/admin/widgets";
 
 type Stats = {
@@ -21,6 +22,10 @@ type Stats = {
   noticesTotal: number;
   applicationsTotal: number;
   applicationsNew: number;
+  usersTotal: number;
+  usersActive: number;
+  usersDisabled: number;
+  usersNewToday: number;
 };
 
 type Circular = {
@@ -43,22 +48,40 @@ type Application = {
   created_at: string;
 };
 
+type RecentUser = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string;
+  profile_photo_key: string;
+  status: string;
+  created_at: string;
+};
+
 export default function AdminOverview() {
   const { t, isBn } = useAdminLang();
   const [stats, setStats] = useState<Stats | null>(null);
   const [circulars, setCirculars] = useState<Circular[]>([]);
   const [apps, setApps] = useState<Application[]>([]);
+  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statsError, setStatsError] = useState(false);
+  const [usersError, setUsersError] = useState(false);
 
   useEffect(() => {
     Promise.all([
-      apiGet<{ stats: Stats }>("/api/admin/stats").then((d) => setStats(d.stats)),
+      apiGet<{ stats: Stats }>("/api/admin/stats")
+        .then((d) => setStats(d.stats))
+        .catch(() => setStatsError(true)),
       apiGet<{ circulars: Circular[] }>("/api/admin/circulars")
         .then((d) => setCirculars(d.circulars.slice(0, 6)))
         .catch(() => {}),
       apiGet<{ applications: Application[] }>("/api/admin/applications")
         .then((d) => setApps(d.applications.slice(0, 6)))
         .catch(() => {}),
+      apiGet<{ users: RecentUser[] }>("/api/admin/users?status=active&page=1&limit=5")
+        .then((d) => setRecentUsers(d.users))
+        .catch(() => setUsersError(true)),
     ])
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -129,6 +152,45 @@ export default function AdminOverview() {
           tone="orange"
         />
       </div>
+
+      {/* User statistics */}
+      <section className="mt-7">
+        <h3 className="mb-3 text-lg font-extrabold text-[#0B2A55]">
+          {t("ইউজার পরিসংখ্যান", "User Statistics")}
+        </h3>
+        {statsError ? (
+          <Card className="p-5 text-center text-sm text-red-600">
+            {t("ডাটা লোড করা যায়নি", "Unable to load")}
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label={t("মোট ইউজার", "Total Users")}
+              value={loading ? "—" : (stats?.usersTotal ?? 0)}
+              icon="👥"
+              tone="blue"
+            />
+            <StatCard
+              label={t("সক্রিয় ইউজার", "Active Users")}
+              value={loading ? "—" : (stats?.usersActive ?? 0)}
+              icon="🟢"
+              tone="green"
+            />
+            <StatCard
+              label={t("নিষ্ক্রিয় ইউজার", "Disabled Users")}
+              value={loading ? "—" : (stats?.usersDisabled ?? 0)}
+              icon="🔴"
+              tone="orange"
+            />
+            <StatCard
+              label={t("আজকের নতুন ইউজার", "Today's New Users")}
+              value={loading ? "—" : (stats?.usersNewToday ?? 0)}
+              icon="🆕"
+              tone="purple"
+            />
+          </div>
+        )}
+      </section>
 
       {/* Recent circulars */}
       <section className="mt-7">
@@ -227,6 +289,64 @@ export default function AdminOverview() {
             />
           )}
         </Card>
+      </section>
+
+      {/* Recent active users */}
+      <section className="mt-7">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-lg font-extrabold text-[#0B2A55]">
+            {t("সাম্প্রতিক Active Users", "Recent Active Users")}
+          </h3>
+          <Link
+            href="/admin/users"
+            className="text-xs font-bold text-blue-600 hover:text-blue-700"
+          >
+            {t("সব দেখুন →", "View all →")}
+          </Link>
+        </div>
+        {usersError ? (
+          <Card className="p-5 text-center text-sm text-red-600">
+            {t("ডাটা লোড করা যায়নি", "Unable to load")}
+          </Card>
+        ) : (
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50 text-left text-[11px] font-bold uppercase tracking-wide text-gray-500">
+                    <th className="px-5 py-3">{t("প্রোফাইল", "Profile")}</th>
+                    <th className="px-5 py-3">{t("নাম", "Name")}</th>
+                    <th className="px-5 py-3">{t("মোবাইল", "Mobile")}</th>
+                    <th className="px-5 py-3">Gmail</th>
+                    <th className="px-5 py-3">{t("নিবন্ধনের তারিখ", "Registration Date")}</th>
+                    <th className="px-5 py-3">{t("স্ট্যাটাস", "Status")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentUsers.map((u) => (
+                    <tr key={u.id} className="border-b border-gray-100 last:border-0">
+                      <td className="px-5 py-3">
+                        <UserAvatar user={u} />
+                      </td>
+                      <td className="px-5 py-3 font-semibold">{u.name}</td>
+                      <td className="px-5 py-3">{u.phone}</td>
+                      <td className="px-5 py-3">{u.email || "—"}</td>
+                      <td className="px-5 py-3 text-xs text-gray-500">
+                        {(u.created_at || "").slice(0, 10)}
+                      </td>
+                      <td className="px-5 py-3">
+                        <StatusBadge status={u.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {!loading && recentUsers.length === 0 && (
+              <EmptyState text={t("কোনো Active User নেই", "No active users yet")} />
+            )}
+          </Card>
+        )}
       </section>
 
       <p className="mt-8 text-center text-xs text-gray-400">

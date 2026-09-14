@@ -14,6 +14,10 @@ const EMPTY = {
   applicationsTotal: 0,
   applicationsNew: 0,
   popularVisible: 0,
+  usersTotal: 0,
+  usersActive: 0,
+  usersDisabled: 0,
+  usersNewToday: 0,
 };
 
 export async function GET(req: Request) {
@@ -34,7 +38,11 @@ export async function GET(req: Request) {
       (SELECT COUNT(*) FROM notices) AS noticesTotal,
       (SELECT COUNT(*) FROM applications) AS applicationsTotal,
       (SELECT COUNT(*) FROM applications WHERE status = 'new') AS applicationsNew,
-      (SELECT COUNT(*) FROM popular_countries WHERE visible = 1) AS popularVisible
+      (SELECT COUNT(*) FROM popular_countries WHERE visible = 1) AS popularVisible,
+      (SELECT COUNT(*) FROM users) AS usersTotal,
+      (SELECT COUNT(*) FROM users WHERE status = 'active') AS usersActive,
+      (SELECT COUNT(*) FROM users WHERE status = 'disabled') AS usersDisabled,
+      (SELECT COUNT(*) FROM users WHERE date(created_at) = date('now')) AS usersNewToday
   `);
 
   return Response.json({ stats: { ...EMPTY, ...(row ?? {}) }, dbReady: true });

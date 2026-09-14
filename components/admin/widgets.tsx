@@ -115,6 +115,37 @@ export function StatCard({
   );
 }
 
+/** Shows a registered user's real photo (proxied through the admin-only
+ *  photo endpoint — never a raw R2 URL) or a default avatar fallback. */
+export function UserAvatar({
+  user,
+  size = 40,
+}: {
+  user: { id: string; name: string; profile_photo_key: string };
+  size?: number;
+}) {
+  const style = { width: size, height: size };
+  if (!user.profile_photo_key) {
+    return (
+      <div
+        style={style}
+        className="flex shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-400"
+      >
+        <span style={{ fontSize: size * 0.5 }}>👤</span>
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/api/admin/users/${user.id}/photo`}
+      alt={user.name}
+      style={style}
+      className="shrink-0 rounded-full object-cover"
+    />
+  );
+}
+
 export function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     active: "bg-green-50 text-green-700",

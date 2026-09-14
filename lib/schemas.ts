@@ -64,3 +64,5 @@ export const APPLICATION_STATUS = [
   "rejected",
   "hired",
 ] as const;
+
+export const USER_STATUS = ["active", "disabled"] as const;

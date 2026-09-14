@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+
 import { dbFirst, dbRun, newId } from "@/lib/cf";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,9 @@ export async function POST(req: Request) {
     };
 
     const name =
-      typeof body.name === "string" ? body.name.trim() : "";
+      typeof body.name === "string"
+        ? body.name.trim()
+        : "";
 
     const phone =
       typeof body.phone === "string"
@@ -46,20 +49,26 @@ export async function POST(req: Request) {
         ? body.password
         : "";
 
-    // -----------------------------
-    // Validation
-    // -----------------------------
+    // ==================================================
+    // VALIDATION
+    // ==================================================
 
     if (!name) {
       return NextResponse.json(
-        { error: "নাম দিন / Please enter your name" },
+        {
+          error:
+            "নাম দিন / Please enter your name",
+        },
         { status: 400 },
       );
     }
 
     if (name.length < 2) {
       return NextResponse.json(
-        { error: "সঠিক নাম দিন / Please enter a valid name" },
+        {
+          error:
+            "সঠিক নাম দিন / Please enter a valid name",
+        },
         { status: 400 },
       );
     }
@@ -74,6 +83,8 @@ export async function POST(req: Request) {
       );
     }
 
+    // Bangladesh mobile number
+    // Example: 01872327575
     if (!/^01[3-9]\d{8}$/.test(phone)) {
       return NextResponse.json(
         {
@@ -84,12 +95,23 @@ export async function POST(req: Request) {
       );
     }
 
+    // Gmail / Email is optional
     if (email) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return NextResponse.json(
           {
             error:
               "সঠিক ইমেইল দিন / Enter a valid email address",
+          },
+          { status: 400 },
+        );
+      }
+
+      if (email.length > 254) {
+        return NextResponse.json(
+          {
+            error:
+              "ইমেইল অনেক বড় / Email address is too long",
           },
           { status: 400 },
         );
@@ -126,9 +148,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // -----------------------------
-    // Check existing phone
-    // -----------------------------
+    // ==================================================
+    // CHECK EXISTING PHONE
+    // ==================================================
 
     const existingPhone = await dbFirst<ExistingUser>(
       `
@@ -150,9 +172,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // -----------------------------
-    // Check existing email
-    // -----------------------------
+    // ==================================================
+    // CHECK EXISTING EMAIL
+    // ==================================================
 
     if (email) {
       const existingEmail = await dbFirst<ExistingUser>(
@@ -176,15 +198,18 @@ export async function POST(req: Request) {
       }
     }
 
-    // -----------------------------
-    // Secure password hash
-    // -----------------------------
+    // ==================================================
+    // HASH PASSWORD
+    // ==================================================
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(
+      password,
+      12,
+    );
 
-    // -----------------------------
-    // Create user
-    // -----------------------------
+    // ==================================================
+    // CREATE USER
+    // ==================================================
 
     const userId = newId("user");
 
@@ -228,26 +253,31 @@ export async function POST(req: Request) {
       passwordHash,
     );
 
-    // -----------------------------
-    // Success
-    // -----------------------------
+    // ==================================================
+    // SUCCESS
+    // ==================================================
 
     return NextResponse.json(
       {
         ok: true,
+
         user: {
           id: userId,
           name,
           phone,
           email,
         },
+
         message:
           "অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে / Account created successfully",
       },
       { status: 201 },
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error(
+      "Registration error:",
+      error,
+    );
 
     return NextResponse.json(
       {

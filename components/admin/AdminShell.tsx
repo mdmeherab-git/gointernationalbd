@@ -38,6 +38,7 @@ const NAV: { href: string; icon: string; bn: string; en: string; badge?: "circ" 
   { href: "/admin/circulars", icon: "📄", bn: "সার্কুলার", en: "Circulars", badge: "circ" },
   { href: "/admin/notices", icon: "📢", bn: "নোটিশ", en: "Notices", badge: "notice" },
   { href: "/admin/applications", icon: "👤", bn: "আবেদনসমূহ", en: "Applications", badge: "app" },
+  { href: "/admin/users", icon: "👥", bn: "রেজিস্টার্ড ইউজার", en: "Registered Users" },
   { href: "/admin/popular-countries", icon: "🌍", bn: "জনপ্রিয় দেশ", en: "Popular Countries" },
   { href: "/admin/settings", icon: "⚙️", bn: "সেটিংস", en: "Settings" },
 ];

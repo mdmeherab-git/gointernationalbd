@@ -743,7 +743,7 @@ useEffect(() => {
   <img
     src="/api/auth/profile-photo"
     alt={currentUser.name}
-    className="h-full w-full object-cover"
+    className="h-full w-full object-cover object-top"
   />
 ) : (
   <span className="text-2xl max-md:text-xl">
@@ -776,7 +776,7 @@ useEffect(() => {
                   <img
                     src="/api/auth/profile-photo"
                     alt={currentUser.name}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover object-top"
                   />
                 ) : (
                   "👤"

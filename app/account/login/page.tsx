@@ -88,7 +88,9 @@ export default function UserLoginPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="01XXXXXXXXX"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              maxLength={11}
+              inputMode="numeric"
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 opacity-100 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
@@ -104,7 +106,7 @@ export default function UserLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="আপনার Password"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 opacity-100 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
