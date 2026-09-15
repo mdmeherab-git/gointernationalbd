@@ -47,3 +47,5 @@ next-env.d.ts
 
 # tesseract.js auto-downloads OCR language data to the cwd at runtime
 *.traineddata
+
+.vercel
