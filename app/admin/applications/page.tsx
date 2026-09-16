@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiGet, apiSend } from "@/components/admin/api";
 import { useAdminLang } from "@/components/admin/AdminShell";
 import {
@@ -10,6 +10,7 @@ import {
   EmptyState,
   PageHeader,
   StatusBadge,
+  TextInput,
   useToast,
 } from "@/components/admin/widgets";
 
@@ -27,19 +28,45 @@ type Application = {
 };
 
 const STATUSES = ["new", "reviewing", "shortlisted", "rejected", "hired"] as const;
+const LIMIT = 20;
 
 export default function ApplicationsPage() {
   const { t } = useAdminLang();
   const toast = useToast();
   const [items, setItems] = useState<Application[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [q, setQ] = useState("");
   const [detail, setDetail] = useState<Application | null>(null);
 
+  // Debounce the search box; reset to page 1 only once the debounced term
+  // actually changes, so a stale page number never combines with a new term.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setQ(searchInput.trim());
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  function changeFilter(next: string) {
+    setFilter(next);
+    setPage(1);
+  }
+
   const load = async () => {
+    const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) });
+    if (filter !== "all") params.set("status", filter);
+    if (q) params.set("q", q);
     try {
-      const d = await apiGet<{ applications: Application[] }>("/api/admin/applications");
+      const d = await apiGet<{ applications: Application[]; total: number }>(
+        `/api/admin/applications?${params}`,
+      );
       setItems(d.applications);
+      setTotal(d.total);
     } catch (e) {
       if ((e as Error).message !== "unauthorized")
         toast.push((e as Error).message, "err");
@@ -47,20 +74,22 @@ export default function ApplicationsPage() {
   };
 
   useEffect(() => {
-    apiGet<{ applications: Application[] }>("/api/admin/applications")
-      .then((d) => setItems(d.applications))
+    const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) });
+    if (filter !== "all") params.set("status", filter);
+    if (q) params.set("q", q);
+    apiGet<{ applications: Application[]; total: number }>(`/api/admin/applications?${params}`)
+      .then((d) => {
+        setItems(d.applications);
+        setTotal(d.total);
+      })
       .catch((e) => {
-        if ((e as Error).message !== "unauthorized")
-          toast.push((e as Error).message, "err");
+        if ((e as Error).message !== "unauthorized") toast.push((e as Error).message, "err");
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page, filter, q]);
 
-  const filtered = useMemo(
-    () => (filter === "all" ? items : items.filter((a) => a.status === filter)),
-    [items, filter],
-  );
+  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
   async function setStatus(a: Application, status: string) {
     setItems((l) => l.map((x) => (x.id === a.id ? { ...x, status } : x)));
@@ -78,6 +107,7 @@ export default function ApplicationsPage() {
     try {
       await apiSend(`/api/admin/applications/${a.id}`, "DELETE");
       setItems((l) => l.filter((x) => x.id !== a.id));
+      setTotal((n) => Math.max(0, n - 1));
       setDetail(null);
       toast.push(t("মুছে ফেলা হয়েছে", "Deleted"));
     } catch (e) {
@@ -96,7 +126,7 @@ export default function ApplicationsPage() {
       "Date",
       "Message",
     ];
-    const rows = filtered.map((a) => [
+    const rows = items.map((a) => [
       a.applicant_name,
       a.phone,
       a.email,
@@ -132,28 +162,40 @@ export default function ApplicationsPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setFilter("all")}
-          className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-            filter === "all" ? "bg-[#0B4DBB] text-white" : "bg-white text-gray-600 border border-gray-200"
-          }`}
-        >
-          {t("সব", "All")} ({items.length})
-        </button>
-        {STATUSES.map((s) => (
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <TextInput
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder={t(
+            "নাম, মোবাইল বা ইমেইল দিয়ে খুঁজুন...",
+            "Search by name, phone or email...",
+          )}
+          className="sm:max-w-xs"
+        />
+
+        <div className="flex flex-wrap gap-2">
           <button
-            key={s}
             type="button"
-            onClick={() => setFilter(s)}
-            className={`rounded-full px-3 py-1.5 text-xs font-bold capitalize ${
-              filter === s ? "bg-[#0B4DBB] text-white" : "bg-white text-gray-600 border border-gray-200"
+            onClick={() => changeFilter("all")}
+            className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+              filter === "all" ? "bg-[#0B4DBB] text-white" : "bg-white text-gray-600 border border-gray-200"
             }`}
           >
-            {s} ({items.filter((a) => a.status === s).length})
+            {t("সব", "All")}
           </button>
-        ))}
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => changeFilter(s)}
+              className={`rounded-full px-3 py-1.5 text-xs font-bold capitalize ${
+                filter === s ? "bg-[#0B4DBB] text-white" : "bg-white text-gray-600 border border-gray-200"
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Card className="overflow-hidden">
@@ -169,7 +211,7 @@ export default function ApplicationsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((a) => (
+              {items.map((a) => (
                 <tr key={a.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                   <td className="px-5 py-3">
                     <p className="font-bold">{a.applicant_name}</p>
@@ -219,8 +261,33 @@ export default function ApplicationsPage() {
           </table>
         </div>
         {loading && <EmptyState text={t("লোড হচ্ছে...", "Loading...")} />}
-        {!loading && filtered.length === 0 && (
+        {!loading && items.length === 0 && (
           <EmptyState text={t("কোনো আবেদন নেই", "No applications")} />
+        )}
+
+        {!loading && total > 0 && (
+          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3 text-xs text-gray-500">
+            <span>
+              {t(`পৃষ্ঠা ${page} / ${totalPages}`, `Page ${page} of ${totalPages}`)} · {total}{" "}
+              {t("টি আবেদন", "applications")}
+            </span>
+            <div className="flex gap-2">
+              <Btn
+                variant="ghost"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                ← {t("আগের", "Previous")}
+              </Btn>
+              <Btn
+                variant="ghost"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                {t("পরের", "Next")} →
+              </Btn>
+            </div>
+          </div>
         )}
       </Card>
 

@@ -22,10 +22,13 @@ type Stats = {
   noticesTotal: number;
   applicationsTotal: number;
   applicationsNew: number;
+  popularVisible: number;
   usersTotal: number;
   usersActive: number;
   usersDisabled: number;
   usersNewToday: number;
+  chatConversations: number;
+  chatUnread: number;
 };
 
 type Circular = {
@@ -190,6 +193,52 @@ export default function AdminOverview() {
             />
           </div>
         )}
+      </section>
+
+      {/* Other statistics */}
+      <section className="mt-7">
+        <h3 className="mb-3 text-lg font-extrabold text-[#0B2A55]">
+          {t("অন্যান্য পরিসংখ্যান", "Other Statistics")}
+        </h3>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label={t("মোট আবেদন", "Total Applications")}
+            value={loading ? "—" : (stats?.applicationsTotal ?? 0)}
+            hint={t(
+              `${stats?.applicationsNew ?? 0} টি নতুন`,
+              `${stats?.applicationsNew ?? 0} new`,
+            )}
+            icon="📥"
+            tone="blue"
+          />
+          <StatCard
+            label={t("মোট নোটিশ", "Total Notices")}
+            value={loading ? "—" : (stats?.noticesTotal ?? 0)}
+            hint={t(
+              `${stats?.noticesActive ?? 0} টি সক্রিয়`,
+              `${stats?.noticesActive ?? 0} active`,
+            )}
+            icon="📢"
+            tone="purple"
+          />
+          <StatCard
+            label={t("জনপ্রিয় দেশ", "Popular Countries")}
+            value={loading ? "—" : (stats?.popularVisible ?? 0)}
+            hint={t("প্রদর্শিত দেশ", "currently shown")}
+            icon="🌍"
+            tone="green"
+          />
+          <StatCard
+            label={t("চ্যাট / অপঠিত", "Chat / Unread")}
+            value={loading ? "—" : (stats?.chatUnread ?? 0)}
+            hint={t(
+              `${stats?.chatConversations ?? 0} টি কথোপকথন`,
+              `${stats?.chatConversations ?? 0} conversations`,
+            )}
+            icon="💬"
+            tone="orange"
+          />
+        </div>
       </section>
 
       {/* Recent circulars */}

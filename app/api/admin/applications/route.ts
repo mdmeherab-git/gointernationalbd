@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/admin";
-import { dbAll, getDb } from "@/lib/cf";
+import { dbAll, dbFirst, getDb } from "@/lib/cf";
 import { APPLICATION_STATUS } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
@@ -17,24 +17,67 @@ export interface ApplicationRow {
   created_at: string;
 }
 
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
 export async function GET(req: Request) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const db = await getDb();
-  if (!db) return Response.json({ applications: [], dbReady: false });
+  if (!db) {
+    return Response.json({
+      applications: [],
+      total: 0,
+      page: 1,
+      limit: DEFAULT_LIMIT,
+      dbReady: false,
+    });
+  }
 
   const url = new URL(req.url);
   const status = url.searchParams.get("status");
+  const q = (url.searchParams.get("q") || "").trim();
+  const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+  const limit = Math.min(
+    MAX_LIMIT,
+    Math.max(1, Number(url.searchParams.get("limit")) || DEFAULT_LIMIT),
+  );
 
-  let sql = "SELECT * FROM applications";
+  const where: string[] = [];
   const params: unknown[] = [];
+
   if (status && APPLICATION_STATUS.includes(status as (typeof APPLICATION_STATUS)[number])) {
-    sql += " WHERE status = ?";
+    where.push("status = ?");
     params.push(status);
   }
-  sql += " ORDER BY created_at DESC";
 
-  const rows = await dbAll<ApplicationRow>(sql, ...params);
-  return Response.json({ applications: rows, dbReady: true });
+  if (q) {
+    where.push("(applicant_name LIKE ? OR phone LIKE ? OR email LIKE ?)");
+    const like = `%${q}%`;
+    params.push(like, like, like);
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+  const countRow = await dbFirst<{ total: number }>(
+    `SELECT COUNT(*) AS total FROM applications ${whereSql}`,
+    ...params,
+  );
+  const total = countRow?.total ?? 0;
+
+  const offset = (page - 1) * limit;
+  const rows = await dbAll<ApplicationRow>(
+    `
+      SELECT * FROM applications
+      ${whereSql}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `,
+    ...params,
+    limit,
+    offset,
+  );
+
+  return Response.json({ applications: rows, total, page, limit, dbReady: true });
 }

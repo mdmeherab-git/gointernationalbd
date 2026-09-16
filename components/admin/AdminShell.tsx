@@ -33,13 +33,14 @@ export function useAdminLang(): LangCtx {
 
 /* ================================ nav ==================================== */
 
-const NAV: { href: string; icon: string; bn: string; en: string; badge?: "circ" | "notice" | "app" }[] = [
+const NAV: { href: string; icon: string; bn: string; en: string; badge?: "circ" | "notice" | "app" | "chat" }[] = [
   { href: "/admin", icon: "📊", bn: "ড্যাশবোর্ড", en: "Dashboard" },
   { href: "/admin/circulars", icon: "📄", bn: "সার্কুলার", en: "Circulars", badge: "circ" },
   { href: "/admin/notices", icon: "📢", bn: "নোটিশ", en: "Notices", badge: "notice" },
   { href: "/admin/applications", icon: "👤", bn: "আবেদনসমূহ", en: "Applications", badge: "app" },
   { href: "/admin/users", icon: "👥", bn: "রেজিস্টার্ড ইউজার", en: "Registered Users" },
   { href: "/admin/popular-countries", icon: "🌍", bn: "জনপ্রিয় দেশ", en: "Popular Countries" },
+  { href: "/admin/chat", icon: "💬", bn: "চ্যাট সেন্টার", en: "Chat Center", badge: "chat" },
   { href: "/admin/settings", icon: "⚙️", bn: "সেটিংস", en: "Settings" },
 ];
 
@@ -47,6 +48,7 @@ type Stats = {
   circularsActive: number;
   noticesActive: number;
   applicationsNew: number;
+  chatUnread: number;
 };
 
 /* ============================== component =============================== */
@@ -107,10 +109,16 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   }
 
   const isBn = lang === "bn";
-  const badgeFor = (b?: "circ" | "notice" | "app") => {
+  const badgeFor = (b?: "circ" | "notice" | "app" | "chat") => {
     if (!b || !stats) return null;
     const n =
-      b === "circ" ? stats.circularsActive : b === "notice" ? stats.noticesActive : stats.applicationsNew;
+      b === "circ"
+        ? stats.circularsActive
+        : b === "notice"
+          ? stats.noticesActive
+          : b === "app"
+            ? stats.applicationsNew
+            : stats.chatUnread;
     if (!n) return null;
     return (
       <span className="ml-auto rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">

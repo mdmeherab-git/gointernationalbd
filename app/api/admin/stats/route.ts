@@ -18,6 +18,8 @@ const EMPTY = {
   usersActive: 0,
   usersDisabled: 0,
   usersNewToday: 0,
+  chatConversations: 0,
+  chatUnread: 0,
 };
 
 export async function GET(req: Request) {
@@ -42,7 +44,11 @@ export async function GET(req: Request) {
       (SELECT COUNT(*) FROM users) AS usersTotal,
       (SELECT COUNT(*) FROM users WHERE status = 'active') AS usersActive,
       (SELECT COUNT(*) FROM users WHERE status = 'disabled') AS usersDisabled,
-      (SELECT COUNT(*) FROM users WHERE date(created_at) = date('now')) AS usersNewToday
+      (SELECT COUNT(*) FROM users WHERE date(created_at) = date('now')) AS usersNewToday,
+      (SELECT COUNT(*) FROM chat_conversations WHERE admin_deleted_at IS NULL) AS chatConversations,
+      (SELECT COUNT(*) FROM chat_messages m
+        JOIN chat_conversations c ON c.id = m.conversation_id
+        WHERE m.sender_type = 'user' AND m.is_read = 0 AND c.admin_deleted_at IS NULL) AS chatUnread
   `);
 
   return Response.json({ stats: { ...EMPTY, ...(row ?? {}) }, dbReady: true });
