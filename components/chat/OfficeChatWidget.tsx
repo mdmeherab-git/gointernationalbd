@@ -443,6 +443,57 @@ export default function OfficeChatWidget() {
     attachmentInputRef.current.click();
   }
 
+  async function uploadViaProxy(file: File, kind: "document" | "media" | "audio") {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("kind", kind);
+
+    const res = await fetch("/api/chat/upload", {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      throw new Error(data.error || "File upload করা যায়নি।");
+    }
+  }
+
+  async function uploadDirectToR2(
+    file: File,
+    kind: "document" | "media" | "audio",
+    uploadUrl: string,
+    key: string,
+  ) {
+    const putRes = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "content-type": file.type || "application/octet-stream" },
+      body: file,
+    });
+
+    if (!putRes.ok) {
+      throw new Error("File upload করা যায়নি (storage)।");
+    }
+
+    const completeRes = await fetch("/api/chat/upload/complete", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        key,
+        name: file.name,
+        mime: file.type || "application/octet-stream",
+        kind,
+      }),
+    });
+
+    const data = (await completeRes.json().catch(() => ({}))) as { error?: string };
+    if (!completeRes.ok) {
+      throw new Error(data.error || "File upload করা যায়নি।");
+    }
+  }
+
   async function uploadAttachment(file: File, kind: "document" | "media" | "audio") {
     if (uploading) return;
 
@@ -451,22 +502,35 @@ export default function OfficeChatWidget() {
     setError("");
 
     try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("kind", kind);
-
-      const res = await fetch("/api/chat/upload", {
+      const presignRes = await fetch("/api/chat/upload/presign", {
         method: "POST",
         credentials: "include",
-        body: form,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          mime: file.type || "application/octet-stream",
+          size: file.size,
+          kind,
+        }),
       });
 
-      const data = (await res.json().catch(() => ({}))) as {
+      const presignData = (await presignRes.json().catch(() => ({}))) as {
+        mode?: "direct" | "proxy";
+        uploadUrl?: string;
+        key?: string;
         error?: string;
       };
 
-      if (!res.ok) {
-        throw new Error(data.error || "File upload করা যায়নি।");
+      if (!presignRes.ok) {
+        throw new Error(presignData.error || "File upload করা যায়নি।");
+      }
+
+      if (presignData.mode === "direct" && presignData.uploadUrl && presignData.key) {
+        await uploadDirectToR2(file, kind, presignData.uploadUrl, presignData.key);
+      } else {
+        // No direct-to-R2 credentials configured for this environment
+        // (e.g. local dev) — fall back to the server-proxied route.
+        await uploadViaProxy(file, kind);
       }
 
       setSelectedFileName("");

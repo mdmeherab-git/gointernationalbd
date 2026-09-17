@@ -111,8 +111,12 @@ export default function AdminChatPage() {
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const messagesRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingKindRef = useRef<"document" | "media" | "audio" | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setQ(searchInput.trim()), 400);
@@ -220,6 +224,90 @@ export default function AdminChatPage() {
       toast.push((e as Error).message, "err");
     } finally {
       setSending(false);
+    }
+  }
+
+  function pickAttachment(kind: "document" | "media" | "audio") {
+    setAttachMenuOpen(false);
+    pendingKindRef.current = kind;
+    if (!fileInputRef.current) return;
+    fileInputRef.current.accept =
+      kind === "document"
+        ? ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,application/zip,application/x-rar-compressed"
+        : kind === "audio"
+          ? "audio/*"
+          : "image/*,video/*";
+    fileInputRef.current.click();
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const kind = pendingKindRef.current;
+    if (!file || !kind || !selectedId) return;
+    await uploadAttachment(file, kind);
+  }
+
+  async function uploadAttachment(file: File, kind: "document" | "media" | "audio") {
+    if (!selectedId || uploadingFile) return;
+    setUploadingFile(true);
+    try {
+      const presignRes = await fetch("/api/admin/chat/upload/presign", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          conversationId: selectedId,
+          fileName: file.name,
+          mime: file.type || "application/octet-stream",
+          size: file.size,
+          kind,
+        }),
+      });
+      const presignData = (await presignRes.json().catch(() => ({}))) as {
+        mode?: "direct" | "proxy";
+        uploadUrl?: string;
+        key?: string;
+        error?: string;
+      };
+      if (!presignRes.ok) throw new Error(presignData.error || "File upload করা যায়নি।");
+
+      if (presignData.mode === "direct" && presignData.uploadUrl && presignData.key) {
+        const putRes = await fetch(presignData.uploadUrl, {
+          method: "PUT",
+          headers: { "content-type": file.type || "application/octet-stream" },
+          body: file,
+        });
+        if (!putRes.ok) throw new Error("File upload করা যায়নি (storage)।");
+
+        const completeRes = await fetch("/api/admin/chat/upload/complete", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            conversationId: selectedId,
+            key: presignData.key,
+            name: file.name,
+            mime: file.type || "application/octet-stream",
+            kind,
+          }),
+        });
+        const completeData = (await completeRes.json().catch(() => ({}))) as { error?: string };
+        if (!completeRes.ok) throw new Error(completeData.error || "File upload করা যায়নি।");
+      } else {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("kind", kind);
+        form.append("conversationId", selectedId);
+        await apiSend("/api/admin/chat/upload", "POST", form);
+      }
+
+      await loadThread(selectedId, false);
+      await loadList();
+    } catch (e) {
+      toast.push((e as Error).message, "err");
+    } finally {
+      setUploadingFile(false);
     }
   }
 
@@ -572,6 +660,36 @@ export default function AdminChatPage() {
               </div>
 
               <div className="flex items-center gap-2 border-t border-gray-100 p-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileSelected}
+                />
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setAttachMenuOpen((v) => !v)}
+                    disabled={uploadingFile}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    title={t("Attachment", "Attachment")}
+                  >
+                    {uploadingFile ? "…" : "📎"}
+                  </button>
+                  {attachMenuOpen && (
+                    <div className="absolute bottom-12 left-0 z-20 w-44 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-xl">
+                      <MenuItem onClick={() => pickAttachment("document")}>
+                        📄 {t("Document", "Document")}
+                      </MenuItem>
+                      <MenuItem onClick={() => pickAttachment("media")}>
+                        🖼️ {t("Photo/Video", "Photo/Video")}
+                      </MenuItem>
+                      <MenuItem onClick={() => pickAttachment("audio")}>
+                        🎙️ {t("Audio", "Audio")}
+                      </MenuItem>
+                    </div>
+                  )}
+                </div>
                 <TextInput
                   value={reply}
                   onChange={(e) => setReply(e.target.value)}

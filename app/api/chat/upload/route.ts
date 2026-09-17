@@ -1,56 +1,11 @@
 import { NextResponse } from "next/server";
 import { dbFirst, dbRun, getUploads, newId } from "@/lib/cf";
+import { classifyAttachment, extensionFor, sizeLimitFor } from "@/lib/chat-upload";
 
 export const dynamic = "force-dynamic";
 
 const USER_COOKIE = "gib_user";
 const GUEST_COOKIE = "gib_chat_guest";
-
-const MAX_DOCUMENT_SIZE = 20 * 1024 * 1024;
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
-const MAX_AUDIO_SIZE = 15 * 1024 * 1024;
-
-const DOCUMENT_TYPES = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "text/plain",
-  "text/csv",
-  "application/zip",
-  "application/x-zip-compressed",
-  "application/x-rar-compressed",
-  "application/vnd.rar",
-]);
-
-const IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
-
-const VIDEO_TYPES = new Set([
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
-  "video/x-msvideo",
-  "video/mpeg",
-]);
-
-const AUDIO_TYPES = new Set([
-  "audio/webm",
-  "audio/ogg",
-  "audio/mpeg",
-  "audio/mp4",
-  "audio/wav",
-  "audio/x-wav",
-  "audio/aac",
-]);
 
 type SessionRow = {
   user_id: string;
@@ -177,29 +132,6 @@ function setGuestCookie(response: NextResponse, guestId: string, shouldSet: bool
   return response;
 }
 
-function getExtension(fileName: string, mime: string) {
-  const raw = fileName.split(".").pop()?.toLowerCase() || "bin";
-  const safe = raw.replace(/[^a-z0-9]/g, "").slice(0, 10);
-  if (safe) return safe;
-
-  const map: Record<string, string> = {
-    "application/pdf": "pdf",
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "video/mp4": "mp4",
-    "audio/webm": "webm",
-  };
-  return map[mime] || "bin";
-}
-
-function classify(mime: string, requestedKind: string) {
-  if (requestedKind === "document" && DOCUMENT_TYPES.has(mime)) return "document" as const;
-  if (requestedKind === "media" && (IMAGE_TYPES.has(mime) || VIDEO_TYPES.has(mime))) return "media" as const;
-  if (requestedKind === "audio" && AUDIO_TYPES.has(mime)) return "audio" as const;
-  return null;
-}
-
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
@@ -214,7 +146,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Fileটি empty।" }, { status: 400 });
     }
 
-    const kind = classify(file.type, requestedKind);
+    const kind = classifyAttachment(file.type, requestedKind);
     if (!kind) {
       return NextResponse.json(
         { error: "এই file type এই attachment option-এর জন্য অনুমোদিত নয়।" },
@@ -222,14 +154,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const limit =
-      kind === "document"
-        ? MAX_DOCUMENT_SIZE
-        : kind === "audio"
-          ? MAX_AUDIO_SIZE
-          : IMAGE_TYPES.has(file.type)
-            ? MAX_IMAGE_SIZE
-            : MAX_VIDEO_SIZE;
+    const limit = sizeLimitFor(kind, file.type);
 
     if (file.size > limit) {
       const mb = Math.round(limit / (1024 * 1024));
@@ -257,7 +182,7 @@ export async function POST(req: Request) {
     }
 
     const conversation = await getOrCreateConversation(userId, guestId);
-    const extension = getExtension(file.name, file.type);
+    const extension = extensionFor(file.name, file.type);
     const key = `chat/${conversation.id}/${newId("file")}.${extension}`;
 
     await uploads.put(key, await file.arrayBuffer(), {

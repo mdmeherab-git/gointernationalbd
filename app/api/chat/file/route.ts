@@ -78,7 +78,6 @@ export async function GET(req: Request) {
                attachment_name, attachment_mime
         FROM chat_messages
         WHERE id = ?
-          AND sender_type = 'user'
         LIMIT 1
       `,
       messageId,

@@ -46,6 +46,13 @@ export interface R2Bucket {
     size: number;
   } | null>;
 
+  head(key: string): Promise<{
+    size: number;
+    httpMetadata?: {
+      contentType?: string;
+    };
+  } | null>;
+
   put(
     key: string,
     value: ArrayBuffer | ReadableStream | string,
@@ -254,6 +261,27 @@ function makeS3R2(
     },
 
     // -------------------------------------------------------
+    // HEAD (existence + metadata check, no body download)
+    // -------------------------------------------------------
+
+    async head(key) {
+      const r = await client.fetch(url(key), { method: "HEAD" });
+
+      if (!r.ok) {
+        return null;
+      }
+
+      return {
+        size: Number(r.headers.get("content-length") || 0),
+
+        httpMetadata: {
+          contentType:
+            r.headers.get("content-type") || undefined,
+        },
+      };
+    },
+
+    // -------------------------------------------------------
     // PUT / UPLOAD
     // -------------------------------------------------------
 
@@ -420,6 +448,60 @@ export async function getUploads(): Promise<R2Bucket | null> {
   }
 
   return null;
+}
+
+// --- R2 presigned uploads (direct browser -> R2, bypassing the server) -------
+//
+// Only available when the S3-compatible R2 API credentials are configured
+// (the Vercel/Node path — see getUploads() above). When the app is running
+// against the native Cloudflare Workers R2 binding instead (local `next dev`
+// via initOpenNextCloudflareForDev(), or a Workers deployment), there is no
+// S3 endpoint to presign a URL against, so this returns null and callers
+// fall back to the existing server-proxied upload route.
+
+export async function createPresignedUploadUrl(
+  key: string,
+  contentType: string,
+  expiresInSeconds = 300,
+): Promise<string | null> {
+  const ctx = await loadContextEnv();
+  if (ctx?.UPLOADS) {
+    // Native Workers R2 binding — no S3 endpoint available to presign.
+    return null;
+  }
+
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const bucket = process.env.R2_BUCKET || "gib-uploads";
+
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    return null;
+  }
+
+  const client = new AwsClient({
+    accessKeyId,
+    secretAccessKey,
+    service: "s3",
+    region: "auto",
+  });
+
+  const objectUrl = new URL(
+    `https://${accountId}.r2.cloudflarestorage.com/${bucket}/` +
+      key.split("/").map(encodeURIComponent).join("/"),
+  );
+
+  // Must be set before signing — aws4fetch signs whatever X-Amz-Expires is
+  // already on the URL, defaulting to 86400s only if it's absent.
+  objectUrl.searchParams.set("X-Amz-Expires", String(expiresInSeconds));
+
+  const signed = await client.sign(objectUrl.toString(), {
+    method: "PUT",
+    headers: { "content-type": contentType },
+    aws: { signQuery: true },
+  });
+
+  return signed.url;
 }
 
 // --- Query helpers -----------------------------------------------------------
