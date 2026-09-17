@@ -1126,19 +1126,19 @@ export default function JobsPage() {
                     }
                   >
 
-                    <div className="flex h-64 w-full items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-[#f8fafc]">
+                    <div className="flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-[#f8fafc]">
 
                       {job.circularUrl && job.circularType === "image" ? (
 
                         <img
-                          src={job.circularUrl}
-                          alt={
-                            isBangla
-                              ? `${getCountryName(job.country)} সার্কুলার`
-                              : `${job.country} job circular`
-                          }
-                          className="h-full w-full object-contain"
-                        />
+  src={job.circularUrl}
+  alt={
+    isBangla
+      ? `${getCountryName(job.country)} সার্কুলার`
+      : `${job.country} job circular`
+  }
+  className="h-full w-full object-contain"
+/>
 
                       ) : (
 
