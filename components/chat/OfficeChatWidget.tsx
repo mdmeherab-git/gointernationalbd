@@ -1076,13 +1076,14 @@ export default function OfficeChatWidget() {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onClick={handleIconClick}
-        className="relative flex h-[54px] w-[54px] touch-none select-none items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-lg ring-1 ring-gray-200 transition hover:scale-105 hover:shadow-xl"
+        className="relative flex h-[54px] w-[54px] touch-none select-none items-center justify-center overflow-hidden 
+        rounded-full border-2 border-white bg-white shadow-lg ring-1 ring-gray-200 transition hover:scale-105 hover:shadow-xl"
       >
         <img
           src="/logo.svg"
           alt="Chat with Office"
           draggable={false}
-          className="h-[48px] w-[48px] object-contain"
+          className="h-[55px] w-[55px] object-contain"
         />
 
         {unread > 0 && (
@@ -1091,7 +1092,7 @@ export default function OfficeChatWidget() {
           </span>
         )}
 
-        <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500" />
+        <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white" />
       </button>
 
       <div className="mt-2 flex justify-end">
