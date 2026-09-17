@@ -16,7 +16,9 @@ export async function GET(req: Request) {
   if (denied) return denied;
 
   try {
-    const messageId = new URL(req.url).searchParams.get("messageId") || "";
+    const url = new URL(req.url);
+    const messageId = url.searchParams.get("messageId") || "";
+    const forceDownload = url.searchParams.get("download") === "1";
     if (!messageId) {
       return NextResponse.json({ error: "Message ID missing." }, { status: 400 });
     }
@@ -54,7 +56,7 @@ export async function GET(req: Request) {
     headers.set("cache-control", "private, max-age=3600");
     headers.set(
       "content-disposition",
-      `inline; filename*=UTF-8''${encodeURIComponent(message.attachment_name || "attachment")}`,
+      `${forceDownload ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(message.attachment_name || "attachment")}`,
     );
 
     return new NextResponse(object.body, { status: 200, headers });

@@ -730,6 +730,10 @@ export default function OfficeChatWidget() {
     return `/api/chat/file?messageId=${encodeURIComponent(messageId)}`;
   }
 
+  function downloadUrl(messageId: string) {
+    return `${attachmentUrl(messageId)}&download=1`;
+  }
+
   function formatBytes(size?: number | null) {
     if (!size || size < 1) return "";
     if (size < 1024) return `${size} B`;
@@ -984,6 +988,16 @@ export default function OfficeChatWidget() {
                               {item.attachment_name}
                             </p>
                           )}
+
+                          <a
+                            href={downloadUrl(item.id)}
+                            download={item.attachment_name || true}
+                            className={`inline-flex items-center gap-1 text-[10px] font-semibold underline ${
+                              isUser ? "text-blue-100" : "text-gray-500"
+                            }`}
+                          >
+                            ⬇ Download
+                          </a>
                         </div>
                       ) : (
                         <p className="whitespace-pre-wrap break-words text-sm leading-5">

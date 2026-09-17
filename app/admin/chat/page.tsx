@@ -80,6 +80,10 @@ function attachmentUrl(messageId: string) {
   return `/api/admin/chat/file?messageId=${encodeURIComponent(messageId)}`;
 }
 
+function downloadUrl(messageId: string) {
+  return `${attachmentUrl(messageId)}&download=1`;
+}
+
 function conversationName(c: { user_name: string | null; visitor_id: string | null }) {
   if (c.user_name) return c.user_name;
   if (c.visitor_id) return `Guest-${c.visitor_id.slice(-6)}`;
@@ -641,6 +645,16 @@ export default function AdminChatPage() {
                                   {m.attachment_name}
                                 </p>
                               )}
+
+                              <a
+                                href={downloadUrl(m.id)}
+                                download={m.attachment_name || true}
+                                className={`inline-flex items-center gap-1 text-[10px] font-semibold underline ${
+                                  isAdmin ? "text-blue-100" : "text-gray-500"
+                                }`}
+                              >
+                                ⬇ Download
+                              </a>
                             </div>
                           ) : (
                             <p className="whitespace-pre-wrap break-words text-sm leading-5">{m.message}</p>
