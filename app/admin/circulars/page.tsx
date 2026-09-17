@@ -188,16 +188,56 @@ export default function CircularsPage() {
     }
   }
 
+  const MAX_UPLOAD_MB = 10;
+
   async function upload(kind: "circular" | "featured", file: File) {
+    if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+      toast.push(t(`File সর্বোচ্চ ${MAX_UPLOAD_MB}MB হতে পারবে`, `File must be ${MAX_UPLOAD_MB}MB or less`), "err");
+      return;
+    }
+
     setUploading(kind);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const d = await apiSend<{ url: string; type: "image" | "pdf" }>(
-        "/api/admin/upload",
-        "POST",
-        fd,
-      );
+      const presignRes = await fetch("/api/admin/upload/presign", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind, mime: file.type, size: file.size }),
+      });
+      const presignData = (await presignRes.json().catch(() => ({}))) as {
+        mode?: "direct" | "proxy";
+        uploadUrl?: string;
+        key?: string;
+        error?: string;
+      };
+      if (!presignRes.ok) throw new Error(presignData.error || "Upload failed");
+
+      let d: { url: string; type: "image" | "pdf" };
+
+      if (presignData.mode === "direct" && presignData.uploadUrl && presignData.key) {
+        const putRes = await fetch(presignData.uploadUrl, {
+          method: "PUT",
+          headers: { "content-type": file.type || "application/octet-stream" },
+          body: file,
+        });
+        if (!putRes.ok) throw new Error("Upload failed");
+
+        const completeRes = await fetch("/api/admin/upload/complete", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ key: presignData.key, kind, mime: file.type }),
+        });
+        d = (await completeRes.json().catch(() => ({}))) as { url: string; type: "image" | "pdf" };
+        if (!completeRes.ok)
+          throw new Error((d as unknown as { error?: string }).error || "Upload failed");
+      } else {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("kind", kind);
+        d = await apiSend<{ url: string; type: "image" | "pdf" }>("/api/admin/upload", "POST", fd);
+      }
+
       if (kind === "circular") {
         set("circularUrl", d.url);
         set("circularType", d.type);

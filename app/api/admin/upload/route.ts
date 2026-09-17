@@ -1,24 +1,16 @@
 import { requireAdmin } from "@/lib/admin";
 import { getUploads, newId } from "@/lib/cf";
+import { EXT_FOR_MIME, isAllowedType, MAX_UPLOAD_SIZE, parseKind } from "@/lib/admin-upload";
 
 export const dynamic = "force-dynamic";
 
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
-const ALLOWED = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/gif",
-  "application/pdf",
-]);
-const EXT: Record<string, string> = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/webp": "webp",
-  "image/gif": "gif",
-  "application/pdf": "pdf",
-};
-
+/**
+ * Legacy server-proxied admin upload — kept as a fallback for environments
+ * without S3-compatible R2 credentials (local dev against the native
+ * Cloudflare binding). Production (Vercel) uses the presign/complete
+ * direct-to-R2 flow instead (see ./presign and ./complete), since Vercel
+ * rejects large request bodies.
+ */
 export async function POST(req: Request) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
@@ -35,20 +27,19 @@ export async function POST(req: Request) {
   }
 
   const file = form.get("file");
+  const kind = parseKind(form.get("kind")) ?? "circular";
+
   if (!(file instanceof File)) {
     return Response.json({ error: "No file provided" }, { status: 400 });
   }
-  if (!ALLOWED.has(file.type)) {
-    return Response.json(
-      { error: "Only PNG, JPG, WebP, GIF or PDF files are allowed" },
-      { status: 415 },
-    );
+  if (!isAllowedType(kind, file.type)) {
+    return Response.json({ error: "এই file type অনুমোদিত নয়" }, { status: 415 });
   }
-  if (file.size > MAX_BYTES) {
-    return Response.json({ error: "File is larger than 5 MB" }, { status: 413 });
+  if (file.size > MAX_UPLOAD_SIZE) {
+    return Response.json({ error: "File সর্বোচ্চ 10MB হতে পারবে" }, { status: 413 });
   }
 
-  const key = `${newId("up")}.${EXT[file.type] ?? "bin"}`;
+  const key = `${newId("up")}.${EXT_FOR_MIME[file.type] ?? "bin"}`;
   await bucket.put(key, await file.arrayBuffer(), {
     httpMetadata: { contentType: file.type },
   });
