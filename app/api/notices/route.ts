@@ -11,6 +11,7 @@ type PublicNotice = {
   tag_type: string;
   tag_label_bn: string;
   tag_label_en: string;
+  image_url: string | null;
 };
 
 function toPublic(row: NoticeRow | (typeof FALLBACK_NOTICES)[number]): PublicNotice {
@@ -22,6 +23,7 @@ function toPublic(row: NoticeRow | (typeof FALLBACK_NOTICES)[number]): PublicNot
     tag_type: row.tag_type,
     tag_label_bn: row.tag_label_bn,
     tag_label_en: row.tag_label_en,
+    image_url: row.image_url ?? null,
   };
 }
 

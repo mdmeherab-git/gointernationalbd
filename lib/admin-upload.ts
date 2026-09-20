@@ -2,7 +2,7 @@ import "server-only";
 
 export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
 
-export type AdminUploadKind = "featured" | "circular";
+export type AdminUploadKind = "featured" | "circular" | "notice";
 
 export const FEATURED_IMAGE_TYPES = new Set([
   "image/png",
@@ -28,11 +28,13 @@ export const EXT_FOR_MIME: Record<string, string> = {
 };
 
 export function parseKind(value: unknown): AdminUploadKind | null {
-  return value === "featured" ? "featured" : value === "circular" ? "circular" : null;
+  return value === "featured" || value === "circular" || value === "notice" ? value : null;
 }
 
 export function isAllowedType(kind: AdminUploadKind, mime: string): boolean {
-  return (kind === "featured" ? FEATURED_IMAGE_TYPES : CIRCULAR_FILE_TYPES).has(mime);
+  // Notice images use the same image-only allow-list as the featured image
+  // (JPG/JPEG primarily, PNG/WebP/GIF already supported by the existing set).
+  return (kind === "circular" ? CIRCULAR_FILE_TYPES : FEATURED_IMAGE_TYPES).has(mime);
 }
 
 // Server-generated keys only ever look like "up-<uuid>.<ext>" (see newId("up")

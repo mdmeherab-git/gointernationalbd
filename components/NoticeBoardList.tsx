@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import NoticeImageModal from "./NoticeImageModal";
 
 /* =========================================================
    NOTICE BOARD LIST — now data-driven from Supabase
@@ -16,6 +17,7 @@ type Notice = {
   tag_type: "new" | "general" | "report";
   tag_label_bn: string;
   tag_label_en: string;
+  image_url?: string | null;
 };
 
 const TAG_STYLES: Record<string, string> = {
@@ -57,6 +59,7 @@ const FALLBACK_NOTICES: Notice[] = [
 export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Notice | null>(null);
 
   useEffect(() => {
     fetch("/api/notices")
@@ -75,26 +78,40 @@ export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const renderNotice = (notice: Notice, key: string) => (
-    <div key={key} className="flex items-start gap-2 py-3">
-      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
+  const renderNotice = (notice: Notice, key: string) => {
+    const hasImage = Boolean(notice.image_url);
+    return (
+      <div
+        key={key}
+        onClick={hasImage ? () => setSelected(notice) : undefined}
+        className={`flex items-start gap-2 py-3 ${
+          hasImage ? "cursor-pointer rounded-lg transition hover:bg-gray-50" : ""
+        }`}
+      >
+        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
 
-      <div className="flex-1">
-        <p className="text-sm leading-6 text-gray-800">
-          {isBangla ? notice.title_bn : notice.title_en}
-        </p>
+        <div className="flex-1">
+          <p className="text-sm leading-6 text-gray-800">
+            {isBangla ? notice.title_bn : notice.title_en}
+          </p>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-          <span>📅 {notice.notice_date}</span>
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${TAG_STYLES[notice.tag_type]}`}
-          >
-            {isBangla ? notice.tag_label_bn : notice.tag_label_en}
-          </span>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+            <span>📅 {notice.notice_date}</span>
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${TAG_STYLES[notice.tag_type]}`}
+            >
+              {isBangla ? notice.tag_label_bn : notice.tag_label_en}
+            </span>
+            {hasImage && (
+              <span className="text-[11px] font-semibold text-blue-600">
+                🖼️ {isBangla ? "নোটিশ দেখুন" : "View Notice"}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-xl md:p-8">
@@ -150,6 +167,12 @@ export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
       >
         {isBangla ? "সকল নোটিশ দেখুন →" : "View All Notices →"}
       </button>
+
+      <NoticeImageModal
+        notice={selected}
+        isBangla={isBangla}
+        onClose={() => setSelected(null)}
+      />
     </div>
   );
 }

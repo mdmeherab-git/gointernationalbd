@@ -41,6 +41,7 @@ export const NOTICE_FIELDS: Record<string, Coercer> = {
   tag_type: oneOf(["new", "general", "report"] as const, "general"),
   tag_label_bn: asText,
   tag_label_en: asText,
+  image_url: asTextOrNull,
   status: oneOf(["active", "inactive"] as const, "active"),
   sort_order: asInt,
 };

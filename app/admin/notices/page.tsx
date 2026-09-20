@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiGet, apiSend } from "@/components/admin/api";
 import { useAdminLang } from "@/components/admin/AdminShell";
 import {
@@ -25,9 +25,12 @@ type Notice = {
   tag_type: "new" | "general" | "report";
   tag_label_bn: string;
   tag_label_en: string;
+  image_url: string | null;
   status: "active" | "inactive";
   sort_order: number;
 };
+
+const MAX_NOTICE_IMAGE_MB = 10;
 
 const TAG_PRESET: Record<Notice["tag_type"], { bn: string; en: string }> = {
   new: { bn: "নতুন", en: "New" },
@@ -44,6 +47,7 @@ function blank(order: number): Notice {
     tag_type: "new",
     tag_label_bn: "নতুন",
     tag_label_en: "New",
+    image_url: null,
     status: "active",
     sort_order: order,
   };
@@ -56,6 +60,8 @@ export default function NoticesPage() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Notice | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageFileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     try {
@@ -81,6 +87,69 @@ export default function NoticesPage() {
   const set = <K extends keyof Notice>(k: K, v: Notice[K]) =>
     setDraft((d) => (d ? { ...d, [k]: v } : d));
 
+  async function uploadNoticeImage(file: File) {
+    if (file.size > MAX_NOTICE_IMAGE_MB * 1024 * 1024) {
+      toast.push(
+        t(
+          `Notice image সর্বোচ্চ ${MAX_NOTICE_IMAGE_MB}MB হতে পারবে।`,
+          `Notice image must be ${MAX_NOTICE_IMAGE_MB}MB or less.`,
+        ),
+        "err",
+      );
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const presignRes = await fetch("/api/admin/upload/presign", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind: "notice", mime: file.type, size: file.size }),
+      });
+      const presignData = (await presignRes.json().catch(() => ({}))) as {
+        mode?: "direct" | "proxy";
+        uploadUrl?: string;
+        key?: string;
+        error?: string;
+      };
+      if (!presignRes.ok) throw new Error(presignData.error || "Upload failed");
+
+      let d: { url: string; type: "image" | "pdf" };
+
+      if (presignData.mode === "direct" && presignData.uploadUrl && presignData.key) {
+        const putRes = await fetch(presignData.uploadUrl, {
+          method: "PUT",
+          headers: { "content-type": file.type || "application/octet-stream" },
+          body: file,
+        });
+        if (!putRes.ok) throw new Error("Upload failed");
+
+        const completeRes = await fetch("/api/admin/upload/complete", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ key: presignData.key, kind: "notice", mime: file.type }),
+        });
+        d = (await completeRes.json().catch(() => ({}))) as { url: string; type: "image" | "pdf" };
+        if (!completeRes.ok)
+          throw new Error((d as unknown as { error?: string }).error || "Upload failed");
+      } else {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("kind", "notice");
+        d = await apiSend<{ url: string; type: "image" | "pdf" }>("/api/admin/upload", "POST", fd);
+      }
+
+      set("image_url", d.url);
+      toast.push(t("ছবি আপলোড হয়েছে", "Image uploaded"));
+    } catch (e) {
+      toast.push((e as Error).message, "err");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   async function save() {
     if (!draft) return;
     if (!draft.title_bn.trim() && !draft.title_en.trim()) {
@@ -95,6 +164,7 @@ export default function NoticesPage() {
       tag_type: draft.tag_type,
       tag_label_bn: draft.tag_label_bn,
       tag_label_en: draft.tag_label_en,
+      image_url: draft.image_url,
       status: draft.status,
       sort_order: draft.sort_order,
     };
@@ -263,6 +333,63 @@ export default function NoticesPage() {
                 onChange={(e) => set("title_en", e.target.value)}
               />
             </Field>
+
+            <Field
+              label={t("নোটিশ ছবি (JPG)", "Notice Image (JPG)")}
+              hint={t(
+                `সর্বোচ্চ ${MAX_NOTICE_IMAGE_MB}MB, JPG/PNG`,
+                `Max ${MAX_NOTICE_IMAGE_MB}MB, JPG/PNG`,
+              )}
+            >
+              <input
+                ref={imageFileRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadNoticeImage(f);
+                  e.target.value = "";
+                }}
+              />
+
+              {draft.image_url && (
+                <div className="mb-2 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={draft.image_url}
+                    alt={t("নোটিশ ছবি", "Notice image")}
+                    className="max-h-48 w-full object-contain"
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <Btn
+                  variant="ghost"
+                  type="button"
+                  onClick={() => imageFileRef.current?.click()}
+                  disabled={uploadingImage}
+                >
+                  {uploadingImage
+                    ? "..."
+                    : draft.image_url
+                      ? t("ছবি পরিবর্তন করুন", "Replace image")
+                      : t("ছবি আপলোড", "Upload image")}
+                </Btn>
+                {draft.image_url && (
+                  <Btn
+                    variant="ghost"
+                    type="button"
+                    onClick={() => set("image_url", null)}
+                    disabled={uploadingImage}
+                  >
+                    {t("সরান", "Remove")}
+                  </Btn>
+                )}
+              </div>
+            </Field>
+
             <div className="grid grid-cols-2 gap-x-3">
               <Field label={t("তারিখ", "Date")}>
                 <TextInput

@@ -109,6 +109,7 @@ export interface NoticeRow {
   tag_type: NoticeTag;
   tag_label_bn: string;
   tag_label_en: string;
+  image_url: string | null;
   status: Status;
   sort_order: number;
   created_at?: string;
@@ -218,21 +219,24 @@ export const FALLBACK_NOTICES = [
     title_bn: "সম্প্রতি সংযুক্ত আরব আমিরাতে ভিসা বাতিল হওয়া প্রবাসী বাংলাদেশি নাগরিকদের তথ্য নিম্নে দেখুন",
     title_en: "Information on Bangladeshi nationals whose UAE visas were recently cancelled",
     notice_date: "2026-09-01", tag_type: "new" as NoticeTag,
-    tag_label_bn: "নতুন", tag_label_en: "New", status: "active" as Status, sort_order: 1,
+    tag_label_bn: "নতুন", tag_label_en: "New", image_url: null as string | null,
+    status: "active" as Status, sort_order: 1,
   },
   {
     id: "seed-not-2",
     title_bn: "৩ ক্যাটাগরিতে বাণিজ্যিক গুরুত্বপূর্ণ ব্যক্তি (অনিবাসী বাংলাদেশি)-২০২৭ নির্বাচন সংক্রান্ত বিজ্ঞপ্তি",
     title_en: "Notice on the 2027 selection of commercially important persons (NRB) in 3 categories",
     notice_date: "2026-08-30", tag_type: "new" as NoticeTag,
-    tag_label_bn: "নতুন", tag_label_en: "New", status: "active" as Status, sort_order: 2,
+    tag_label_bn: "নতুন", tag_label_en: "New", image_url: null as string | null,
+    status: "active" as Status, sort_order: 2,
   },
   {
     id: "seed-not-3",
     title_bn: "বার্ষিক ক্রয় পরিকল্পনা ২০২৬-২৭",
     title_en: "Annual procurement plan 2026-27",
     notice_date: "2026-08-17", tag_type: "report" as NoticeTag,
-    tag_label_bn: "বিভিন্ন প্রতিবেদন", tag_label_en: "Reports", status: "active" as Status, sort_order: 3,
+    tag_label_bn: "বিভিন্ন প্রতিবেদন", tag_label_en: "Reports", image_url: null as string | null,
+    status: "active" as Status, sort_order: 3,
   },
 ];
 
