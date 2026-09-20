@@ -15,6 +15,7 @@ export interface ApplicationRow {
   message: string;
   status: string;
   created_at: string;
+  user_id: string | null;
 }
 
 const DEFAULT_LIMIT = 20;

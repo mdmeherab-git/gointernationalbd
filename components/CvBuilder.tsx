@@ -109,12 +109,24 @@ async function smartCropToSquare(file: File): Promise<string> {
   return canvas.toDataURL("image/jpeg", 0.9);
 }
 
-export default function CvBuilder({ isBangla }: { isBangla: boolean }) {
-  const [step, setStep] = useState<"upload" | "form">("upload");
+export default function CvBuilder({
+  isBangla,
+  initialData,
+  onSaved,
+}: {
+  isBangla: boolean;
+  /** Pre-fills the form and skips the passport-upload step — used by
+   *  /account/cv to reopen a previously saved CV for editing. */
+  initialData?: CvData;
+  /** Called after a PDF download successfully persists the CV data to the
+   *  signed-in user's account (see the best-effort save in buildPdfBytes). */
+  onSaved?: () => void;
+}) {
+  const [step, setStep] = useState<"upload" | "form">(initialData ? "form" : "upload");
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
   const [lowConfidenceWarning, setLowConfidenceWarning] = useState<string | null>(null);
-  const [cvData, setCvData] = useState<CvData>(emptyCvData);
+  const [cvData, setCvData] = useState<CvData>(initialData ?? emptyCvData);
   const [generating, setGenerating] = useState(false);
   const [generatingDocsOnly, setGeneratingDocsOnly] = useState(false);
   const [cleanDownloadOpen, setCleanDownloadOpen] = useState(false);
@@ -254,11 +266,29 @@ export default function CvBuilder({ isBangla }: { isBangla: boolean }) {
     return finalBytes;
   };
 
+  /* Best-effort save of the CV data to the signed-in user's account.
+     Silently no-ops for guests (401) — the homepage CV modal keeps working
+     exactly as before for anonymous visitors. */
+  const saveCvToAccount = async () => {
+    try {
+      const res = await fetch("/api/account/cv", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ data: cvData }),
+      });
+      if (res.ok) onSaved?.();
+    } catch {
+      // Non-fatal — the PDF download itself already succeeded.
+    }
+  };
+
   const handleGeneratePdf = async () => {
     setGenerating(true);
     try {
       const finalBytes = await buildPdfBytes(true);
       downloadPdfBytes(finalBytes, `${cvData.fullName || "cv"}.pdf`);
+      await saveCvToAccount();
     } finally {
       setGenerating(false);
     }
@@ -275,6 +305,7 @@ export default function CvBuilder({ isBangla }: { isBangla: boolean }) {
     try {
       const finalBytes = await buildPdfBytes(false);
       downloadPdfBytes(finalBytes, `${cvData.fullName || "cv"}-clean.pdf`);
+      await saveCvToAccount();
       setCleanDownloadOpen(false);
       setPromoCode("");
     } finally {

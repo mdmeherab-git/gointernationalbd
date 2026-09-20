@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { countries } from "./countries";
 import CvAndNoticeSection from "../components/CvAndNoticeSection";
+import Reveal from "@/components/ui/Reveal";
 import CvBuilder from "../components/CvBuilder";
+
 
 /* =========================================================
    TYPES
@@ -503,6 +505,7 @@ const [currentUser, setCurrentUser] = useState<{
 } | null>(null);
 
 const [authLoading, setAuthLoading] = useState(true);
+const [unreadNotifications, setUnreadNotifications] = useState(0);
 
 useEffect(() => {
   let cancelled = false;
@@ -549,6 +552,35 @@ useEffect(() => {
     cancelled = true;
   };
 }, []);
+
+// Polls the unread notification count for the profile-dropdown badge —
+// only once a user is confirmed logged in, so guests never trigger it.
+useEffect(() => {
+  if (!currentUser) {
+    setUnreadNotifications(0);
+    return;
+  }
+
+  let cancelled = false;
+
+  async function loadUnread() {
+    try {
+      const res = await fetch("/api/account/notifications", { cache: "no-store" });
+      const data = (await res.json().catch(() => ({}))) as { unreadCount?: number };
+      if (!cancelled) setUnreadNotifications(data.unreadCount ?? 0);
+    } catch {
+      // Non-fatal — badge just stays at its last known value.
+    }
+  }
+
+  loadUnread();
+  const interval = setInterval(loadUnread, 45000);
+
+  return () => {
+    cancelled = true;
+    clearInterval(interval);
+  };
+}, [currentUser]);
   return (
     <main className="min-h-screen bg-white">
 
@@ -853,6 +885,11 @@ useEffect(() => {
             >
               <span>🔔</span>
               {isBangla ? "নোটিফিকেশন" : "Notifications"}
+              {unreadNotifications > 0 && (
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white">
+                  {unreadNotifications}
+                </span>
+              )}
             </Link>
 
             <Link
@@ -975,664 +1012,809 @@ useEffect(() => {
       </header>
 
       {/* ===================================================
-          HERO SECTION
-      =================================================== */}
+    HERO SECTION
+=================================================== */}
 
-      <section
-        id="visa-check"
-        className="w-full bg-white"
+<section
+  id="visa-check"
+  className="w-full bg-white"
+>
+
+  <div className="mx-[192px] max-md:mx-0">
+
+    {/* IMAGE + TEXT OVERLAY */}
+
+    <div className="relative">
+
+      {/* HERO IMAGE ANIMATION */}
+
+      <Reveal
+        duration={1.1}
+        y={35}
       >
+        <img
+          src="/hero.png"
+          alt="Go International BD Travel"
+          className="block h-auto w-full"
+        />
+      </Reveal>
 
-        <div className="mx-[192px] max-md:mx-0">
+      <div className="py-8 max-md:py-0 xl:absolute xl:inset-0 xl:z-10 xl:flex xl:items-center xl:py-0">
 
-          {/* IMAGE + TEXT OVERLAY */}
+        <div className="w-full px-12 max-md:px-4">
 
-          <div className="relative">
+          <div className="max-w-[600px] max-md:absolute max-md:left-4 max-md:top-2.5 max-md:z-10 max-md:max-w-[67%]">
 
-          <img
-            src="/hero.png"
-            alt="Go International BD Travel"
-            className="block h-auto w-full"
-          />
+            {/* BADGE */}
 
-          <div className="py-8 max-md:py-0 xl:absolute xl:inset-0 xl:z-10 xl:flex xl:items-center xl:py-0">
+            <Reveal
+              delay={0.25}
+              duration={0.8}
+              y={25}
+            >
+              <div className="relative -top-2 mb-6 inline-flex items-center rounded-full border border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md max-md:top-0 max-md:mb-1.5 max-md:px-2 max-md:py-0.5 max-md:text-[8px] max-md:shadow-sm">
 
-            <div className="w-full px-12 max-md:px-4">
+                <span>🛡️</span>
 
-              <div className="max-w-[600px] max-md:absolute max-md:left-4 max-md:top-2.5 max-md:z-10 max-md:max-w-[67%]">
-
-                {/* BADGE */}
-
-                <div className="relative -top-2 mb-6 inline-flex items-center rounded-full border border-blue-200 bg-white/95 px-5 py-2 text-sm text-blue-600 shadow-md max-md:top-0 max-md:mb-1.5 max-md:px-2 max-md:py-0.5 max-md:text-[8px] max-md:shadow-sm">
-
-                  <span>🛡️</span>
-
-                  <span className="ml-2">
-                    {isBangla
-                      ? "১০০+ দেশের অফিসিয়াল ভিসা চেক"
-                      : "100+ Countries Official Visa Check"}
-                  </span>
-
-                </div>
-
-                {/* TITLE */}
-
-                <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl max-md:top-0 max-md:text-[19px] max-md:leading-tight">
-
-                  {isBangla ? (
-                    <>
-                      অফিসিয়াল{" "}
-                      <span className="text-blue-800">
-                        ভিসা স্ট্যাটাস
-                      </span>
-                      <br />
-                      <span className="whitespace-nowrap">
-                         চেক করুন
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      Check Official{" "}
-                      <span className="text-blue-600">
-                        Visa Status
-                      </span>
-                      <br />
-                      for Multiple Countries
-                    </>
-                  )}
-
-                </h1>
-
-                {/* DESCRIPTION */}
-
-                <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700 max-md:top-0 max-md:mt-1.5 max-md:text-[8px] max-md:font-medium max-md:leading-snug max-md:text-balance">
-
+                <span className="ml-2">
                   {isBangla
-                    ? "সরকারি উৎস থেকে সরাসরি আপনার ভিসার স্ট্যাটাস চেক করুন। দ্রুত, নির্ভরযোগ্য ও নিরাপদ।"
-                    : "Check your visa status directly from official government sources. Fast, reliable and 100% secure."}
-
-                </p>
-
-                </div>
-
-                {/* VISA CHECK BOX */}
-
-                <div className="mt-8 w-full max-w-[600px] xl:max-w-[760px] rounded-2xl bg-white p-2 shadow-xl max-md:mt-3 max-md:p-1.5 xl:relative xl:top-32">
-
-                  <div className="flex flex-wrap items-stretch gap-2 max-md:grid max-md:grid-cols-2 max-md:gap-1.5">
-
-                    {/* COUNTRY */}
-
-                    <select
-                      value={selectedCountry}
-                      onChange={(e) =>
-                        setSelectedCountry(e.target.value)
-                      }
-                      className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
-                    >
-
-                      <option value="">
-                        {isBangla
-                          ? "দেশ নির্বাচন করুন"
-                          : "Select Country"}
-                      </option>
-
-                      {countries.map((country) => (
-                        <option
-                          key={country.code}
-                          value={country.code}
-                        >
-                          {country.name}
-                        </option>
-                      ))}
-
-                    </select>
-
-                    {/* VISA TYPE */}
-
-                    <select
-                      value={visaType}
-                      onChange={(e) =>
-                        setVisaType(e.target.value)
-                      }
-                      className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
-                    >
-
-                      <option value="">
-                        {isBangla
-                          ? "ভিসার ধরন"
-                          : "Select Visa Type"}
-                      </option>
-
-                      <option value="work">
-                        {isBangla
-                          ? "ওয়ার্ক ভিসা"
-                          : "Work Visa"}
-                      </option>
-
-                      <option value="tourist">
-                        {isBangla
-                          ? "ট্যুরিস্ট ভিসা"
-                          : "Tourist Visa"}
-                      </option>
-
-                      <option value="student">
-                        {isBangla
-                          ? "স্টুডেন্ট ভিসা"
-                          : "Student Visa"}
-                      </option>
-
-                      <option value="business">
-                        {isBangla
-                          ? "বিজনেস ভিসা"
-                          : "Business Visa"}
-                      </option>
-
-                      <option value="family">
-                        {isBangla
-                          ? "ফ্যামিলি ভিসা"
-                          : "Family Visa"}
-                      </option>
-
-                      <option value="transit">
-                        {isBangla
-                          ? "ট্রানজিট ভিসা"
-                          : "Transit Visa"}
-                      </option>
-
-                    </select>
-
-                    {/* PASSPORT */}
-
-                    <input
-                      type="text"
-                      value={passportNumber}
-                      onChange={(e) =>
-                        setPassportNumber(e.target.value)
-                      }
-                      placeholder={
-                        isBangla
-                          ? "পাসপোর্ট নম্বর"
-                          : "Passport Number"
-                      }
-                      className="h-14 min-w-[180px] flex-1 rounded-xl border border-gray-200 bg-white px-4 text-gray-700 outline-none placeholder:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
-                    />
-
-                    {/* BUTTON */}
-
-                    <button
-                      type="button"
-                      onClick={handleVisaCheck}
-                      className="h-14 min-w-[160px] shrink-0 rounded-xl bg-blue-600 px-5 text-sm font-semibold leading-tight text-white transition hover:bg-blue-700 max-md:h-10 max-md:min-w-0 max-md:px-1 max-md:text-[10px] max-md:leading-none"
-                    >
-                      🔍{" "}
-                      {isBangla
-                        ? "ভিসা চেক করুন"
-                        : "Check Visa"}
-                      <br />
-                      {isBangla ? "এখনই" : "Now"}
-                    </button>
-
-                  </div>
-
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* ===================================================
-          SCROLLING NOTICE BOARD
-      =================================================== */}
-
-      {notice.enabled && (
-        <section className="w-full bg-white py-3">
-
-  <div className="mx-[192px] flex overflow-hidden rounded-xl border border-blue-100 bg-blue-50 shadow-sm max-md:mx-4">
-
-            <div className="z-10 flex shrink-0 items-center bg-[#0B4DBB] px-5 py-3 font-semibold text-white shadow-md">
-
-              📢{" "}
-              {isBangla
-                ? "বিশেষ বিজ্ঞপ্তি"
-                : "Special Notice"}
-
-            </div>
-
-            <div className="relative flex flex-1 overflow-hidden">
-
-              <div
-                className="notice-marquee flex min-w-max items-center whitespace-nowrap py-3"
-                style={{
-                  animationDuration: `${Math.max(
-                    5,
-                    notice.speed
-                  )}s`,
-                  animationDirection:
-                    notice.direction === "right"
-                      ? "reverse"
-                      : "normal",
-                }}
-              >
-
-                <span className="mx-8 text-sm font-medium text-[#0B2A55]">
-                  {isBangla
-                    ? notice.bangla
-                    : notice.english}
-                </span>
-
-                <span className="mx-8 text-sm font-medium text-[#0B2A55]">
-                  {isBangla
-                    ? notice.bangla
-                    : notice.english}
-                </span>
-
-                <span className="mx-8 text-sm font-medium text-[#0B2A55]">
-                  {isBangla
-                    ? notice.bangla
-                    : notice.english}
+                    ? "১০০+ দেশের অফিসিয়াল ভিসা চেক"
+                    : "100+ Countries Official Visa Check"}
                 </span>
 
               </div>
+            </Reveal>
 
-            </div>
+            {/* TITLE */}
 
-          </div>
+            <Reveal
+              delay={0.4}
+              duration={0.9}
+              y={35}
+            >
+              <h1 className="relative -top-5 text-5xl font-bold leading-tight text-[#000000] max-lg:text-4xl max-md:top-0 max-md:text-[19px] max-md:leading-tight">
 
-        </section>
-      )}
+                {isBangla ? (
+                  <>
+                    অফিসিয়াল{" "}
+                    <span className="text-blue-800">
+                      ভিসা স্ট্যাটাস
+                    </span>
+                    <br />
+                    <span className="whitespace-nowrap">
+                      চেক করুন
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Check Official{" "}
+                    <span className="text-blue-600">
+                      Visa Status
+                    </span>
+                    <br />
+                    for Multiple Countries
+                  </>
+                )}
 
-      {/* ===================================================
-          POPULAR COUNTRIES
-      =================================================== */}
+              </h1>
+            </Reveal>
 
-      <section className="w-full bg-white py-8">
+            {/* DESCRIPTION */}
 
-        <div className="mx-[165px] px-6 max-md:mx-0">
+            <Reveal
+              delay={0.55}
+              duration={0.9}
+              y={30}
+            >
+              <p className="relative -top-5 mt-4 max-w-[600px] text-lg leading-7 text-gray-700 max-md:top-0 max-md:mt-1.5 max-md:text-[8px] max-md:font-medium max-md:leading-snug max-md:text-balance">
 
-          <div className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
-
-            <div className="mb-5 flex items-center justify-between gap-4 max-md:flex-col max-md:items-start">
-
-              <h2 className="text-xl font-bold text-[#0B2A55]">
                 {isBangla
-                  ? "জনপ্রিয় দেশসমূহ"
-                  : "Popular Countries"}
-              </h2>
+                  ? "সরকারি উৎস থেকে সরাসরি আপনার ভিসার স্ট্যাটাস চেক করুন। দ্রুত, নির্ভরযোগ্য ও নিরাপদ।"
+                  : "Check your visa status directly from official government sources. Fast, reliable and 100% secure."}
 
-              <div className="relative z-20 w-full max-w-[280px]">
+              </p>
+            </Reveal>
 
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  🔍
-                </span>
+          </div>
+
+          {/* VISA CHECK BOX */}
+
+          <Reveal
+            delay={0.7}
+            duration={1}
+            y={40}
+          >
+            <div className="mt-8 w-full max-w-[600px] rounded-2xl bg-white p-2 shadow-xl max-md:mt-3 max-md:p-1.5 xl:relative xl:top-32 xl:max-w-[760px]">
+
+              <div className="flex flex-wrap items-stretch gap-2 max-md:grid max-md:grid-cols-2 max-md:gap-1.5">
+
+                {/* COUNTRY */}
+
+                <select
+                  value={selectedCountry}
+                  onChange={(e) =>
+                    setSelectedCountry(e.target.value)
+                  }
+                  className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
+                >
+
+                  <option value="">
+                    {isBangla
+                      ? "দেশ নির্বাচন করুন"
+                      : "Select Country"}
+                  </option>
+
+                  {countries.map((country) => (
+                    <option
+                      key={country.code}
+                      value={country.code}
+                    >
+                      {country.name}
+                    </option>
+                  ))}
+
+                </select>
+
+                {/* VISA TYPE */}
+
+                <select
+                  value={visaType}
+                  onChange={(e) =>
+                    setVisaType(e.target.value)
+                  }
+                  className="h-14 min-w-[160px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-gray-700 outline-none focus:border-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
+                >
+
+                  <option value="">
+                    {isBangla
+                      ? "ভিসার ধরন"
+                      : "Select Visa Type"}
+                  </option>
+
+                  <option value="work">
+                    {isBangla
+                      ? "ওয়ার্ক ভিসা"
+                      : "Work Visa"}
+                  </option>
+
+                  <option value="tourist">
+                    {isBangla
+                      ? "ট্যুরিস্ট ভিসা"
+                      : "Tourist Visa"}
+                  </option>
+
+                  <option value="student">
+                    {isBangla
+                      ? "স্টুডেন্ট ভিসা"
+                      : "Student Visa"}
+                  </option>
+
+                  <option value="business">
+                    {isBangla
+                      ? "বিজনেস ভিসা"
+                      : "Business Visa"}
+                  </option>
+
+                  <option value="family">
+                    {isBangla
+                      ? "ফ্যামিলি ভিসা"
+                      : "Family Visa"}
+                  </option>
+
+                  <option value="transit">
+                    {isBangla
+                      ? "ট্রানজিট ভিসা"
+                      : "Transit Visa"}
+                  </option>
+
+                </select>
+
+                {/* PASSPORT */}
 
                 <input
                   type="text"
-                  value={countrySearch}
+                  value={passportNumber}
                   onChange={(e) =>
-                    setCountrySearch(e.target.value)
+                    setPassportNumber(e.target.value)
                   }
                   placeholder={
                     isBangla
-                      ? "দেশ খুঁজুন..."
-                      : "Search country..."
+                      ? "পাসপোর্ট নম্বর"
+                      : "Passport Number"
                   }
-                  className="relative z-20 w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="h-14 min-w-[180px] flex-1 rounded-xl border border-gray-200 bg-white px-4 text-gray-700 outline-none placeholder:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
                 />
 
-              </div>
+                {/* BUTTON */}
 
-            </div>
-
-            <div className="overflow-x-auto pb-2">
-
-              <div className="flex min-w-max gap-6">
-
-                {filteredCountries.map((country) => (
-                  <button
-                    key={country.code}
-                    type="button"
-                    onClick={() => {
-                      if (country.code === "my") {
-                        setMalaysiaServicesOpen(true);
-                      }
-
-                      if (country.code === "sa") {
-                        setSaudiServicesOpen(true);
-                      }
-                    }}
-                    className="group w-[95px] flex-shrink-0 text-center"
-                  >
-
-                    <div className="mx-auto flex h-14 w-20 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-blue-300 group-hover:shadow-md">
-
-                      <img
-                        src={`/flags/${country.code}.svg`}
-                        alt={country.name}
-                        className="h-full w-full object-cover"
-                      />
-
-                    </div>
-
-                    <p className="mt-2 whitespace-nowrap text-sm font-medium text-gray-700 group-hover:text-blue-600">
-                      {country.name}
-                    </p>
-
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={handleVisaCheck}
+                  className="h-14 min-w-[160px] shrink-0 rounded-xl bg-blue-600 px-5 text-sm font-semibold leading-tight text-white transition hover:bg-blue-700 max-md:h-10 max-md:min-w-0 max-md:px-1 max-md:text-[10px] max-md:leading-none"
+                >
+                  🔍{" "}
+                  {isBangla
+                    ? "ভিসা চেক করুন"
+                    : "Check Visa"}
+                  <br />
+                  {isBangla ? "এখনই" : "Now"}
+                </button>
 
               </div>
 
             </div>
-
-          </div>
+          </Reveal>
 
         </div>
 
-      </section>
+      </div>
 
-      {/* ===================================================
-          QUICK SERVICES
-      =================================================== */}
+    </div>
 
-      <section className="w-full bg-white pb-8">
-
-        <div className="mx-[165px] px-6 max-md:mx-0">
-
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-
-            {/* JOBS */}
-
-            <Link
-              href="/jobs"
-              className="block rounded-2xl border border-purple-100 bg-purple-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-            >
-
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100">
-
-                <img
-                  src="/technica-bage.svg"
-                  alt="Technical Badge"
-                  className="h-10 w-10 object-contain"
-                />
-
-              </div>
-
-              <h3 className="text-lg font-bold text-[#0B2A55]">
-                {isBangla
-                  ? "চাকরির সার্কুলার"
-                  : "Job Circular"}
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                {isBangla
-                  ? "বিশ্বস্ত উৎস থেকে সর্বশেষ বিদেশি চাকরির সুযোগ খুঁজুন।"
-                  : "Find latest overseas jobs from reliable sources."}
-              </p>
-
-              <div className="mt-5 font-semibold text-purple-600 hover:text-purple-700">
-                {isBangla
-                  ? "চাকরি দেখুন →"
-                  : "View Jobs →"}
-              </div>
-
-            </Link>
-
-            {/* SKILL TRAINING */}
-
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100">
-
-                <img
-                  src="/technical-training.svg"
-                  alt="Technical Training"
-                  className="h-10 w-10 object-contain"
-                />
-
-              </div>
-
-              <h3 className="text-lg font-bold text-[#0B2A55]">
-                {isBangla
-                  ? "দক্ষতা প্রশিক্ষণ"
-                  : "Skill Training"}
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                {isBangla
-                  ? "প্রযুক্তিগত প্রশিক্ষণে অংশ নিয়ে আপনার ক্যারিয়ারের জন্য প্রয়োজনীয় বাস্তব দক্ষতা তৈরি করুন।"
-                  : "Enroll in technical training programs and develop practical skills for your career."}
-              </p>
-
-              <button className="mt-5 font-semibold text-blue-600 hover:text-blue-700">
-                {isBangla
-                  ? "প্রশিক্ষণ দেখুন →"
-                  : "Explore Training →"}
-              </button>
-
-            </div>
-
-            
-
-            {/* TRACK APPLICATION */}
-
-            <div className="rounded-2xl border border-orange-100 bg-orange-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-orange-100 text-3xl">
-                📋
-              </div>
-
-              <h3 className="text-lg font-bold text-[#0B2A55]">
-                {isBangla
-                  ? "আবেদন ট্র্যাক করুন"
-                  : "Track Application"}
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                {isBangla
-                  ? "আপনার ভিসা অথবা আবেদনের বর্তমান স্ট্যাটাস সহজেই দেখুন।"
-                  : "Track your visa or application status easily."}
-              </p>
-
-              <button className="mt-5 font-semibold text-orange-600 hover:text-orange-700">
-                {isBangla
-                  ? "এখনই ট্র্যাক করুন →"
-                  : "Track Now →"}
-              </button>
-
-            </div>
-
-            {/* CV BUILDER — FULL CARD CLICKABLE */}
-
-<div
-  id="cv-builder"
-  role="button"
-  tabIndex={0}
-  onClick={openCvBuilder}
-  onKeyDown={(e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      openCvBuilder();
-    }
-  }}
-  className="group w-full cursor-pointer rounded-2xl border border-green-100 bg-green-50 p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
->
-
-  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl transition-transform duration-300 group-hover:scale-105">
-    📄
   </div>
-
-  <h3 className="text-lg font-bold text-[#0B2A55]">
-    {isBangla
-      ? "সিভি তৈরি করুন"
-      : "Build Your CV"}
-  </h3>
-
-  <p className="mt-2 text-sm leading-6 text-gray-600">
-    {isBangla
-      ? "নিজের জন্য এক পেজের প্রফেশনাল সিভি তৈরি করুন — সম্পূর্ণ ফ্রি।"
-      : "Create a one-page professional CV for yourself — completely free."}
-  </p>
-
-  <div className="mt-5 font-semibold text-green-600 transition-colors duration-200 group-hover:text-green-700">
-    {isBangla
-      ? "সিভি তৈরি করুন →"
-      : "Create CV →"}
-  </div>
-
-</div>
-
-</div>
-
-</div>
 
 </section>
 
       {/* ===================================================
-          LATEST JOB CIRCULARS
-      =================================================== */}
+    SCROLLING NOTICE BOARD
+=================================================== */}
 
-      <section
-        id="jobs"
-        className="w-full bg-[#F8FAFC] py-12"
-      >
+{notice.enabled && (
+  <Reveal
+    duration={0.7}
+    y={20}
+  >
+    <section className="w-full bg-white py-3">
 
-        <div className="mx-[165px] px-6 max-md:mx-0">
+      <div className="mx-[192px] flex overflow-hidden rounded-xl border border-blue-100 bg-blue-50 shadow-sm max-md:mx-4">
 
-          <div className="mb-7 flex items-end justify-between">
+        {/* NOTICE LABEL */}
 
-            <div>
+        <Reveal
+          delay={0.15}
+          duration={0.55}
+          y={10}
+        >
+          <div className="z-10 flex h-full shrink-0 items-center bg-[#0B4DBB] px-5 py-3 font-semibold text-white shadow-md max-md:px-3 max-md:text-sm">
 
-              <p className="mb-2 text-sm font-semibold text-blue-600">
-                {isBangla
-                  ? "সর্বশেষ সুযোগ"
-                  : "LATEST OPPORTUNITIES"}
-              </p>
+            📢{" "}
+            {isBangla
+              ? "বিশেষ বিজ্ঞপ্তি"
+              : "Special Notice"}
 
-              <h2 className="text-3xl font-bold text-[#0B2A55]">
-                {isBangla
-                  ? "সর্বশেষ চাকরির সার্কুলার"
-                  : "Latest Job Circulars"}
-              </h2>
+          </div>
+        </Reveal>
 
-              <p className="mt-2 text-gray-600">
-                {isBangla
-                  ? "বিদেশে কাজের সর্বশেষ সুযোগগুলো এক জায়গায় দেখুন।"
-                  : "Explore the latest overseas employment opportunities in one place."}
-              </p>
+        {/* MARQUEE */}
 
-            </div>
+        <div className="relative flex flex-1 overflow-hidden">
 
-            <Link
-              href="/jobs"
-              className="font-semibold text-blue-600 hover:text-blue-700"
-            >
+          <div
+            className="notice-marquee flex min-w-max items-center whitespace-nowrap py-3"
+            style={{
+              animationDuration: `${Math.max(
+                5,
+                notice.speed
+              )}s`,
+              animationDirection:
+                notice.direction === "right"
+                  ? "reverse"
+                  : "normal",
+            }}
+          >
+
+            <span className="mx-8 text-sm font-medium text-[#0B2A55]">
               {isBangla
-                ? "সব চাকরি দেখুন →"
-                : "View All Jobs →"}
-            </Link>
+                ? notice.bangla
+                : notice.english}
+            </span>
+
+            <span className="mx-8 text-sm font-medium text-[#0B2A55]">
+              {isBangla
+                ? notice.bangla
+                : notice.english}
+            </span>
+
+            <span className="mx-8 text-sm font-medium text-[#0B2A55]">
+              {isBangla
+                ? notice.bangla
+                : notice.english}
+            </span>
 
           </div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+        </div>
 
-            {homeJobs.map((job) => (
+      </div>
 
-              <div
-                key={job.id}
-                className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+    </section>
+  </Reveal>
+)}
+
+      {/* ===================================================
+    POPULAR COUNTRIES
+=================================================== */}
+
+<Reveal
+  duration={0.8}
+  y={25}
+>
+  <section className="w-full bg-white py-8">
+
+    <div className="mx-[165px] px-6 max-md:mx-0">
+
+      <div className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
+
+        {/* TITLE + SEARCH */}
+
+        <Reveal
+          delay={0.15}
+          duration={0.7}
+          y={18}
+        >
+          <div className="mb-5 flex items-center justify-between gap-4 max-md:flex-col max-md:items-start">
+
+            <h2 className="text-xl font-bold text-[#0B2A55]">
+              {isBangla
+                ? "জনপ্রিয় দেশসমূহ"
+                : "Popular Countries"}
+            </h2>
+
+            <div className="relative z-20 w-full max-w-[280px]">
+
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                🔍
+              </span>
+
+              <input
+                type="text"
+                value={countrySearch}
+                onChange={(e) =>
+                  setCountrySearch(e.target.value)
+                }
+                placeholder={
+                  isBangla
+                    ? "দেশ খুঁজুন..."
+                    : "Search country..."
+                }
+                className="relative z-20 w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+
+            </div>
+
+          </div>
+        </Reveal>
+
+        {/* COUNTRIES */}
+
+        <div className="overflow-x-auto pb-2">
+
+          <div className="flex min-w-max gap-6">
+
+            {filteredCountries.map((country, index) => (
+              <Reveal
+                key={country.code}
+                delay={0.25 + index * 0.045}
+                duration={0.55}
+                y={18}
               >
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (country.code === "my") {
+                      setMalaysiaServicesOpen(true);
+                    }
 
-                <div className="flex items-center justify-between">
-
-                  <div className="flex items-center gap-2">
-
-                    <span className="text-2xl">
-                      {job.flag}
-                    </span>
-
-                    <span className="font-semibold text-[#0B2A55]">
-                      {getJobCountry(job.country)}
-                    </span>
-
-                  </div>
-
-                  <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-600">
-                    {isBangla ? "সক্রিয়" : "Active"}
-                  </span>
-
-                </div>
-
-                <div className="mt-5">
-
-                  <h3 className="text-lg font-bold text-[#0B2A55]">
-                    {getJobPosition(job.position)}
-                  </h3>
-
-                  <div className="mt-4 space-y-2 text-sm">
-
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">
-                        {isBangla ? "বেতন" : "Salary"}
-                      </span>
-
-                      <span className="font-semibold text-gray-800">
-                        {job.salary}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">
-                        {isBangla ? "পদসংখ্যা" : "Vacancy"}
-                      </span>
-
-                      <span className="font-semibold text-gray-800">
-                        {job.vacancy}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">
-                        {isBangla
-                          ? "শেষ তারিখ"
-                          : "Deadline"}
-                      </span>
-
-                      <span className="font-semibold text-red-500">
-                        {job.deadline}
-                      </span>
-                    </div>
-
-                  </div>
-
-                </div>
-
-                <Link
-                  href="/jobs"
-                  className="mt-5 block rounded-xl bg-blue-600 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
+                    if (country.code === "sa") {
+                      setSaudiServicesOpen(true);
+                    }
+                  }}
+                  className="group w-[95px] flex-shrink-0 text-center"
                 >
-                  {isBangla
-                    ? "বিস্তারিত দেখুন"
-                    : "View Details"}
-                </Link>
 
-              </div>
+                  <div className="mx-auto flex h-14 w-20 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-blue-300 group-hover:shadow-md">
 
+                    <img
+                      src={`/flags/${country.code}.svg`}
+                      alt={country.name}
+                      className="h-full w-full object-cover"
+                    />
+
+                  </div>
+
+                  <p className="mt-2 whitespace-nowrap text-sm font-medium text-gray-700 group-hover:text-blue-600">
+                    {country.name}
+                  </p>
+
+                </button>
+              </Reveal>
             ))}
 
           </div>
 
         </div>
 
-      </section>
+      </div>
 
+    </div>
+
+  </section>
+</Reveal>
+
+     {/* ===================================================
+    QUICK SERVICES
+=================================================== */}
+
+<Reveal
+  duration={0.8}
+  y={25}
+>
+  <section className="w-full bg-white pb-8">
+
+    <div className="mx-[165px] px-6 max-md:mx-0">
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+
+        {/* JOBS */}
+
+        <Reveal
+          delay={0.15}
+          duration={0.65}
+          y={25}
+        >
+          <Link
+            href="/jobs"
+            className="group block h-full rounded-2xl border border-purple-100 bg-purple-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+          >
+
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100 transition-transform duration-300 group-hover:scale-105">
+
+              <img
+                src="/technica-bage.svg"
+                alt="Technical Badge"
+                className="h-10 w-10 object-contain"
+              />
+
+            </div>
+
+            <h3 className="text-lg font-bold text-[#0B2A55]">
+              {isBangla
+                ? "চাকরির সার্কুলার"
+                : "Job Circular"}
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              {isBangla
+                ? "বিশ্বস্ত উৎস থেকে সর্বশেষ বিদেশি চাকরির সুযোগ খুঁজুন।"
+                : "Find latest overseas jobs from reliable sources."}
+            </p>
+
+            <div className="mt-5 font-semibold text-purple-600 transition-colors duration-200 group-hover:text-purple-700">
+              {isBangla
+                ? "চাকরি দেখুন →"
+                : "View Jobs →"}
+            </div>
+
+          </Link>
+        </Reveal>
+
+
+        {/* SKILL TRAINING */}
+
+        <Reveal
+          delay={0.25}
+          duration={0.65}
+          y={25}
+        >
+          <div className="group h-full rounded-2xl border border-blue-100 bg-blue-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100 transition-transform duration-300 group-hover:scale-105">
+
+              <img
+                src="/technical-training.svg"
+                alt="Technical Training"
+                className="h-10 w-10 object-contain"
+              />
+
+            </div>
+
+            <h3 className="text-lg font-bold text-[#0B2A55]">
+              {isBangla
+                ? "দক্ষতা প্রশিক্ষণ"
+                : "Skill Training"}
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              {isBangla
+                ? "প্রযুক্তিগত প্রশিক্ষণে অংশ নিয়ে আপনার ক্যারিয়ারের জন্য প্রয়োজনীয় বাস্তব দক্ষতা তৈরি করুন।"
+                : "Enroll in technical training programs and develop practical skills for your career."}
+            </p>
+
+            <button
+              type="button"
+              className="mt-5 font-semibold text-blue-600 transition-colors duration-200 hover:text-blue-700"
+            >
+              {isBangla
+                ? "প্রশিক্ষণ দেখুন →"
+                : "Explore Training →"}
+            </button>
+
+          </div>
+        </Reveal>
+
+
+        {/* TRACK APPLICATION */}
+
+        <Reveal
+          delay={0.35}
+          duration={0.65}
+          y={25}
+        >
+          <div className="group h-full rounded-2xl border border-orange-100 bg-orange-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-orange-100 text-3xl transition-transform duration-300 group-hover:scale-105">
+              📋
+            </div>
+
+            <h3 className="text-lg font-bold text-[#0B2A55]">
+              {isBangla
+                ? "আবেদন ট্র্যাক করুন"
+                : "Track Application"}
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              {isBangla
+                ? "আপনার ভিসা অথবা আবেদনের বর্তমান স্ট্যাটাস সহজেই দেখুন।"
+                : "Track your visa or application status easily."}
+            </p>
+
+            <button
+              type="button"
+              className="mt-5 font-semibold text-orange-600 transition-colors duration-200 hover:text-orange-700"
+            >
+              {isBangla
+                ? "এখনই ট্র্যাক করুন →"
+                : "Track Now →"}
+            </button>
+
+          </div>
+        </Reveal>
+
+
+        {/* CV BUILDER */}
+
+        <Reveal
+          delay={0.45}
+          duration={0.65}
+          y={25}
+        >
+          <div
+            id="cv-builder"
+            role="button"
+            tabIndex={0}
+            onClick={openCvBuilder}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openCvBuilder();
+              }
+            }}
+            className="group h-full w-full cursor-pointer rounded-2xl border border-green-100 bg-green-50 p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
+          >
+
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl transition-transform duration-300 group-hover:scale-105">
+              📄
+            </div>
+
+            <h3 className="text-lg font-bold text-[#0B2A55]">
+              {isBangla
+                ? "সিভি তৈরি করুন"
+                : "Build Your CV"}
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              {isBangla
+                ? "নিজের জন্য এক পেজের প্রফেশনাল সিভি তৈরি করুন — সম্পূর্ণ ফ্রি।"
+                : "Create a one-page professional CV for yourself — completely free."}
+            </p>
+
+            <div className="mt-5 font-semibold text-green-600 transition-colors duration-200 group-hover:text-green-700">
+              {isBangla
+                ? "সিভি তৈরি করুন →"
+                : "Create CV →"}
+            </div>
+
+          </div>
+        </Reveal>
+
+      </div>
+
+    </div>
+
+  </section>
+</Reveal>
+
+      {/* ===================================================
+    LATEST JOB CIRCULARS
+=================================================== */}
+
+<Reveal
+  duration={0.8}
+  y={25}
+>
+  <section
+    id="jobs"
+    className="w-full bg-[#F8FAFC] py-12"
+  >
+
+    <div className="mx-[165px] px-6 max-md:mx-0">
+
+      {/* SECTION HEADER */}
+
+      <Reveal
+        delay={0.1}
+        duration={0.7}
+        y={20}
+      >
+        <div className="mb-7 flex items-end justify-between">
+
+          <div>
+
+            <p className="mb-2 text-sm font-semibold text-blue-600">
+              {isBangla
+                ? "সর্বশেষ সুযোগ"
+                : "LATEST OPPORTUNITIES"}
+            </p>
+
+            <h2 className="text-3xl font-bold text-[#0B2A55]">
+              {isBangla
+                ? "সর্বশেষ চাকরির সার্কুলার"
+                : "Latest Job Circulars"}
+            </h2>
+
+            <p className="mt-2 text-gray-600">
+              {isBangla
+                ? "বিদেশে কাজের সর্বশেষ সুযোগগুলো এক জায়গায় দেখুন।"
+                : "Explore the latest overseas employment opportunities in one place."}
+            </p>
+
+          </div>
+
+          <Link
+            href="/jobs"
+            className="font-semibold text-blue-600 transition-colors hover:text-blue-700"
+          >
+            {isBangla
+              ? "সব চাকরি দেখুন →"
+              : "View All Jobs →"}
+          </Link>
+
+        </div>
+      </Reveal>
+
+
+      {/* JOB CARDS */}
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+
+        {homeJobs.map((job, index) => (
+
+          <Reveal
+            key={job.id}
+            delay={0.2 + index * 0.08}
+            duration={0.65}
+            y={25}
+          >
+            <div
+              className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+            >
+
+              {/* COUNTRY + STATUS */}
+
+              <div className="flex items-center justify-between">
+
+                <div className="flex items-center gap-2">
+
+                  <span className="text-2xl">
+                    {job.flag}
+                  </span>
+
+                  <span className="font-semibold text-[#0B2A55]">
+                    {getJobCountry(job.country)}
+                  </span>
+
+                </div>
+
+                <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-600">
+                  {isBangla ? "সক্রিয়" : "Active"}
+                </span>
+
+              </div>
+
+
+              {/* JOB INFORMATION */}
+
+              <div className="mt-5">
+
+                <h3 className="text-lg font-bold text-[#0B2A55]">
+                  {getJobPosition(job.position)}
+                </h3>
+
+                <div className="mt-4 space-y-2 text-sm">
+
+                  {/* SALARY */}
+
+                  <div className="flex justify-between">
+
+                    <span className="text-gray-500">
+                      {isBangla ? "বেতন" : "Salary"}
+                    </span>
+
+                    <span className="font-semibold text-gray-800">
+                      {job.salary}
+                    </span>
+
+                  </div>
+
+
+                  {/* VACANCY */}
+
+                  <div className="flex justify-between">
+
+                    <span className="text-gray-500">
+                      {isBangla ? "পদসংখ্যা" : "Vacancy"}
+                    </span>
+
+                    <span className="font-semibold text-gray-800">
+                      {job.vacancy}
+                    </span>
+
+                  </div>
+
+
+                  {/* DEADLINE */}
+
+                  <div className="flex justify-between">
+
+                    <span className="text-gray-500">
+                      {isBangla
+                        ? "শেষ তারিখ"
+                        : "Deadline"}
+                    </span>
+
+                    <span className="font-semibold text-red-500">
+                      {job.deadline}
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* DETAILS BUTTON */}
+
+              <Link
+                href="/jobs"
+                className="mt-5 block rounded-xl bg-blue-600 py-3 text-center text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700"
+              >
+                {isBangla
+                  ? "বিস্তারিত দেখুন"
+                  : "View Details"}
+              </Link>
+
+            </div>
+          </Reveal>
+
+        ))}
+
+      </div>
+
+    </div>
+
+  </section>
+</Reveal>
       {/* ===================================================
           NOTICE BOARD
       =================================================== */}
@@ -1657,90 +1839,119 @@ useEffect(() => {
           FEATURED CIRCULARS
       =================================================== */}
 
-      {featuredCirculars.filter((item) => item.active).length > 0 && (
+{featuredCirculars.filter((item) => item.active).length > 0 && (
 
-        <section className="w-full bg-white py-12">
+  <Reveal
+    duration={0.8}
+    y={30}
+  >
+    <section className="w-full bg-white py-12">
 
-          <div className="mx-[165px] px-6 max-md:mx-0">
+      <div className="mx-[165px] px-6 max-md:mx-0">
 
-            <div className="mb-7">
+        {/* SECTION HEADER */}
 
-              <p className="mb-2 text-sm font-semibold text-purple-600">
-                {isBangla
-                  ? "নিয়োগ বিজ্ঞপ্তি"
-                  : "RECRUITMENT CIRCULARS"}
-              </p>
+        <Reveal
+          delay={0.1}
+          duration={0.7}
+          y={20}
+        >
+          <div className="mb-7">
 
-              <h2 className="text-3xl font-bold text-[#0B2A55]">
-                {isBangla
-                  ? "বিশেষ সার্কুলার"
-                  : "Featured Circulars"}
-              </h2>
+            <p className="mb-2 text-sm font-semibold text-purple-600">
+              {isBangla
+                ? "নিয়োগ বিজ্ঞপ্তি"
+                : "RECRUITMENT CIRCULARS"}
+            </p>
 
-              <p className="mt-2 text-gray-600">
-                {isBangla
-                  ? "অফিস থেকে প্রকাশিত গুরুত্বপূর্ণ সার্কুলারগুলো দেখুন।"
-                  : "View important recruitment circulars published by our office."}
-              </p>
+            <h2 className="text-3xl font-bold text-[#0B2A55]">
+              {isBangla
+                ? "বিশেষ সার্কুলার"
+                : "Featured Circulars"}
+            </h2>
 
-            </div>
+            <p className="mt-2 text-gray-600">
+              {isBangla
+                ? "অফিস থেকে প্রকাশিত গুরুত্বপূর্ণ সার্কুলারগুলো দেখুন।"
+                : "View important recruitment circulars published by our office."}
+            </p>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          </div>
+        </Reveal>
 
-              {featuredCirculars
-                .filter((item) => item.active)
-                .map((circular) => (
 
-                  <div
-                    key={circular.id}
-                    className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                  >
+        {/* CIRCULAR CARDS */}
 
-                    <div className="h-52 overflow-hidden bg-gray-100">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
 
-                      <img
-                        src={circular.imageUrl}
-                        alt={circular.title}
-                        className="h-full w-full object-cover"
-                      />
+          {featuredCirculars
+            .filter((item) => item.active)
+            .map((circular, index) => (
 
-                    </div>
+              <Reveal
+                key={circular.id}
+                delay={0.2 + index * 0.08}
+                duration={0.65}
+                y={30}
+              >
 
-                    <div className="p-5">
+                <div
+                  className="group h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                >
 
-                      <p className="text-sm font-medium text-blue-600">
-                        {circular.country}
-                      </p>
+                  {/* IMAGE */}
 
-                      <h3 className="mt-1 font-bold text-[#0B2A55]">
-                        {circular.title}
-                      </h3>
+                  <div className="h-52 overflow-hidden bg-gray-100">
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedCircular(circular)
-                        }
-                        className="mt-4 w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700"
-                      >
-                        {isBangla
-                          ? "সার্কুলার দেখুন"
-                          : "View Circular"}
-                      </button>
-
-                    </div>
+                    <img
+                      src={circular.imageUrl}
+                      alt={circular.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
 
                   </div>
 
-                ))}
 
-            </div>
+                  {/* CONTENT */}
 
-          </div>
+                  <div className="p-5">
 
-        </section>
+                    <p className="text-sm font-medium text-blue-600">
+                      {circular.country}
+                    </p>
 
-      )}
+                    <h3 className="mt-1 font-bold text-[#0B2A55]">
+                      {circular.title}
+                    </h3>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedCircular(circular)
+                      }
+                      className="mt-4 w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-md"
+                    >
+                      {isBangla
+                        ? "সার্কুলার দেখুন"
+                        : "View Circular"}
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </Reveal>
+
+            ))}
+
+        </div>
+
+      </div>
+
+    </section>
+  </Reveal>
+
+)}
 
       {/* ===================================================
           HOW IT WORKS

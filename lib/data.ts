@@ -116,6 +116,43 @@ export interface NoticeRow {
   updated_at?: string;
 }
 
+export type MedicalStatus = "not_started" | "in_progress" | "fit" | "unfit" | "completed";
+export type VisaStatus = "not_started" | "processing" | "running" | "issued" | "rejected" | "completed";
+export type FlightStatus = "not_scheduled" | "pending" | "confirmed" | "completed" | "cancelled";
+
+export interface VisaStatusRow {
+  id: string;
+  user_id: string;
+  application_id: string | null;
+  medical_status: MedicalStatus;
+  visa_status: VisaStatus;
+  flight_status: FlightStatus;
+  flight_date: string;
+  flight_airline: string;
+  flight_pnr: string;
+  remarks: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationRow {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  link: string | null;
+  is_read: number;
+  created_at: string;
+  read_at: string | null;
+}
+
+export interface UserCvRow {
+  user_id: string;
+  data: string; // JSON-encoded CvData
+  updated_at: string;
+}
+
 export interface PopularCountryRow {
   id: string;
   code: string;

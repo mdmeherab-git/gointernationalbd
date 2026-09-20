@@ -67,3 +67,48 @@ export const APPLICATION_STATUS = [
 ] as const;
 
 export const USER_STATUS = ["active", "disabled"] as const;
+
+export const MEDICAL_STATUS = [
+  "not_started",
+  "in_progress",
+  "fit",
+  "unfit",
+  "completed",
+] as const;
+
+export const VISA_STATUS = [
+  "not_started",
+  "processing",
+  "running",
+  "issued",
+  "rejected",
+  "completed",
+] as const;
+
+export const FLIGHT_STATUS = [
+  "not_scheduled",
+  "pending",
+  "confirmed",
+  "completed",
+  "cancelled",
+] as const;
+
+/** Admin-writable fields for a user's visa_statuses row (upserted). */
+export const VISA_STATUS_FIELDS: Record<string, Coercer> = {
+  medical_status: oneOf(MEDICAL_STATUS, "not_started"),
+  visa_status: oneOf(VISA_STATUS, "not_started"),
+  flight_status: oneOf(FLIGHT_STATUS, "not_scheduled"),
+  flight_date: asText,
+  flight_airline: asText,
+  flight_pnr: asText,
+  remarks: asText,
+};
+
+/** User-writable notification + language preferences (Account Settings). */
+export const USER_SETTINGS_FIELDS: Record<string, Coercer> = {
+  notify_application: asBool01,
+  notify_visa: asBool01,
+  notify_medical: asBool01,
+  notify_general: asBool01,
+  language_pref: oneOf(["bn", "en"] as const, "bn"),
+};

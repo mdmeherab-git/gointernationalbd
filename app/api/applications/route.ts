@@ -1,4 +1,5 @@
 import { dbRun, getDb, newId } from "@/lib/cf";
+import { getCurrentUser } from "@/lib/user-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -36,10 +37,11 @@ export async function POST(req: Request) {
   }
 
   const id = newId("app");
+  const currentUser = await getCurrentUser(req);
   await dbRun(
     `INSERT INTO applications
-       (id, circular_id, job_title, job_country, applicant_name, phone, email, message, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new')`,
+       (id, circular_id, job_title, job_country, applicant_name, phone, email, message, status, user_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`,
     id,
     circularId,
     jobTitle,
@@ -48,6 +50,7 @@ export async function POST(req: Request) {
     phone,
     email,
     message,
+    currentUser?.id ?? null,
   );
   return Response.json({ ok: true, stored: true, id });
 }

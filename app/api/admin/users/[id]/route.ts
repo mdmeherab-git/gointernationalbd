@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/admin";
-import { dbFirst, dbRun, getDb, getUploads } from "@/lib/cf";
+import { dbAll, dbFirst, dbRun, getDb, getUploads } from "@/lib/cf";
 import { readJson } from "@/lib/crud";
 import { USER_STATUS } from "@/lib/schemas";
 import type { AdminUserRow } from "../route";
@@ -111,6 +111,11 @@ export async function DELETE(req: Request, { params }: Ctx) {
   );
   if (!existing) return Response.json({ error: "User not found" }, { status: 404 });
 
+  const documents = await dbAll<{ r2_key: string }>(
+    "SELECT r2_key FROM user_documents WHERE user_id = ?",
+    id,
+  );
+
   // R2 cleanup runs FIRST and gates everything else: if it fails, no DB
   // rows are touched at all, so the account is left exactly as it was
   // rather than in a half-deleted state.
@@ -137,6 +142,9 @@ export async function DELETE(req: Request, { params }: Ctx) {
     await dbRun("DELETE FROM user_documents WHERE user_id = ?", id);
     await dbRun("DELETE FROM user_otps WHERE user_id = ?", id);
     await dbRun("DELETE FROM user_sessions WHERE user_id = ?", id);
+    await dbRun("DELETE FROM visa_statuses WHERE user_id = ?", id);
+    await dbRun("DELETE FROM notifications WHERE user_id = ?", id);
+    await dbRun("DELETE FROM user_cvs WHERE user_id = ?", id);
     await dbRun("DELETE FROM users WHERE id = ?", id);
   } catch (error) {
     console.error("Admin delete user — DB delete failed:", error);
@@ -144,6 +152,22 @@ export async function DELETE(req: Request, { params }: Ctx) {
       { error: "ইউজার মুছতে ব্যর্থ / Could not delete user" },
       { status: 500 },
     );
+  }
+
+  // Best-effort: the D1 rows are already gone either way, so a failed R2
+  // cleanup here just leaves an orphaned object rather than blocking the
+  // (already-completed) account deletion.
+  if (documents.length) {
+    const bucket = await getUploads();
+    if (bucket) {
+      for (const doc of documents) {
+        try {
+          await bucket.delete(doc.r2_key);
+        } catch (error) {
+          console.error("Admin delete user — document R2 cleanup failed for key", doc.r2_key, error);
+        }
+      }
+    }
   }
 
   return Response.json({ ok: true });

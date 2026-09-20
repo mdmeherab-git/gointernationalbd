@@ -8,12 +8,30 @@ import {
   Card,
   Drawer,
   EmptyState,
+  Field,
   PageHeader,
+  Select,
   StatusBadge,
+  Textarea,
   TextInput,
   UserAvatar,
   useToast,
 } from "@/components/admin/widgets";
+
+type VisaStatus = {
+  medical_status: string;
+  visa_status: string;
+  flight_status: string;
+  flight_date: string;
+  flight_airline: string;
+  flight_pnr: string;
+  remarks: string;
+  updated_at: string | null;
+};
+
+const MEDICAL_STATUSES = ["not_started", "in_progress", "fit", "unfit", "completed"] as const;
+const VISA_STATUSES = ["not_started", "processing", "running", "issued", "rejected", "completed"] as const;
+const FLIGHT_STATUSES = ["not_scheduled", "pending", "confirmed", "completed", "cancelled"] as const;
 
 type AdminUser = {
   id: string;
@@ -45,6 +63,65 @@ export default function AdminUsersPage() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<AdminUser | null>(null);
+
+  const [visaStatus, setVisaStatus] = useState<VisaStatus | null>(null);
+  const [savingVisaStatus, setSavingVisaStatus] = useState(false);
+
+  const [notifTitle, setNotifTitle] = useState("");
+  const [notifMessage, setNotifMessage] = useState("");
+  const [sendingNotif, setSendingNotif] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      if (!detail) {
+        setVisaStatus(null);
+        return;
+      }
+      try {
+        const d = await apiGet<{ status: VisaStatus }>(`/api/admin/users/${detail.id}/visa-status`);
+        setVisaStatus(d.status);
+      } catch {
+        setVisaStatus(null);
+      }
+    })();
+  }, [detail]);
+
+  async function saveVisaStatus() {
+    if (!detail || !visaStatus) return;
+    setSavingVisaStatus(true);
+    try {
+      const d = await apiSend<{ status: VisaStatus }>(
+        `/api/admin/users/${detail.id}/visa-status`,
+        "PUT",
+        visaStatus,
+      );
+      setVisaStatus(d.status);
+      toast.push(t("স্ট্যাটাস সংরক্ষণ হয়েছে", "Status saved"));
+    } catch (e) {
+      toast.push((e as Error).message, "err");
+    } finally {
+      setSavingVisaStatus(false);
+    }
+  }
+
+  async function sendNotification() {
+    if (!detail || !notifTitle.trim() || !notifMessage.trim()) return;
+    setSendingNotif(true);
+    try {
+      await apiSend("/api/admin/notifications", "POST", {
+        userId: detail.id,
+        title: notifTitle.trim(),
+        message: notifMessage.trim(),
+      });
+      setNotifTitle("");
+      setNotifMessage("");
+      toast.push(t("নোটিফিকেশন পাঠানো হয়েছে", "Notification sent"));
+    } catch (e) {
+      toast.push((e as Error).message, "err");
+    } finally {
+      setSendingNotif(false);
+    }
+  }
 
   // Debounce the search box so we don't hit the API on every keystroke.
   // Resetting to page 1 here (inside the timeout callback, not the effect
@@ -319,6 +396,112 @@ export default function AdminUsersPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* VISA / MEDICAL / FLIGHT STATUS */}
+            {visaStatus && (
+              <div className="border-t border-gray-100 pt-4">
+                <p className="mb-2 text-xs font-bold text-gray-600">
+                  {t("ভিসা / মেডিকেল / ফ্লাইট স্ট্যাটাস", "Visa / Medical / Flight Status")}
+                </p>
+
+                <Field label={t("মেডিকেল স্ট্যাটাস", "Medical Status")}>
+                  <Select
+                    value={visaStatus.medical_status}
+                    onChange={(e) => setVisaStatus({ ...visaStatus, medical_status: e.target.value })}
+                  >
+                    {MEDICAL_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+
+                <Field label={t("ভিসা স্ট্যাটাস", "Visa Status")}>
+                  <Select
+                    value={visaStatus.visa_status}
+                    onChange={(e) => setVisaStatus({ ...visaStatus, visa_status: e.target.value })}
+                  >
+                    {VISA_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+
+                <Field label={t("ফ্লাইট স্ট্যাটাস", "Flight Status")}>
+                  <Select
+                    value={visaStatus.flight_status}
+                    onChange={(e) => setVisaStatus({ ...visaStatus, flight_status: e.target.value })}
+                  >
+                    {FLIGHT_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label={t("ফ্লাইট তারিখ", "Flight Date")}>
+                    <TextInput
+                      value={visaStatus.flight_date}
+                      onChange={(e) => setVisaStatus({ ...visaStatus, flight_date: e.target.value })}
+                    />
+                  </Field>
+                  <Field label={t("এয়ারলাইন", "Airline")}>
+                    <TextInput
+                      value={visaStatus.flight_airline}
+                      onChange={(e) => setVisaStatus({ ...visaStatus, flight_airline: e.target.value })}
+                    />
+                  </Field>
+                </div>
+
+                <Field label="PNR">
+                  <TextInput
+                    value={visaStatus.flight_pnr}
+                    onChange={(e) => setVisaStatus({ ...visaStatus, flight_pnr: e.target.value })}
+                  />
+                </Field>
+
+                <Field label={t("মন্তব্য (ইউজার দেখতে পাবে)", "Remarks (visible to user)")}>
+                  <Textarea
+                    rows={2}
+                    value={visaStatus.remarks}
+                    onChange={(e) => setVisaStatus({ ...visaStatus, remarks: e.target.value })}
+                  />
+                </Field>
+
+                <Btn onClick={saveVisaStatus} disabled={savingVisaStatus}>
+                  {savingVisaStatus ? "..." : t("স্ট্যাটাস সংরক্ষণ করুন", "Save Status")}
+                </Btn>
+              </div>
+            )}
+
+            {/* SEND NOTIFICATION */}
+            <div className="border-t border-gray-100 pt-4">
+              <p className="mb-2 text-xs font-bold text-gray-600">
+                {t("নোটিফিকেশন পাঠান", "Send Notification")}
+              </p>
+              <Field label={t("শিরোনাম", "Title")}>
+                <TextInput value={notifTitle} onChange={(e) => setNotifTitle(e.target.value)} maxLength={120} />
+              </Field>
+              <Field label={t("বার্তা", "Message")}>
+                <Textarea
+                  rows={3}
+                  value={notifMessage}
+                  onChange={(e) => setNotifMessage(e.target.value)}
+                  maxLength={500}
+                />
+              </Field>
+              <Btn
+                onClick={sendNotification}
+                disabled={sendingNotif || !notifTitle.trim() || !notifMessage.trim()}
+              >
+                {sendingNotif ? "..." : t("পাঠান", "Send")}
+              </Btn>
             </div>
           </div>
         )}
