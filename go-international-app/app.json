@@ -1,18 +1,21 @@
 {
   "expo": {
-    "name": "go-international-app",
-    "slug": "go-international-app",
+    "name": "GO International BD",
+    "slug": "go-international-bd",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "gointernationalapp",
+    "scheme": "gointernationalbd",
     "userInterfaceStyle": "automatic",
+    "primaryColor": "#0B2A55",
     "ios": {
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.gointernationalbd.app",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -28,11 +31,15 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#ffffff",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 160
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-sharing",
+      "expo-image",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

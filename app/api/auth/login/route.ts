@@ -132,6 +132,12 @@ export async function POST(req: Request) {
         email: user.email,
         phone: user.phone,
       },
+      // Browsers rely on the httpOnly cookie below and ignore this field.
+      // Native clients (no cookie jar sharing with a browser origin) store
+      // this and resend it themselves as `Cookie: gib_user=<sessionToken>`
+      // on every request — same session row, same requireUser() check,
+      // just exposed for a non-browser caller to manage explicitly.
+      sessionToken: sessionId,
     });
 
     response.cookies.set({

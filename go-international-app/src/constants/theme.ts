@@ -26,6 +26,27 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+/**
+ * GO International BD brand palette — used directly (not through the
+ * light/dark ThemedView/ThemedText system above) because, like the
+ * production website, the app's production screens use one fixed light
+ * brand identity rather than a dark-mode variant.
+ */
+export const Brand = {
+  primary: '#0B2A55',
+  blue: '#0B4DBB',
+  blueDark: '#093f98',
+  red: '#EF233C',
+  white: '#ffffff',
+  background: '#F5F7FB',
+  card: '#ffffff',
+  border: '#E5E7EB',
+  text: '#111827',
+  textMuted: '#6B7280',
+  success: '#16A34A',
+  warning: '#D97706',
+} as const;
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
