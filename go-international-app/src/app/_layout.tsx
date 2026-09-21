@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Brand } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -44,11 +45,18 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <StatusBar style="light" />
-        <RootNavigator />
-      </AuthProvider>
-    </LanguageProvider>
+    <SafeAreaProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          {/* Most screens (Home/Jobs/Applications/Visa/Account/Profile/...)
+            have a light background right up to the status bar, so dark
+            icons are the safer default — only the navy header on pushed
+            screens would want light icons, and native-stack headers
+            already manage their own status-bar contrast on Android. */}
+        <StatusBar style="dark" />
+          <RootNavigator />
+        </AuthProvider>
+      </LanguageProvider>
+    </SafeAreaProvider>
   );
 }

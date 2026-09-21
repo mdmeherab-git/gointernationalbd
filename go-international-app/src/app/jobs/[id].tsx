@@ -1,21 +1,23 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyView, ErrorView, LoadingView } from '@/components/state-views';
 import { Brand, Spacing } from '@/constants/theme';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, resolveAssetUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
-import type { ApiCircular } from '@/lib/types';
+import type { ApiCircular, Application } from '@/lib/types';
 import { useApiQuery } from '@/lib/use-api';
 
 export default function JobDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, autoApply } = useLocalSearchParams<{ id: string; autoApply?: string }>();
   const { t } = useLanguage();
   const { user } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const { data, loading, error, reload } = useApiQuery(
     () => api.get<{ circulars: ApiCircular[] }>('/api/circulars'),
@@ -23,7 +25,24 @@ export default function JobDetailsScreen() {
   );
   const job = data?.circulars.find((c) => c.id === id) ?? null;
 
+  // Best-effort duplicate-application check — only meaningful when logged
+  // in, and silently ignored on failure so it never blocks a real apply.
+  const { data: myApplications, reload: reloadMyApplications } = useApiQuery(
+    () => (user ? api.get<{ applications: Application[] }>('/api/account/applications') : Promise.resolve({ applications: [] })),
+    [user?.id],
+  );
+  const alreadyApplied = Boolean(job && myApplications?.applications.some((a) => a.circular_id === job.id));
+
   const [applyOpen, setApplyOpen] = useState(false);
+
+  // Coming from the Jobs list's "আবেদন করুন" button — open the apply flow
+  // immediately instead of making the user tap Apply again on this screen.
+  useEffect(() => {
+    if (autoApply === '1' && job && !alreadyApplied) {
+      handleApplyPress();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoApply, job?.id, alreadyApplied]);
 
   if (loading) return <LoadingView />;
   if (error) return <ErrorView message={error} onRetry={reload} />;
@@ -47,8 +66,10 @@ export default function JobDetailsScreen() {
   return (
     <>
       <ScrollView style={styles.screen} contentContainerStyle={{ padding: Spacing.three, gap: 14 }}>
-        {job.featuredImageUrl && job.circularType === 'image' && (
-          <Image source={{ uri: job.featuredImageUrl }} style={styles.heroImage} contentFit="cover" />
+        {job.circularUrl && job.circularType === 'image' && (
+          <View style={styles.heroImageBox}>
+            <Image source={{ uri: resolveAssetUrl(job.circularUrl)! }} style={styles.heroImage} contentFit="contain" />
+          </View>
         )}
 
         <View style={styles.titleRow}>
@@ -85,20 +106,30 @@ export default function JobDetailsScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.actionBar}>
+      <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         {job.circularUrl && (
           <Pressable
             style={styles.secondaryButton}
-            onPress={() => Linking.openURL(job.circularUrl!)}>
+            onPress={() => Linking.openURL(resolveAssetUrl(job.circularUrl)!)}>
             <Text style={styles.secondaryButtonText}>📄 {t('সার্কুলার দেখুন', 'View Circular')}</Text>
           </Pressable>
         )}
-        <Pressable style={styles.primaryButton} onPress={handleApplyPress}>
-          <Text style={styles.primaryButtonText}>✅ {t('আবেদন করুন', 'Apply')}</Text>
+        <Pressable
+          style={[styles.primaryButton, alreadyApplied && styles.primaryButtonDisabled]}
+          disabled={alreadyApplied}
+          onPress={handleApplyPress}>
+          <Text style={styles.primaryButtonText}>
+            {alreadyApplied ? `✓ ${t('আবেদন করা হয়েছে', 'Already Applied')}` : `✅ ${t('আবেদন করুন', 'Apply')}`}
+          </Text>
         </Pressable>
       </View>
 
-      <ApplyModal open={applyOpen} onClose={() => setApplyOpen(false)} job={job} />
+      <ApplyModal
+        open={applyOpen}
+        onClose={() => setApplyOpen(false)}
+        job={job}
+        onApplied={reloadMyApplications}
+      />
     </>
   );
 }
@@ -121,7 +152,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function ApplyModal({ open, onClose, job }: { open: boolean; onClose: () => void; job: ApiCircular }) {
+function ApplyModal({
+  open,
+  onClose,
+  job,
+  onApplied,
+}: {
+  open: boolean;
+  onClose: () => void;
+  job: ApiCircular;
+  onApplied: () => void;
+}) {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
@@ -148,6 +189,7 @@ function ApplyModal({ open, onClose, job }: { open: boolean; onClose: () => void
         circular_id: job.id,
       });
       setDone(true);
+      onApplied();
     } catch (err) {
       Alert.alert('', err instanceof ApiError ? err.message : t('আবেদন করা যায়নি।', 'Could not submit application.'));
     } finally {
@@ -181,10 +223,17 @@ function ApplyModal({ open, onClose, job }: { open: boolean; onClose: () => void
                   <Text style={{ fontSize: 20, color: Brand.textMuted }}>✕</Text>
                 </Pressable>
               </View>
-              <TextInput style={styles.input} placeholder={t('নাম', 'Name')} value={name} onChangeText={setName} />
+              <TextInput
+                style={styles.input}
+                placeholder={t('নাম', 'Name')}
+                placeholderTextColor={Brand.textMuted}
+                value={name}
+                onChangeText={setName}
+              />
               <TextInput
                 style={styles.input}
                 placeholder={t('মোবাইল নম্বর', 'Phone number')}
+                placeholderTextColor={Brand.textMuted}
                 keyboardType="phone-pad"
                 value={phone}
                 onChangeText={setPhone}
@@ -192,6 +241,7 @@ function ApplyModal({ open, onClose, job }: { open: boolean; onClose: () => void
               <TextInput
                 style={styles.input}
                 placeholder={t('ইমেইল (ঐচ্ছিক)', 'Email (optional)')}
+                placeholderTextColor={Brand.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
@@ -200,6 +250,7 @@ function ApplyModal({ open, onClose, job }: { open: boolean; onClose: () => void
               <TextInput
                 style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
                 placeholder={t('বার্তা (ঐচ্ছিক)', 'Message (optional)')}
+                placeholderTextColor={Brand.textMuted}
                 multiline
                 value={message}
                 onChangeText={setMessage}
@@ -217,7 +268,17 @@ function ApplyModal({ open, onClose, job }: { open: boolean; onClose: () => void
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Brand.background },
-  heroImage: { width: '100%', height: 180, borderRadius: 16 },
+  heroImageBox: {
+    width: '100%',
+    maxHeight: 420,
+    aspectRatio: 4 / 5,
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: Brand.border,
+    overflow: 'hidden',
+  },
+  heroImage: { width: '100%', height: '100%' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   country: { fontSize: 12, color: Brand.textMuted, fontWeight: '600' },
   title: { fontSize: 20, fontWeight: '800', color: Brand.primary },
@@ -238,11 +299,12 @@ const styles = StyleSheet.create({
     borderTopColor: Brand.border,
   },
   primaryButton: { flex: 1, backgroundColor: Brand.blue, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
+  primaryButtonDisabled: { backgroundColor: Brand.textMuted },
   primaryButtonText: { color: Brand.white, fontWeight: '700', fontSize: 13 },
   secondaryButton: { flex: 1, borderWidth: 1, borderColor: Brand.blue, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
   secondaryButtonText: { color: Brand.blue, fontWeight: '700', fontSize: 13 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: Brand.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14 },
+  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: Brand.text },
 });

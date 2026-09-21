@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LoadingView } from '@/components/state-views';
 import { Brand } from '@/constants/theme';
@@ -26,6 +27,7 @@ type CvData = Record<string, unknown> & {
 
 export default function CvScreen() {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export default function CvScreen() {
   if (loading) return <LoadingView />;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
       {message && (
         <Text style={[styles.message, message.kind === 'err' ? styles.messageErr : styles.messageOk]}>{message.text}</Text>
       )}
@@ -109,16 +111,16 @@ export default function CvScreen() {
         <TextInput style={styles.input} value={data.presentAddress ?? ''} onChangeText={(v) => set('presentAddress', v)} />
       </Field>
       <Field label={t('জন্মতারিখ', 'Date of Birth')}>
-        <TextInput style={styles.input} placeholder="DD/MM/YYYY" value={data.dateOfBirth ?? ''} onChangeText={(v) => set('dateOfBirth', v)} />
+        <TextInput style={styles.input} placeholder="DD/MM/YYYY" placeholderTextColor={Brand.textMuted} value={data.dateOfBirth ?? ''} onChangeText={(v) => set('dateOfBirth', v)} />
       </Field>
       <Field label={t('পাসপোর্ট নম্বর', 'Passport Number')}>
         <TextInput style={styles.input} value={data.passportNumber ?? ''} onChangeText={(v) => set('passportNumber', v.toUpperCase())} />
       </Field>
       <Field label={t('পাসপোর্ট ইস্যু', 'Passport Issue')}>
-        <TextInput style={styles.input} placeholder="DD/MM/YYYY" value={data.passportIssue ?? ''} onChangeText={(v) => set('passportIssue', v)} />
+        <TextInput style={styles.input} placeholder="DD/MM/YYYY" placeholderTextColor={Brand.textMuted} value={data.passportIssue ?? ''} onChangeText={(v) => set('passportIssue', v)} />
       </Field>
       <Field label={t('পাসপোর্ট মেয়াদ শেষ', 'Passport Expiry')}>
-        <TextInput style={styles.input} placeholder="DD/MM/YYYY" value={data.passportExpiry ?? ''} onChangeText={(v) => set('passportExpiry', v)} />
+        <TextInput style={styles.input} placeholder="DD/MM/YYYY" placeholderTextColor={Brand.textMuted} value={data.passportExpiry ?? ''} onChangeText={(v) => set('passportExpiry', v)} />
       </Field>
       <Field label={t('নিজের সম্পর্কে', 'About Me')}>
         <TextInput
@@ -163,7 +165,7 @@ const styles = StyleSheet.create({
   messageErr: { color: '#991B1B', backgroundColor: '#FEE2E2' },
   updatedText: { fontSize: 11, color: Brand.textMuted, marginBottom: 12, textAlign: 'center' },
   label: { fontSize: 12, fontWeight: '700', color: Brand.text, marginBottom: 6 },
-  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, backgroundColor: Brand.white },
+  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, color: Brand.text, backgroundColor: Brand.white },
   hint: { fontSize: 11, color: Brand.textMuted, marginBottom: 16, lineHeight: 16 },
   primaryButton: { backgroundColor: Brand.blue, borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginBottom: 10 },
   primaryButtonText: { color: Brand.white, fontWeight: '700', fontSize: 14 },

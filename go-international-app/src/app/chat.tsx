@@ -13,6 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuestPrompt } from './(tabs)/applications';
 import { LoadingView } from '@/components/state-views';
@@ -34,6 +35,7 @@ export default function ChatScreen() {
   const { t } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<ChatMessage[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,13 +67,19 @@ export default function ChatScreen() {
     const message = text.trim();
     if (!message) return;
     setSending(true);
-    setText('');
     try {
       await api.post('/api/chat', { message });
+      // Only clear the draft once the send actually succeeds, so a failed
+      // send (e.g. offline) leaves the message in the box to retry.
+      setText('');
       await load(false);
       listRef.current?.scrollToEnd({ animated: true });
     } catch {
-      Alert.alert('', t('Message পাঠানো যায়নি।', 'Could not send the message.'));
+      Alert.alert(
+        t('Message পাঠানো যায়নি', 'Could not send'),
+        t('আবার চেষ্টা করুন।', 'Please try again.'),
+        [{ text: t('ঠিক আছে', 'OK') }],
+      );
     } finally {
       setSending(false);
     }
@@ -109,12 +117,16 @@ export default function ChatScreen() {
   if (loading) return <LoadingView />;
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
       <FlatList
         ref={listRef}
         data={messages ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
@@ -146,15 +158,16 @@ export default function ChatScreen() {
         }}
       />
 
-      <View style={styles.inputBar}>
+      <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <TextInput
           style={styles.input}
           placeholder={t('Message লিখুন...', 'Type a message...')}
+          placeholderTextColor={Brand.textMuted}
           value={text}
           onChangeText={setText}
           multiline
         />
-        <Pressable style={styles.sendButton} disabled={sending || !text.trim()} onPress={send}>
+        <Pressable style={styles.sendButton} disabled={sending || !text.trim()} onPress={send} hitSlop={8}>
           <Text style={styles.sendButtonText}>➤</Text>
         </Pressable>
       </View>
@@ -192,6 +205,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
+    color: Brand.text,
     maxHeight: 100,
   },
   sendButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: Brand.blue, alignItems: 'center', justifyContent: 'center' },

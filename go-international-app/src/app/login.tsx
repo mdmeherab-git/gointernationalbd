@@ -2,6 +2,7 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
+import { PasswordInput } from '@/components/PasswordInput';
 import { Brand } from '@/constants/theme';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -35,8 +36,8 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{t('Login', 'Login')}</Text>
         <Text style={styles.subtitle}>{t('আপনার Account-এ Login করুন', 'Log in to your account')}</Text>
 
@@ -46,16 +47,15 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="01XXXXXXXXX"
+          placeholderTextColor={Brand.textMuted}
           keyboardType="phone-pad"
           value={phone}
           onChangeText={setPhone}
         />
 
         <Text style={styles.label}>{t('পাসওয়ার্ড', 'Password')}</Text>
-        <TextInput
-          style={styles.input}
+        <PasswordInput
           placeholder={t('আপনার Password', 'Your password')}
-          secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, color: Brand.textMuted, textAlign: 'center', marginBottom: 20 },
   error: { color: Brand.red, fontSize: 13, textAlign: 'center', marginBottom: 10, fontWeight: '600' },
   label: { fontSize: 13, fontWeight: '700', color: Brand.text, marginTop: 12, marginBottom: 6 },
-  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, backgroundColor: Brand.white },
+  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: Brand.text, backgroundColor: Brand.white },
   primaryButton: { backgroundColor: Brand.blue, borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginTop: 22 },
   primaryButtonText: { color: Brand.white, fontWeight: '700', fontSize: 14 },
   linkRow: { marginTop: 18, alignItems: 'center' },

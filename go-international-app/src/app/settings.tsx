@@ -1,8 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LoadingView } from '@/components/state-views';
+import { PasswordInput } from '@/components/PasswordInput';
 import { Brand } from '@/constants/theme';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -13,6 +15,7 @@ export default function SettingsScreen() {
   const { t, language, setLanguage } = useLanguage();
   const { logout } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<AccountSettings | null>(null);
@@ -80,7 +83,7 @@ export default function SettingsScreen() {
   if (loading) return <LoadingView />;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
       {/* LANGUAGE */}
       <Section title={t('ভাষা', 'Language')}>
         <View style={styles.row}>
@@ -126,24 +129,18 @@ export default function SettingsScreen() {
 
       {/* SECURITY */}
       <Section title={t('Password পরিবর্তন', 'Change Password')}>
-        <TextInput
-          style={styles.input}
+        <PasswordInput
           placeholder={t('বর্তমান Password', 'Current Password')}
-          secureTextEntry
           value={currentPassword}
           onChangeText={setCurrentPassword}
         />
-        <TextInput
-          style={styles.input}
+        <PasswordInput
           placeholder={t('নতুন Password', 'New Password')}
-          secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}
         />
-        <TextInput
-          style={styles.input}
+        <PasswordInput
           placeholder={t('নতুন Password নিশ্চিত করুন', 'Confirm New Password')}
-          secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
@@ -176,10 +173,8 @@ export default function SettingsScreen() {
           </Pressable>
         ) : (
           <View style={{ gap: 10 }}>
-            <TextInput
-              style={styles.input}
+            <PasswordInput
               placeholder={t('নিশ্চিত করতে Password দিন', 'Enter password to confirm')}
-              secureTextEntry
               value={deactivatePassword}
               onChangeText={setDeactivatePassword}
             />

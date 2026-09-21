@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -19,10 +19,15 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Brand, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
-import { api } from '@/lib/api';
+import { api, resolveAssetUrl } from '@/lib/api';
 import { useApiQuery } from '@/lib/use-api';
-import type { ApiCircular, PopularCountry, PublicNotice } from '@/lib/types';
+import { countries, type Country } from '@/lib/countries';
+import { guessCountryCode } from '@/lib/country-match';
+import type { ApiCircular, PublicNotice } from '@/lib/types';
 import { LoadingView } from '@/components/state-views';
+import { CountryFlag } from '@/components/CountryFlag';
+import { CountryPickerModal } from '@/components/CountryPickerModal';
+import { OptionPickerModal } from '@/components/OptionPickerModal';
 
 const VISA_TYPES = [
   { value: 'work', bn: 'ওয়ার্ক ভিসা', en: 'Work Visa' },
@@ -50,23 +55,44 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const countries = useApiQuery(() => api.get<{ countries: PopularCountry[] }>('/api/popular-countries'));
   const notices = useApiQuery(() => api.get<{ notices: PublicNotice[] }>('/api/notices'));
   const latestJobs = useApiQuery(() => api.get<{ circulars: ApiCircular[] }>('/api/circulars?limit=6'));
   const featured = useApiQuery(() => api.get<{ circulars: ApiCircular[] }>('/api/circulars?featured=1&limit=5'));
+  const pinnedCountries = useApiQuery(() => api.get<{ countries: Country[] }>('/api/popular-countries'));
 
   const [refreshing, setRefreshing] = useState(false);
   async function onRefresh() {
     setRefreshing(true);
-    await Promise.all([countries.refresh(), notices.refresh(), latestJobs.refresh(), featured.refresh()]);
+    await Promise.all([notices.refresh(), latestJobs.refresh(), featured.refresh(), pinnedCountries.refresh()]);
     setRefreshing(false);
   }
 
-  const [country, setCountry] = useState<string | null>(null);
+  // Same merge the website uses: admin-pinned "popular" countries first,
+  // then the rest of the full dataset, all searchable together as one list
+  // (see app/page.tsx's filteredCountries).
+  const [countrySearch, setCountrySearch] = useState('');
+  const filteredCountries = useMemo(() => {
+    const pinned = pinnedCountries.data?.countries ?? [];
+    const pinnedCodes = new Set(pinned.map((c) => c.code));
+    const merged = [...pinned, ...countries.filter((c) => !pinnedCodes.has(c.code))];
+    const q = countrySearch.trim().toLowerCase();
+    if (!q) return merged;
+    return merged.filter((c) => c.name.toLowerCase().includes(q));
+  }, [countrySearch, pinnedCountries.data]);
+
+  const [country, setCountry] = useState<Country | null>(null);
   const [visaType, setVisaType] = useState<string | null>(null);
   const [passportNumber, setPassportNumber] = useState('');
   const [saudiOpen, setSaudiOpen] = useState(false);
   const [malaysiaOpen, setMalaysiaOpen] = useState(false);
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
+  const [visaTypePickerOpen, setVisaTypePickerOpen] = useState(false);
+
+  function handleCountryTap(c: Country) {
+    if (c.code === 'sa') return setSaudiOpen(true);
+    if (c.code === 'my') return setMalaysiaOpen(true);
+    Alert.alert('', t(`${c.name}-এর জন্য সেবা শীঘ্রই আসছে।`, `Services for ${c.name} are coming soon.`));
+  }
 
   function handleCheckVisa() {
     if (!country) {
@@ -81,11 +107,11 @@ export default function HomeScreen() {
       Alert.alert('', t('দয়া করে পাসপোর্ট নম্বর লিখুন।', 'Please enter your passport number.'));
       return;
     }
-    if (country === 'sa') return setSaudiOpen(true);
-    if (country === 'my') return setMalaysiaOpen(true);
+    if (country.code === 'sa') return setSaudiOpen(true);
+    if (country.code === 'my') return setMalaysiaOpen(true);
     Alert.alert(
       '',
-      t(`${country.toUpperCase()} এর Visa Check এখনো সংযুক্ত হয়নি।`, `Visa check for ${country.toUpperCase()} is not connected yet.`),
+      t(`${country.name}-এর Visa Check এখনো সংযুক্ত হয়নি।`, `Visa check for ${country.name} is not connected yet.`),
     );
   }
 
@@ -118,36 +144,35 @@ export default function HomeScreen() {
           <Text style={styles.heroTitle}>{t('অফিসিয়াল ভিসা স্ট্যাটাস চেক করুন', 'Check Your Official Visa Status')}</Text>
 
           <Text style={styles.fieldLabel}>{t('দেশ নির্বাচন করুন', 'Select Country')}</Text>
-          <View style={styles.pickerRow}>
-            {(countries.data?.countries ?? []).slice(0, 8).map((c) => (
-              <Pressable
-                key={c.code}
-                onPress={() => setCountry(c.code)}
-                style={[styles.chip, country === c.code && styles.chipActive]}>
-                <Text style={[styles.chipText, country === c.code && styles.chipTextActive]}>{c.name}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <Pressable style={styles.selectorField} onPress={() => setCountryPickerOpen(true)}>
+            {country ? (
+              <View style={styles.selectorSelectedRow}>
+                <CountryFlag code={country.code} width={22} height={16} />
+                <Text style={styles.selectorValueText}>{country.name}</Text>
+              </View>
+            ) : (
+              <Text style={styles.selectorPlaceholder}>{t('দেশ নির্বাচন করুন', 'Select Country')}</Text>
+            )}
+            <Text style={styles.selectorChevron}>▾</Text>
+          </Pressable>
 
           <Text style={styles.fieldLabel}>{t('ভিসার ধরন', 'Visa Type')}</Text>
-          <View style={styles.pickerRow}>
-            {VISA_TYPES.map((v) => (
-              <Pressable
-                key={v.value}
-                onPress={() => setVisaType(v.value)}
-                style={[styles.chip, visaType === v.value && styles.chipActive]}>
-                <Text style={[styles.chipText, visaType === v.value && styles.chipTextActive]}>
-                  {t(v.bn, v.en)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <Pressable style={styles.selectorField} onPress={() => setVisaTypePickerOpen(true)}>
+            <Text style={visaType ? styles.selectorValueText : styles.selectorPlaceholder}>
+              {(() => {
+                const selected = VISA_TYPES.find((v) => v.value === visaType);
+                return selected ? t(selected.bn, selected.en) : t('ভিসার ধরন', 'Select Visa Type');
+              })()}
+            </Text>
+            <Text style={styles.selectorChevron}>▾</Text>
+          </Pressable>
 
           <Text style={styles.fieldLabel}>{t('পাসপোর্ট নম্বর', 'Passport Number')}</Text>
           <TextInput
             value={passportNumber}
-            onChangeText={setPassportNumber}
+            onChangeText={(v) => setPassportNumber(v.toUpperCase())}
             placeholder={t('পাসপোর্ট নম্বর লিখুন', 'Enter passport number')}
+            placeholderTextColor={Brand.textMuted}
             autoCapitalize="characters"
             style={styles.input}
           />
@@ -159,18 +184,31 @@ export default function HomeScreen() {
 
         {/* POPULAR COUNTRIES */}
         <SectionHeader icon="🌍" title={t('জনপ্রিয় দেশসমূহ', 'Popular Countries')} />
-        {countries.loading ? (
-          <LoadingView />
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
-            {(countries.data?.countries ?? []).map((c) => (
-              <View key={c.code} style={styles.countryPill}>
-                <Text style={{ fontSize: 22 }}>{flagEmoji(c.code)}</Text>
-                <Text style={styles.countryPillText}>{c.name}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        )}
+        <View style={styles.countrySearchWrap}>
+          <TextInput
+            value={countrySearch}
+            onChangeText={setCountrySearch}
+            placeholder={t('🔍 দেশ খুঁজুন...', '🔍 Search country...')}
+            placeholderTextColor={Brand.textMuted}
+            style={styles.countrySearchInput}
+          />
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll} keyboardShouldPersistTaps="handled">
+          {filteredCountries.length === 0 ? (
+            <Text style={styles.emptyInlineText}>{t('কোনো দেশ পাওয়া যায়নি।', 'No country found.')}</Text>
+          ) : (
+            filteredCountries.map((c) => (
+              <Pressable key={c.code} style={styles.countryPill} onPress={() => handleCountryTap(c)}>
+                <View style={styles.countryFlagBox}>
+                  <CountryFlag code={c.code} width={72} height={50} />
+                </View>
+                <Text style={styles.countryPillText} numberOfLines={1}>
+                  {c.name}
+                </Text>
+              </Pressable>
+            ))
+          )}
+        </ScrollView>
 
         {/* QUICK SERVICES */}
         <SectionHeader icon="⚡" title={t('দ্রুত সেবা', 'Quick Services')} />
@@ -227,7 +265,7 @@ export default function HomeScreen() {
               <Pressable
                 key={n.id}
                 style={styles.noticeRow}
-                onPress={() => n.image_url && router.push({ pathname: '/notice/[id]', params: { id: n.id } })}>
+                onPress={() => router.push({ pathname: '/notice/[id]', params: { id: n.id } })}>
                 <View style={styles.noticeDot} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.noticeText} numberOfLines={2}>
@@ -253,10 +291,10 @@ export default function HomeScreen() {
                   style={styles.featuredCard}
                   onPress={() => router.push({ pathname: '/jobs/[id]', params: { id: c.id } })}>
                   {c.featuredImageUrl ? (
-                    <Image source={{ uri: c.featuredImageUrl }} style={styles.featuredImage} contentFit="cover" />
+                    <Image source={{ uri: resolveAssetUrl(c.featuredImageUrl)! }} style={styles.featuredImage} contentFit="cover" />
                   ) : (
                     <View style={[styles.featuredImage, styles.featuredImageFallback]}>
-                      <Text style={{ fontSize: 28 }}>{c.flag}</Text>
+                      <CountryFlag code={c.countryCode || guessCountryCode(c.country)} width={40} height={30} />
                     </View>
                   )}
                   <Text style={styles.featuredCountry}>{c.country}</Text>
@@ -310,14 +348,23 @@ export default function HomeScreen() {
         title={t('মালয়েশিয়া', 'Malaysia')}
         links={MALAYSIA_LINKS}
       />
+
+      <CountryPickerModal
+        open={countryPickerOpen}
+        onClose={() => setCountryPickerOpen(false)}
+        onSelect={setCountry}
+        selectedCode={country?.code}
+      />
+      <OptionPickerModal
+        open={visaTypePickerOpen}
+        onClose={() => setVisaTypePickerOpen(false)}
+        onSelect={setVisaType}
+        title={t('ভিসার ধরন নির্বাচন করুন', 'Select Visa Type')}
+        selectedValue={visaType}
+        options={VISA_TYPES.map((v) => ({ value: v.value, label: t(v.bn, v.en) }))}
+      />
     </SafeAreaView>
   );
-}
-
-function flagEmoji(code: string): string {
-  if (code.length !== 2) return '🏳️';
-  const base = 127397;
-  return String.fromCodePoint(...code.toUpperCase().split('').map((c) => base + c.charCodeAt(0)));
 }
 
 function SectionHeader({
@@ -356,12 +403,15 @@ function ServiceCard({ icon, title, desc, onPress }: { icon: string; title: stri
 }
 
 function JobRow({ job, onPress }: { job: ApiCircular; onPress: () => void }) {
+  const code = job.countryCode || guessCountryCode(job.country);
   return (
     <Pressable style={styles.jobRow} onPress={onPress}>
-      <Text style={{ fontSize: 22 }}>{job.flag}</Text>
+      <CountryFlag code={code} width={30} height={22} />
       <View style={{ flex: 1 }}>
-        <Text style={styles.jobTitle}>{job.category || job.title}</Text>
-        <Text style={styles.jobMeta}>
+        <Text style={styles.jobTitle} numberOfLines={1}>
+          {job.category || job.title}
+        </Text>
+        <Text style={styles.jobMeta} numberOfLines={1}>
           {job.country} · {job.salary}
         </Text>
       </View>
@@ -450,18 +500,21 @@ const styles = StyleSheet.create({
   heroEyebrow: { color: Brand.blue, fontSize: 11, fontWeight: '700' },
   heroTitle: { color: Brand.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 },
   fieldLabel: { color: Brand.text, fontSize: 12, fontWeight: '700', marginTop: 10, marginBottom: 6 },
-  pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 999,
+  selectorField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: Brand.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     backgroundColor: Brand.white,
   },
-  chipActive: { backgroundColor: Brand.blue, borderColor: Brand.blue },
-  chipText: { fontSize: 12, color: Brand.text, fontWeight: '600' },
-  chipTextActive: { color: Brand.white },
+  selectorSelectedRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  selectorValueText: { fontSize: 14, color: Brand.text, fontWeight: '700' },
+  selectorPlaceholder: { fontSize: 14, color: Brand.textMuted },
+  selectorChevron: { color: Brand.textMuted, fontSize: 14 },
   input: {
     borderWidth: 1,
     borderColor: Brand.border,
@@ -490,19 +543,40 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '800', color: Brand.primary },
   sectionAction: { fontSize: 12, fontWeight: '700', color: Brand.blue },
   hScroll: { paddingLeft: Spacing.three },
-  countryPill: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 84,
-    height: 76,
-    marginRight: 10,
-    borderRadius: 14,
-    backgroundColor: Brand.white,
+  countrySearchWrap: { paddingHorizontal: Spacing.three, marginBottom: 10 },
+  countrySearchInput: {
     borderWidth: 1,
     borderColor: Brand.border,
-    gap: 4,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: Brand.text,
+    backgroundColor: Brand.white,
   },
-  countryPillText: { fontSize: 11, color: Brand.text, fontWeight: '600', textAlign: 'center' },
+  emptyInlineText: { color: Brand.textMuted, fontSize: 12, paddingVertical: 20 },
+  countryPill: {
+    alignItems: 'center',
+    width: 84,
+    marginRight: 14,
+    gap: 6,
+  },
+  countryFlagBox: {
+    width: 72,
+    height: 50,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Brand.border,
+    backgroundColor: Brand.white,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  countryPillText: { fontSize: 12, color: Brand.text, fontWeight: '600', textAlign: 'center' },
   servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

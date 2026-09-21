@@ -44,6 +44,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "44142dd3-b310-41f7-abcf-49736c324ada"
+      }
+    },
+    "owner": "go-international-bd"
   }
 }

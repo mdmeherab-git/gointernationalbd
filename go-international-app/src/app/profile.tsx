@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LoadingView } from '@/components/state-views';
 import { Brand } from '@/constants/theme';
@@ -13,6 +14,7 @@ import type { CurrentUser } from '@/lib/types';
 export default function ProfileScreen() {
   const { t } = useLanguage();
   const { refreshUser } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [profile, setProfile] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,7 +117,7 @@ export default function ProfileScreen() {
   if (!profile) return null;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
       {message && (
         <Text style={[styles.message, message.kind === 'err' ? styles.messageErr : styles.messageOk]}>{message.text}</Text>
       )}
@@ -157,11 +159,11 @@ export default function ProfileScreen() {
       </Field>
 
       <Field label={t('পাসপোর্ট ইস্যু', 'Passport Issue')}>
-        <TextInput style={styles.input} placeholder="DD/MM/YYYY" value={passportIssue} onChangeText={setPassportIssue} />
+        <TextInput style={styles.input} placeholder="DD/MM/YYYY" placeholderTextColor={Brand.textMuted} value={passportIssue} onChangeText={setPassportIssue} />
       </Field>
 
       <Field label={t('পাসপোর্ট মেয়াদ শেষ', 'Passport Expiry')}>
-        <TextInput style={styles.input} placeholder="DD/MM/YYYY" value={passportExpiry} onChangeText={setPassportExpiry} />
+        <TextInput style={styles.input} placeholder="DD/MM/YYYY" placeholderTextColor={Brand.textMuted} value={passportExpiry} onChangeText={setPassportExpiry} />
       </Field>
 
       <Pressable style={styles.primaryButton} disabled={saving} onPress={save}>
@@ -191,7 +193,7 @@ const styles = StyleSheet.create({
   avatarImage: { width: '100%', height: '100%' },
   changePhotoText: { color: Brand.blue, fontWeight: '700', fontSize: 13 },
   label: { fontSize: 12, fontWeight: '700', color: Brand.text, marginBottom: 6 },
-  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, backgroundColor: Brand.white },
+  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, color: Brand.text, backgroundColor: Brand.white },
   inputDisabled: { backgroundColor: '#F3F4F6', color: Brand.textMuted },
   primaryButton: { backgroundColor: Brand.blue, borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
   primaryButtonText: { color: Brand.white, fontWeight: '700', fontSize: 14 },

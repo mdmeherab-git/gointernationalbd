@@ -48,6 +48,20 @@ export function apiUrl(path: string): string {
   return `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
+/**
+ * Every image/file URL the backend returns (notice.image_url, circular's
+ * circularUrl/featuredImageUrl, ...) is a relative "/api/files/<key>" path,
+ * not an absolute URL — the website can use it as-is because the browser
+ * resolves it against the current page's origin, but a native app has no
+ * such origin and must resolve it against the API base itself. Already-
+ * absolute URLs (e.g. a government service link) are returned unchanged.
+ */
+export function resolveAssetUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  return apiUrl(path);
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {

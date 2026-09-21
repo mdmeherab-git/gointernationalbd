@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyView, ErrorView, LoadingView } from '@/components/state-views';
 import { Brand, Spacing } from '@/constants/theme';
@@ -18,6 +19,7 @@ const TYPE_ICON: Record<string, string> = {
 
 export default function NotificationsScreen() {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data, loading, refreshing, error, refresh, reload, setData } = useApiQuery(() =>
     api.get<{ notifications: NotificationItem[]; unreadCount: number }>('/api/account/notifications'),
@@ -63,7 +65,7 @@ export default function NotificationsScreen() {
         <FlatList
           data={data!.notifications}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 24 }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Brand.blue} />}
           renderItem={({ item }) => (
             <Pressable

@@ -2,6 +2,7 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
+import { PasswordInput } from '@/components/PasswordInput';
 import { Brand } from '@/constants/theme';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -51,23 +52,37 @@ export default function RegisterScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{t('অ্যাকাউন্ট তৈরি করুন', 'Create Account')}</Text>
         <Text style={styles.subtitle}>{t('আপনার GO International BD Account তৈরি করুন', 'Create your GO International BD account')}</Text>
 
         {!!error && <Text style={styles.error}>{error}</Text>}
 
         <Text style={styles.label}>{t('নাম', 'Full Name')}</Text>
-        <TextInput style={styles.input} placeholder={t('আপনার পূর্ণ নাম', 'Your full name')} value={name} onChangeText={setName} />
+        <TextInput
+          style={styles.input}
+          placeholder={t('আপনার পূর্ণ নাম', 'Your full name')}
+          placeholderTextColor={Brand.textMuted}
+          value={name}
+          onChangeText={setName}
+        />
 
         <Text style={styles.label}>{t('মোবাইল নম্বর', 'Phone Number')}</Text>
-        <TextInput style={styles.input} placeholder="01XXXXXXXXX" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+        <TextInput
+          style={styles.input}
+          placeholder="01XXXXXXXXX"
+          placeholderTextColor={Brand.textMuted}
+          keyboardType="phone-pad"
+          value={phone}
+          onChangeText={setPhone}
+        />
 
         <Text style={styles.label}>{t('ইমেইল (ঐচ্ছিক)', 'Email (Optional)')}</Text>
         <TextInput
           style={styles.input}
           placeholder="you@example.com"
+          placeholderTextColor={Brand.textMuted}
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
@@ -75,13 +90,15 @@ export default function RegisterScreen() {
         />
 
         <Text style={styles.label}>{t('পাসওয়ার্ড', 'Password')}</Text>
-        <TextInput style={styles.input} placeholder={t('কমপক্ষে ৮ অক্ষর', 'At least 8 characters')} secureTextEntry value={password} onChangeText={setPassword} />
+        <PasswordInput
+          placeholder={t('কমপক্ষে ৮ অক্ষর', 'At least 8 characters')}
+          value={password}
+          onChangeText={setPassword}
+        />
 
         <Text style={styles.label}>{t('পাসওয়ার্ড নিশ্চিত করুন', 'Confirm Password')}</Text>
-        <TextInput
-          style={styles.input}
+        <PasswordInput
           placeholder={t('পাসওয়ার্ড আবার লিখুন', 'Re-enter password')}
-          secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
@@ -110,7 +127,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, color: Brand.textMuted, textAlign: 'center', marginBottom: 16 },
   error: { color: Brand.red, fontSize: 13, textAlign: 'center', marginBottom: 6, fontWeight: '600' },
   label: { fontSize: 13, fontWeight: '700', color: Brand.text, marginTop: 12, marginBottom: 6 },
-  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, backgroundColor: Brand.white },
+  input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: Brand.text, backgroundColor: Brand.white },
   primaryButton: { backgroundColor: Brand.blue, borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginTop: 22 },
   primaryButtonText: { color: Brand.white, fontWeight: '700', fontSize: 14 },
   linkRow: { marginTop: 18, alignItems: 'center' },

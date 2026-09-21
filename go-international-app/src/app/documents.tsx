@@ -4,6 +4,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyView, ErrorView, LoadingView } from '@/components/state-views';
 import { Brand, Spacing } from '@/constants/theme';
@@ -42,6 +43,7 @@ function formatSize(bytes: number) {
 
 export default function DocumentsScreen() {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const { data, loading, error, reload, setData } = useApiQuery(() =>
     api.get<{ documents: UserDocument[] }>('/api/account/documents'),
   );
@@ -166,7 +168,7 @@ export default function DocumentsScreen() {
         <FlatList
           data={data!.documents}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 24 }]}
           renderItem={({ item }) => {
             const isImage = item.content_type.startsWith('image/');
             return (
