@@ -14,8 +14,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
+import { AppHeader } from '@/components/AppHeader';
 import { Brand, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
@@ -27,6 +28,7 @@ import type { ApiCircular, PublicNotice } from '@/lib/types';
 import { LoadingView } from '@/components/state-views';
 import { CountryFlag } from '@/components/CountryFlag';
 import { CountryPickerModal } from '@/components/CountryPickerModal';
+import { JobGridCard } from '@/components/JobGridCard';
 import { OptionPickerModal } from '@/components/OptionPickerModal';
 
 const VISA_TYPES = [
@@ -116,28 +118,19 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Brand.blue} />}>
-        {/* HEADER */}
-        <Animated.View entering={FadeInDown.duration(280)} style={styles.header}>
-          <View style={styles.headerBrand}>
-            <Image source={require('@/assets/images/icon.png')} style={styles.headerLogo} contentFit="contain" />
-            <View>
-              <Text style={styles.headerTitle}>GO INTERNATIONAL BD</Text>
-              <Text style={styles.headerSubtitle}>
-                {t('অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহায়তা', 'Official Visa Check & Immigration Assistant')}
-              </Text>
-            </View>
-          </View>
+    <SafeAreaView style={styles.safe} edges={[]}>
+      <AppHeader
+        rightExtra={
           <Pressable
             style={styles.profileButton}
             onPress={() => router.push(user ? '/notifications' : '/login')}>
-            <Text style={{ fontSize: 18 }}>{user ? '🔔' : '👤'}</Text>
+            <Text style={{ fontSize: 16 }}>{user ? '🔔' : '👤'}</Text>
           </Pressable>
-        </Animated.View>
-
+        }
+      />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Brand.blue} />}>
         {/* HERO — VISA CHECK */}
         <Animated.View entering={FadeInUp.duration(320).delay(80)} style={styles.heroCard}>
           <Text style={styles.heroEyebrow}>{t('১০০+ দেশের অফিসিয়াল ভিসা চেক', 'Official visa check for 100+ countries')}</Text>
@@ -248,9 +241,15 @@ export default function HomeScreen() {
         {latestJobs.loading ? (
           <LoadingView />
         ) : (
-          <View style={{ gap: 10, paddingHorizontal: Spacing.three }}>
+          <View style={styles.jobsGrid}>
             {(latestJobs.data?.circulars ?? []).slice(0, 4).map((job) => (
-              <JobRow key={job.id} job={job} onPress={() => router.push({ pathname: '/jobs/[id]', params: { id: job.id } })} />
+              <View key={job.id} style={styles.jobsGridCell}>
+                <JobGridCard
+                  job={job}
+                  onPress={() => router.push({ pathname: '/jobs/[id]', params: { id: job.id } })}
+                  onApply={() => router.push({ pathname: '/jobs/[id]', params: { id: job.id, autoApply: '1' } })}
+                />
+              </View>
             ))}
           </View>
         )}
@@ -402,24 +401,6 @@ function ServiceCard({ icon, title, desc, onPress }: { icon: string; title: stri
   );
 }
 
-function JobRow({ job, onPress }: { job: ApiCircular; onPress: () => void }) {
-  const code = job.countryCode || guessCountryCode(job.country);
-  return (
-    <Pressable style={styles.jobRow} onPress={onPress}>
-      <CountryFlag code={code} width={30} height={22} />
-      <View style={{ flex: 1 }}>
-        <Text style={styles.jobTitle} numberOfLines={1}>
-          {job.category || job.title}
-        </Text>
-        <Text style={styles.jobMeta} numberOfLines={1}>
-          {job.country} · {job.salary}
-        </Text>
-      </View>
-      <Text style={styles.jobArrow}>›</Text>
-    </Pressable>
-  );
-}
-
 function ServiceLinksModal({
   open,
   onClose,
@@ -464,21 +445,10 @@ function ServiceLinksModal({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Brand.background },
   scrollContent: { paddingBottom: 40 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-  },
-  headerBrand: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  headerLogo: { width: 40, height: 40 },
-  headerTitle: { fontSize: 15, fontWeight: '800', color: Brand.primary },
-  headerSubtitle: { fontSize: 10, color: Brand.textMuted, maxWidth: 220 },
   profileButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: Brand.white,
     borderWidth: 1,
     borderColor: Brand.border,
@@ -594,19 +564,14 @@ const styles = StyleSheet.create({
   },
   serviceTitle: { fontSize: 13, fontWeight: '800', color: Brand.primary },
   serviceDesc: { fontSize: 11, color: Brand.textMuted, lineHeight: 15 },
-  jobRow: {
+  jobsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: Brand.white,
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: Brand.border,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 12,
+    paddingHorizontal: Spacing.three,
   },
-  jobTitle: { fontSize: 13, fontWeight: '700', color: Brand.text },
-  jobMeta: { fontSize: 11, color: Brand.textMuted, marginTop: 2 },
-  jobArrow: { fontSize: 20, color: Brand.textMuted },
+  jobsGridCell: { width: '48%' },
   noticeRow: {
     flexDirection: 'row',
     gap: 10,

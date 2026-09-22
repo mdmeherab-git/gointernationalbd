@@ -392,7 +392,7 @@ export default function CvScreen() {
           {generatingPdf ? (
             <ActivityIndicator color={Brand.white} />
           ) : (
-            <Text style={styles.primaryButtonText}>📄 {t('PDF ডাউনলোড করুন', 'Download PDF')}</Text>
+            <Text style={styles.primaryButtonText}>📄 {t('CV PDF ডাউনলোড করুন', 'Download CV PDF')}</Text>
           )}
         </Pressable>
       </ScrollView>

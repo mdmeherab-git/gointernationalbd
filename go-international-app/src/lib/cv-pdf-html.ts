@@ -1,5 +1,5 @@
 import { CV_LOGO_DATA_URI } from './cv-logo';
-import type { CvData } from './cv';
+import { MAX_LEN, type CvData } from './cv';
 
 /**
  * Builds an HTML document that visually mirrors the website's CV PDF
@@ -21,6 +21,16 @@ const MINT = '#D8EAEA';
 const DARK = '#303438';
 const MUTED = '#4B5559';
 
+/** Same truncation rule as the website's own PDF template (components/
+ * CvPdfDocument.tsx `clip()`) — every field is bounded to a fixed max
+ * length so no amount of typed text (long names, long descriptions,
+ * wide Bengali glyphs) can push the layout past one A4 page. */
+function clip(value: unknown, max: number): string {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  return text.length <= max ? text : `${text.slice(0, Math.max(1, max - 1)).trim()}…`;
+}
+
 function esc(value: unknown): string {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -31,7 +41,7 @@ function esc(value: unknown): string {
 
 function row(label: string, value: string): string {
   if (!value) return '';
-  return `<div class="pi-row"><span class="pi-label">${esc(label)}</span><span class="pi-value">${esc(value)}</span></div>`;
+  return `<div class="pi-row"><span class="pi-label">${esc(label)}</span><span class="pi-value">${esc(clip(value, MAX_LEN.personalInfoValue))}</span></div>`;
 }
 
 export function buildCvHtml(data: CvData, showWatermark: boolean): string {
@@ -53,49 +63,53 @@ export function buildCvHtml(data: CvData, showWatermark: boolean): string {
 
   const jobsHtml = data.workExperience
     .filter((j) => j.position || j.company || j.description)
+    .slice(0, 3)
     .map(
       (job) => `
       <div class="job-entry">
         <div class="job-head">
-          <span class="job-title">${esc(job.position).toUpperCase()}</span>
-          <span class="job-date">${esc(job.startDate)}${job.startDate || job.endDate ? ' - ' : ''}${esc(job.endDate)}</span>
+          <span class="job-title">${esc(clip(job.position, MAX_LEN.jobCompany)).toUpperCase()}</span>
+          <span class="job-date">${esc(clip(job.startDate, MAX_LEN.jobDate))}${job.startDate || job.endDate ? ' - ' : ''}${esc(clip(job.endDate, MAX_LEN.jobDate))}</span>
         </div>
-        ${job.company ? `<div class="job-company">${esc(job.company)}</div>` : ''}
-        ${job.description ? `<div class="job-desc">${esc(job.description)}</div>` : ''}
+        ${job.company ? `<div class="job-company">${esc(clip(job.company, MAX_LEN.jobCompany))}</div>` : ''}
+        ${job.description ? `<div class="job-desc">${esc(clip(job.description, MAX_LEN.jobDescription))}</div>` : ''}
       </div>`,
     )
     .join('');
 
   const eduHtml = data.education
     .filter((e) => e.institution || e.level || e.year)
+    .slice(0, 2)
     .map(
       (e) => `
       <div class="edu-entry">
-        <div class="edu-institution">${esc(e.institution)}</div>
+        <div class="edu-institution">${esc(clip(e.institution, MAX_LEN.eduInstitution))}</div>
         <div class="edu-level">${esc(e.level)}</div>
-        <div class="edu-year">${esc(e.year)}</div>
+        <div class="edu-year">${esc(clip(e.year, MAX_LEN.eduYear))}</div>
       </div>`,
     )
     .join('');
 
   const refHtml = data.references
     .filter((r) => r.name || r.phone || r.email)
+    .slice(0, 2)
     .map(
       (r) => `
       <div class="ref-entry">
-        <div class="ref-name">${esc(r.name)}</div>
-        ${r.phone ? `<div class="ref-line">Tel: ${esc(r.phone)}</div>` : ''}
-        ${r.email ? `<div class="ref-line">${esc(r.email)}</div>` : ''}
+        <div class="ref-name">${esc(clip(r.name, MAX_LEN.refName))}</div>
+        ${r.phone ? `<div class="ref-line">Tel: ${esc(clip(r.phone, MAX_LEN.refPhone))}</div>` : ''}
+        ${r.email ? `<div class="ref-line">${esc(clip(r.email, MAX_LEN.refEmail))}</div>` : ''}
       </div>`,
     )
     .join('');
 
   const skillsHtml = data.skills
     .filter((s) => s.name)
+    .slice(0, 5)
     .map(
       (s) => `
       <div class="skill-row">
-        <span class="skill-name">${esc(s.name)}</span>
+        <span class="skill-name">${esc(clip(s.name, MAX_LEN.skillName))}</span>
         <span class="skill-bar"><span class="skill-fill" style="width:${Math.min(5, Math.max(1, s.level)) * 20}%"></span></span>
       </div>`,
     )
@@ -103,12 +117,14 @@ export function buildCvHtml(data: CvData, showWatermark: boolean): string {
 
   const langHtml = data.languages
     .filter((l) => l.name)
-    .map((l) => `<div class="bullet-item">• ${esc(l.name).toUpperCase()}${l.level ? ` (${esc(l.level)})` : ''}</div>`)
+    .slice(0, 4)
+    .map((l) => `<div class="bullet-item">• ${esc(clip(l.name, MAX_LEN.languageName)).toUpperCase()}${l.level ? ` (${esc(l.level)})` : ''}</div>`)
     .join('');
 
   const hobbyHtml = data.hobbies
     .filter(Boolean)
-    .map((h) => `<div class="bullet-item">• ${esc(h).toUpperCase()}</div>`)
+    .slice(0, 3)
+    .map((h) => `<div class="bullet-item">• ${esc(clip(h, MAX_LEN.hobby)).toUpperCase()}</div>`)
     .join('');
 
   const personalRowsHtml = personalRows.map(([label, value]) => row(label, value)).join('');
@@ -123,12 +139,19 @@ export function buildCvHtml(data: CvData, showWatermark: boolean): string {
 <meta charset="utf-8" />
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 595pt;
+    height: 842pt;
+    /* Hard page-size cap: every field below is also length-clipped, but
+       this guarantees the printed PDF can never grow to a 2nd page even
+       under an unexpected font-metrics edge case. */
+    overflow: hidden;
+  }
   body {
     font-family: -apple-system, Roboto, "Noto Sans Bengali", Arial, sans-serif;
     color: ${DARK};
-    width: 595pt;
-    height: 842pt;
   }
   .frame {
     position: relative;
@@ -207,14 +230,14 @@ export function buildCvHtml(data: CvData, showWatermark: boolean): string {
     ${showWatermark ? `<img class="watermark" src="${CV_LOGO_DATA_URI}" />` : ''}
 
     <div class="col-left">
-      <div class="name">${esc((data.fullName || 'YOUR NAME').toUpperCase())}</div>
-      <div class="job-title-header">${esc((data.jobTitle || 'PROFESSIONAL').toUpperCase())}</div>
+      <div class="name">${esc(clip(data.fullName || 'YOUR NAME', MAX_LEN.fullName).toUpperCase())}</div>
+      <div class="job-title-header">${esc(clip(data.jobTitle || 'PROFESSIONAL', MAX_LEN.jobTitle).toUpperCase())}</div>
       ${photoHtml}
 
       <div class="badge-heading"><span class="badge">👤</span><span class="heading">CONTACT ME</span></div>
-      <div class="left-block">${esc(data.phone)}</div>
-      <div class="left-block">${esc(data.email)}</div>
-      <div class="left-block">${esc(data.presentAddress)}</div>
+      <div class="left-block">${esc(clip(data.phone, MAX_LEN.phone))}</div>
+      <div class="left-block">${esc(clip(data.email, MAX_LEN.email))}</div>
+      <div class="left-block">${esc(clip(data.presentAddress, MAX_LEN.address))}</div>
 
       <div class="divider-h"></div>
       <div class="badge-heading"><span class="badge">🎓</span><span class="heading">EDUCATION</span></div>

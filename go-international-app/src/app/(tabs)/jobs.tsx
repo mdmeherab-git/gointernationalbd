@@ -1,15 +1,13 @@
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CountryFlag } from '@/components/CountryFlag';
+import { JobGridCard } from '@/components/JobGridCard';
 import { OptionPickerModal, type PickerOption } from '@/components/OptionPickerModal';
 import { EmptyView, ErrorView, LoadingView } from '@/components/state-views';
 import { Brand, Spacing } from '@/constants/theme';
-import { api, resolveAssetUrl } from '@/lib/api';
-import { guessCountryCode } from '@/lib/country-match';
+import { api } from '@/lib/api';
 import { useLanguage } from '@/lib/language';
 import type { ApiCircular } from '@/lib/types';
 import { useApiQuery } from '@/lib/use-api';
@@ -41,16 +39,9 @@ const CATEGORY_OPTIONS: { value: string; bn: string }[] = [
   { value: 'Technician', bn: 'টেকনিশিয়ান' },
 ];
 
-/** Below this width the 2nd column has no room to breathe (card content —
- * flag + country + circular preview + stat rows — starts wrapping/clipping),
- * so narrow phones fall back to a single full-width column. */
-const TWO_COLUMN_MIN_WIDTH = 700;
-
 export default function JobsScreen() {
   const { t } = useLanguage();
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const numColumns = width >= TWO_COLUMN_MIN_WIDTH ? 2 : 1;
   const { data, loading, refreshing, error, refresh, reload } = useApiQuery(() =>
     api.get<{ circulars: ApiCircular[] }>('/api/circulars'),
   );
@@ -82,11 +73,10 @@ export default function JobsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <FlatList
-        key={numColumns}
         data={loading || error ? [] : filtered}
         keyExtractor={(item) => item.id}
-        numColumns={numColumns}
-        columnWrapperStyle={numColumns === 2 ? styles.gridRow : undefined}
+        numColumns={2}
+        columnWrapperStyle={styles.gridRow}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Brand.blue} />}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
@@ -154,10 +144,10 @@ export default function JobsScreen() {
           </>
         }
         renderItem={({ item }) => (
-          <View style={numColumns === 2 ? styles.gridCell : styles.singleCell}>
-            <JobCard
+          <View style={styles.gridCell}>
+            <JobGridCard
               job={item}
-              onViewDetails={() => router.push({ pathname: '/jobs/[id]', params: { id: item.id } })}
+              onPress={() => router.push({ pathname: '/jobs/[id]', params: { id: item.id } })}
               onApply={() => router.push({ pathname: '/jobs/[id]', params: { id: item.id, autoApply: '1' } })}
             />
           </View>
@@ -181,90 +171,6 @@ export default function JobsScreen() {
         options={categoryOptions}
       />
     </SafeAreaView>
-  );
-}
-
-function JobCard({
-  job,
-  onViewDetails,
-  onApply,
-}: {
-  job: ApiCircular;
-  onViewDetails: () => void;
-  onApply: () => void;
-}) {
-  const { t } = useLanguage();
-  const code = job.countryCode || guessCountryCode(job.country);
-  const imageUrl = resolveAssetUrl(job.circularUrl);
-  const showImage = imageUrl && job.circularType === 'image';
-
-  return (
-    <View style={styles.card}>
-      {/* CARD HEADER */}
-      <View style={styles.cardHeader}>
-        <CountryFlag code={code} width={28} height={21} />
-        <Text style={styles.cardCountry} numberOfLines={1}>
-          {job.country}
-        </Text>
-      </View>
-      {!!job.sponsor && (
-        <Text style={styles.cardSponsor}>
-          {t('স্পনসর: ', 'Sponsor: ')}
-          <Text style={styles.cardSponsorName}>{job.sponsor}</Text>
-        </Text>
-      )}
-
-      {/* CIRCULAR PREVIEW */}
-      <Pressable style={styles.previewBox} onPress={onViewDetails}>
-        {showImage ? (
-          <Image source={{ uri: imageUrl! }} style={styles.previewImage} contentFit="contain" />
-        ) : (
-          <View style={styles.previewFallback}>
-            <Text style={{ fontSize: 40 }}>📄</Text>
-            <Text style={styles.previewFallbackCountry}>{job.country}</Text>
-            <Text style={styles.previewFallbackMeta}>
-              {job.category} {t('চাকরির সার্কুলার', 'Job Circular')}
-            </Text>
-            <View style={styles.previewFallbackPill}>
-              <Text style={styles.previewFallbackPillText}>{t('সার্কুলার প্রিভিউ', 'Circular Preview')}</Text>
-            </View>
-          </View>
-        )}
-      </Pressable>
-
-      {/* CATEGORY BADGE */}
-      {!!job.category && (
-        <View style={styles.categoryBadge}>
-          <Text style={styles.categoryBadgeText}>{job.category}</Text>
-        </View>
-      )}
-
-      {/* STATS */}
-      <View style={styles.statRows}>
-        <View style={styles.statRow}>
-          <Text style={styles.statLabel}>{t('বেতন', 'Salary')}</Text>
-          <Text style={styles.statValue}>{job.salary || '—'}</Text>
-        </View>
-        <View style={styles.statRow}>
-          <Text style={styles.statLabel}>{t('পদসংখ্যা', 'Vacancy')}</Text>
-          <Text style={styles.statValue}>{job.vacancy}</Text>
-        </View>
-        <View style={styles.statRow}>
-          <Text style={styles.statLabel}>{t('আবেদনের শেষ তারিখ', 'Deadline')}</Text>
-          <Text style={styles.statValueDeadline}>{job.deadline || '—'}</Text>
-        </View>
-      </View>
-
-      {/* BUTTONS */}
-      <View style={styles.cardButtons}>
-        <Pressable style={styles.detailsButton} onPress={onViewDetails}>
-          <Text style={styles.detailsButtonText}>{t('বিস্তারিত দেখুন', 'View Details')}</Text>
-        </Pressable>
-        <Pressable style={styles.applyButton} onPress={onApply}>
-          <Text style={styles.applyButtonText}>{t('আবেদন করুন', 'Apply Now')}</Text>
-        </Pressable>
-      </View>
-    </View>
   );
 }
 
@@ -320,49 +226,6 @@ const styles = StyleSheet.create({
   sectionHeading: { paddingHorizontal: Spacing.three, marginTop: Spacing.two, marginBottom: Spacing.two },
   sectionEyebrow: { fontSize: 12, fontWeight: '700', color: Brand.blue },
   sectionTitle: { fontSize: 20, fontWeight: '800', color: Brand.primary, marginTop: 2 },
-  singleCell: { paddingHorizontal: Spacing.three },
   gridRow: { paddingHorizontal: Spacing.three, gap: Spacing.three },
-  gridCell: { flex: 1 },
-  card: {
-    marginBottom: Spacing.three,
-    backgroundColor: Brand.white,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Brand.border,
-    padding: 16,
-    gap: 12,
-  },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardCountry: { fontSize: 17, fontWeight: '800', color: Brand.text, flexShrink: 1 },
-  cardSponsor: { fontSize: 12, color: Brand.textMuted, marginTop: -6 },
-  cardSponsorName: { color: Brand.blue, fontWeight: '700' },
-  previewBox: {
-    aspectRatio: 4 / 5,
-    width: '100%',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Brand.border,
-    backgroundColor: '#F8FAFC',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewImage: { width: '100%', height: '100%' },
-  previewFallback: { alignItems: 'center', gap: 4, padding: 16 },
-  previewFallbackCountry: { fontWeight: '800', color: Brand.text, marginTop: 4 },
-  previewFallbackMeta: { fontSize: 11, color: Brand.textMuted },
-  previewFallbackPill: { marginTop: 6, backgroundColor: Brand.white, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4 },
-  previewFallbackPillText: { fontSize: 11, color: Brand.textMuted },
-  categoryBadge: { alignSelf: 'flex-start', backgroundColor: '#EFF6FF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
-  categoryBadgeText: { fontSize: 12, fontWeight: '700', color: '#1D4ED8' },
-  statRows: { gap: 8 },
-  statRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  statLabel: { fontSize: 12, color: Brand.textMuted },
-  statValue: { fontSize: 12, fontWeight: '700', color: Brand.text },
-  statValueDeadline: { fontSize: 12, fontWeight: '700', color: Brand.red },
-  cardButtons: { flexDirection: 'row', gap: 10 },
-  detailsButton: { flex: 1, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE', borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  detailsButtonText: { fontSize: 12, fontWeight: '800', color: '#1D4ED8' },
-  applyButton: { flex: 1, backgroundColor: Brand.blue, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  applyButtonText: { fontSize: 12, fontWeight: '800', color: Brand.white },
+  gridCell: { flex: 1, marginBottom: Spacing.three },
 });
