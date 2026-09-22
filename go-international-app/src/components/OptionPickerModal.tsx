@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Brand } from '@/constants/theme';
@@ -35,18 +35,20 @@ export function OptionPickerModal({
               <Text style={styles.closeText}>✕</Text>
             </Pressable>
           </View>
-          {options.map((opt) => (
-            <Pressable
-              key={opt.value}
-              style={[styles.row, opt.value === selectedValue && styles.rowSelected]}
-              onPress={() => {
-                onSelect(opt.value);
-                onClose();
-              }}>
-              <Text style={styles.rowText}>{opt.label}</Text>
-              {opt.value === selectedValue && <Text style={styles.checkmark}>✓</Text>}
-            </Pressable>
-          ))}
+          <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+            {options.map((opt) => (
+              <Pressable
+                key={opt.value}
+                style={[styles.row, opt.value === selectedValue && styles.rowSelected]}
+                onPress={() => {
+                  onSelect(opt.value);
+                  onClose();
+                }}>
+                <Text style={styles.rowText}>{opt.label}</Text>
+                {opt.value === selectedValue && <Text style={styles.checkmark}>✓</Text>}
+              </Pressable>
+            ))}
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>

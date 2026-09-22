@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyView, ErrorView, LoadingView } from '@/components/state-views';
@@ -165,6 +165,7 @@ function ApplyModal({
 }) {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState(user?.name ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
@@ -205,10 +206,14 @@ function ApplyModal({
 
   return (
     <Modal visible={open} transparent animationType="slide" onRequestClose={handleClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+      <KeyboardAvoidingView
+        style={styles.modalOverlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -insets.bottom}
+      >
+        <View style={[styles.modalCard, { maxHeight: '88%' }]}>
           {done ? (
-            <View style={{ alignItems: 'center', gap: 10, paddingVertical: 12 }}>
+            <View style={{ alignItems: 'center', gap: 10, paddingVertical: 12, paddingBottom: Math.max(insets.bottom, 16) }}>
               <Text style={{ fontSize: 40 }}>✅</Text>
               <Text style={styles.sectionTitle}>{t('আবেদন সফল হয়েছে!', 'Application submitted!')}</Text>
               <Pressable style={styles.primaryButton} onPress={handleClose}>
@@ -219,49 +224,63 @@ function ApplyModal({
             <>
               <View style={styles.modalHeader}>
                 <Text style={styles.sectionTitle}>{t('আবেদন করুন', 'Apply for this job')}</Text>
-                <Pressable onPress={handleClose}>
+                <Pressable onPress={handleClose} hitSlop={10}>
                   <Text style={{ fontSize: 20, color: Brand.textMuted }}>✕</Text>
                 </Pressable>
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder={t('নাম', 'Name')}
-                placeholderTextColor={Brand.textMuted}
-                value={name}
-                onChangeText={setName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder={t('মোবাইল নম্বর', 'Phone number')}
-                placeholderTextColor={Brand.textMuted}
-                keyboardType="phone-pad"
-                value={phone}
-                onChangeText={setPhone}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder={t('ইমেইল (ঐচ্ছিক)', 'Email (optional)')}
-                placeholderTextColor={Brand.textMuted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
-              <TextInput
-                style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
-                placeholder={t('বার্তা (ঐচ্ছিক)', 'Message (optional)')}
-                placeholderTextColor={Brand.textMuted}
-                multiline
-                value={message}
-                onChangeText={setMessage}
-              />
-              <Pressable style={styles.primaryButton} disabled={submitting} onPress={submit}>
-                <Text style={styles.primaryButtonText}>{submitting ? '...' : t('জমা দিন', 'Submit')}</Text>
-              </Pressable>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ gap: 10 }}
+              >
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('নাম', 'Name')}
+                  placeholderTextColor={Brand.textMuted}
+                  value={name}
+                  onChangeText={setName}
+                  returnKeyType="next"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('মোবাইল নম্বর', 'Phone number')}
+                  placeholderTextColor={Brand.textMuted}
+                  keyboardType="phone-pad"
+                  value={phone}
+                  onChangeText={setPhone}
+                  returnKeyType="next"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('ইমেইল (ঐচ্ছিক)', 'Email (optional)')}
+                  placeholderTextColor={Brand.textMuted}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                  returnKeyType="next"
+                />
+                <TextInput
+                  style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                  placeholder={t('বার্তা (ঐচ্ছিক)', 'Message (optional)')}
+                  placeholderTextColor={Brand.textMuted}
+                  multiline
+                  value={message}
+                  onChangeText={setMessage}
+                  blurOnSubmit
+                />
+                <Pressable
+                  style={[styles.primaryButton, { marginBottom: Math.max(insets.bottom, 12) }]}
+                  disabled={submitting}
+                  onPress={submit}
+                >
+                  <Text style={styles.primaryButtonText}>{submitting ? '...' : t('জমা দিন', 'Submit')}</Text>
+                </Pressable>
+              </ScrollView>
             </>
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

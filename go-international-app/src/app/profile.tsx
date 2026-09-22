@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
+import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LoadingView } from '@/components/state-views';
@@ -24,7 +25,10 @@ export default function ProfileScreen() {
   const [passportIssue, setPassportIssue] = useState('');
   const [passportExpiry, setPassportExpiry] = useState('');
   const [photoHeaders, setPhotoHeaders] = useState<Record<string, string>>({});
-  const [photoVersion, setPhotoVersion] = useState(0);
+  // Seeded from the current time (not 0) so a stale disk-cached response
+  // from a previous app launch under the same query string is never
+  // reused — each cold start gets a guaranteed-fresh cache key.
+  const [photoVersion, setPhotoVersion] = useState(() => Date.now());
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [message, setMessage] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null);
@@ -94,16 +98,29 @@ export default function ProfileScreen() {
     const asset = result.assets[0];
     setUploadingPhoto(true);
     try {
+      // The picker's reported mimeType is unreliable on Android (often
+      // missing, or stale from before the built-in cropper re-encodes the
+      // file), and the server rejects any file whose bytes don't match its
+      // declared Content-Type. Re-encoding through the manipulator every
+      // time guarantees a real JPEG regardless of the source format (JPG,
+      // PNG, or WebP all decode fine as input) and doubles as the required
+      // resize/compression step before upload.
+      const manipulated = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        [{ resize: { width: 1024 } }],
+        { compress: 0.75, format: ImageManipulator.SaveFormat.JPEG },
+      );
+
       const form = new FormData();
       form.append('photo', {
-        uri: asset.uri,
-        name: asset.fileName ?? 'photo.jpg',
-        type: asset.mimeType ?? 'image/jpeg',
+        uri: manipulated.uri,
+        name: 'profile-photo.jpg',
+        type: 'image/jpeg',
       } as unknown as Blob);
 
       const data = await api.postForm<{ profilePhotoKey: string }>('/api/auth/profile-photo', form);
       setProfile((p) => (p ? { ...p, profilePhotoKey: data.profilePhotoKey } : p));
-      setPhotoVersion((v) => v + 1);
+      setPhotoVersion(Date.now());
       await refreshUser();
       notify(t('ছবি আপডেট হয়েছে', 'Photo updated'));
     } catch (err) {
@@ -130,14 +147,20 @@ export default function ProfileScreen() {
               source={{ uri: `${BASE_URL}/api/auth/profile-photo?v=${photoVersion}`, headers: photoHeaders }}
               style={styles.avatarImage}
               contentFit="cover"
+              cachePolicy="none"
             />
           ) : (
             <Text style={{ fontSize: 32 }}>👤</Text>
           )}
+          {uploadingPhoto && (
+            <View style={[StyleSheet.absoluteFill, styles.avatarOverlay]}>
+              <ActivityIndicator color={Brand.white} />
+            </View>
+          )}
         </View>
         <Pressable onPress={pickAndUploadPhoto} disabled={uploadingPhoto}>
           <Text style={styles.changePhotoText}>
-            {uploadingPhoto ? '...' : t('ছবি পরিবর্তন করুন', 'Change Photo')}
+            {uploadingPhoto ? t('আপলোড হচ্ছে...', 'Uploading...') : t('ছবি পরিবর্তন করুন', 'Change Photo')}
           </Text>
         </Pressable>
       </View>
@@ -191,6 +214,7 @@ const styles = StyleSheet.create({
   photoSection: { alignItems: 'center', gap: 8, marginBottom: 20 },
   avatar: { width: 96, height: 96, borderRadius: 48, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarImage: { width: '100%', height: '100%' },
+  avatarOverlay: { backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
   changePhotoText: { color: Brand.blue, fontWeight: '700', fontSize: 13 },
   label: { fontSize: 12, fontWeight: '700', color: Brand.text, marginBottom: 6 },
   input: { borderWidth: 1, borderColor: Brand.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, color: Brand.text, backgroundColor: Brand.white },

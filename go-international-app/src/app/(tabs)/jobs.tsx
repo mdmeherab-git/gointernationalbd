@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CountryFlag } from '@/components/CountryFlag';
@@ -41,9 +41,16 @@ const CATEGORY_OPTIONS: { value: string; bn: string }[] = [
   { value: 'Technician', bn: 'টেকনিশিয়ান' },
 ];
 
+/** Below this width the 2nd column has no room to breathe (card content —
+ * flag + country + circular preview + stat rows — starts wrapping/clipping),
+ * so narrow phones fall back to a single full-width column. */
+const TWO_COLUMN_MIN_WIDTH = 700;
+
 export default function JobsScreen() {
   const { t } = useLanguage();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const numColumns = width >= TWO_COLUMN_MIN_WIDTH ? 2 : 1;
   const { data, loading, refreshing, error, refresh, reload } = useApiQuery(() =>
     api.get<{ circulars: ApiCircular[] }>('/api/circulars'),
   );
@@ -75,8 +82,11 @@ export default function JobsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <FlatList
+        key={numColumns}
         data={loading || error ? [] : filtered}
         keyExtractor={(item) => item.id}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns === 2 ? styles.gridRow : undefined}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Brand.blue} />}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
@@ -144,11 +154,13 @@ export default function JobsScreen() {
           </>
         }
         renderItem={({ item }) => (
-          <JobCard
-            job={item}
-            onViewDetails={() => router.push({ pathname: '/jobs/[id]', params: { id: item.id } })}
-            onApply={() => router.push({ pathname: '/jobs/[id]', params: { id: item.id, autoApply: '1' } })}
-          />
+          <View style={numColumns === 2 ? styles.gridCell : styles.singleCell}>
+            <JobCard
+              job={item}
+              onViewDetails={() => router.push({ pathname: '/jobs/[id]', params: { id: item.id } })}
+              onApply={() => router.push({ pathname: '/jobs/[id]', params: { id: item.id, autoApply: '1' } })}
+            />
+          </View>
         )}
       />
 
@@ -308,8 +320,10 @@ const styles = StyleSheet.create({
   sectionHeading: { paddingHorizontal: Spacing.three, marginTop: Spacing.two, marginBottom: Spacing.two },
   sectionEyebrow: { fontSize: 12, fontWeight: '700', color: Brand.blue },
   sectionTitle: { fontSize: 20, fontWeight: '800', color: Brand.primary, marginTop: 2 },
+  singleCell: { paddingHorizontal: Spacing.three },
+  gridRow: { paddingHorizontal: Spacing.three, gap: Spacing.three },
+  gridCell: { flex: 1 },
   card: {
-    marginHorizontal: Spacing.three,
     marginBottom: Spacing.three,
     backgroundColor: Brand.white,
     borderRadius: 16,
