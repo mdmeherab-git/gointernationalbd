@@ -20,7 +20,7 @@ export default function AppTabs() {
     <Tabs style={{ flex: 1 }}>
       <TabSlot />
       <TabList asChild>
-        <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+        <View style={{ ...styles.bar, paddingBottom: Math.max(insets.bottom, 10) }}>
           <TabTrigger name="index" href="/" asChild>
             <TabButton label={t('হোম', 'Home')} icon={require('@/assets/images/tabIcons/home.png')} />
           </TabTrigger>

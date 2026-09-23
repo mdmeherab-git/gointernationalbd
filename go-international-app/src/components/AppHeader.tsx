@@ -129,7 +129,12 @@ export function AppHeader({ rightExtra }: { rightExtra?: ReactNode }) {
             accessibilityRole="button"
             accessibilityLabel={t('ভাষা পরিবর্তন করুন', 'Switch language')}
           >
+            <Text style={styles.langButtonIcon}>🌐</Text>
+            {/* Shows the language to switch TO (Bangla mode -> "English",
+                English mode -> "বাংলা"), matching the toggle behavior used
+                everywhere else in the app — not the currently-active one. */}
             <Text style={styles.langButtonText}>{isBangla ? 'English' : 'বাংলা'}</Text>
+            <Text style={styles.langButtonChevron}>▾</Text>
           </Pressable>
           {rightExtra}
         </View>
@@ -171,11 +176,17 @@ const styles = StyleSheet.create({
   rightRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
   langButton: {
     flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     borderWidth: 1,
     borderColor: Brand.border,
-    borderRadius: 8,
+    borderRadius: 999,
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
+  langButtonIcon: { fontSize: 11 },
   langButtonText: { fontSize: 11, fontWeight: '700', color: Brand.text },
+  langButtonChevron: { fontSize: 10, color: Brand.textMuted },
 });

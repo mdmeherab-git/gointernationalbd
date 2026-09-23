@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -20,7 +20,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { Brand, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
-import { api, resolveAssetUrl } from '@/lib/api';
+import { api, authHeaders, BASE_URL, resolveAssetUrl } from '@/lib/api';
 import { useApiQuery } from '@/lib/use-api';
 import { countries, type Country } from '@/lib/countries';
 import { guessCountryCode } from '@/lib/country-match';
@@ -28,7 +28,7 @@ import type { ApiCircular, PublicNotice } from '@/lib/types';
 import { LoadingView } from '@/components/state-views';
 import { CountryFlag } from '@/components/CountryFlag';
 import { CountryPickerModal } from '@/components/CountryPickerModal';
-import { JobGridCard } from '@/components/JobGridCard';
+import { CompactJobCard } from '@/components/CompactJobCard';
 import { OptionPickerModal } from '@/components/OptionPickerModal';
 
 const VISA_TYPES = [
@@ -119,22 +119,26 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
-      <AppHeader
-        rightExtra={
-          <Pressable
-            style={styles.profileButton}
-            onPress={() => router.push(user ? '/notifications' : '/login')}>
-            <Text style={{ fontSize: 16 }}>{user ? '🔔' : '👤'}</Text>
-          </Pressable>
-        }
-      />
+      <AppHeader rightExtra={<HeaderProfileButton />} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Brand.blue} />}>
+        {/* HERO BANNER — the website's own public/hero.png, reused as-is */}
+        <View style={styles.heroBannerWrap}>
+          <Image
+            source={require('@/assets/images/hero.png')}
+            style={styles.heroBannerImage}
+            contentFit="cover"
+          />
+        </View>
+
         {/* HERO — VISA CHECK */}
         <Animated.View entering={FadeInUp.duration(320).delay(80)} style={styles.heroCard}>
           <Text style={styles.heroEyebrow}>{t('১০০+ দেশের অফিসিয়াল ভিসা চেক', 'Official visa check for 100+ countries')}</Text>
           <Text style={styles.heroTitle}>{t('অফিসিয়াল ভিসা স্ট্যাটাস চেক করুন', 'Check Your Official Visa Status')}</Text>
+          <Text style={styles.heroSubtitle}>
+            {t('দেশ, ভিসার ধরন নির্বাচন করুন এবং পাসপোর্ট নম্বর দিন', 'Select country, visa type and enter passport number')}
+          </Text>
 
           <Text style={styles.fieldLabel}>{t('দেশ নির্বাচন করুন', 'Select Country')}</Text>
           <Pressable style={styles.selectorField} onPress={() => setCountryPickerOpen(true)}>
@@ -176,7 +180,11 @@ export default function HomeScreen() {
         </Animated.View>
 
         {/* POPULAR COUNTRIES */}
-        <SectionHeader icon="🌍" title={t('জনপ্রিয় দেশসমূহ', 'Popular Countries')} />
+        <SectionHeader
+          icon="🌍"
+          title={t('জনপ্রিয় দেশসমূহ', 'Popular Countries')}
+          action={{ label: t('সব দেখুন →', 'See All →'), onPress: () => setCountryPickerOpen(true) }}
+        />
         <View style={styles.countrySearchWrap}>
           <TextInput
             value={countrySearch}
@@ -244,11 +252,7 @@ export default function HomeScreen() {
           <View style={styles.jobsGrid}>
             {(latestJobs.data?.circulars ?? []).slice(0, 4).map((job) => (
               <View key={job.id} style={styles.jobsGridCell}>
-                <JobGridCard
-                  job={job}
-                  onPress={() => router.push({ pathname: '/jobs/[id]', params: { id: job.id } })}
-                  onApply={() => router.push({ pathname: '/jobs/[id]', params: { id: job.id, autoApply: '1' } })}
-                />
+                <CompactJobCard job={job} onPress={() => router.push({ pathname: '/jobs/[id]', params: { id: job.id } })} />
               </View>
             ))}
           </View>
@@ -366,6 +370,33 @@ export default function HomeScreen() {
   );
 }
 
+/** Header's top-right circular button — shows the user's real uploaded
+ * profile photo when one exists (same authenticated endpoint/pattern as
+ * profile.tsx), otherwise the plain icon. Guests go to Login instead. */
+function HeaderProfileButton() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [photoHeaders, setPhotoHeaders] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (user?.profilePhotoKey) authHeaders().then(setPhotoHeaders);
+  }, [user?.profilePhotoKey]);
+
+  return (
+    <Pressable style={styles.profileButton} onPress={() => router.push(user ? '/notifications' : '/login')}>
+      {user?.profilePhotoKey ? (
+        <Image
+          source={{ uri: `${BASE_URL}/api/auth/profile-photo`, headers: photoHeaders }}
+          style={styles.profilePhotoImage}
+          contentFit="cover"
+        />
+      ) : (
+        <Text style={{ fontSize: 16 }}>{user ? '🔔' : '👤'}</Text>
+      )}
+    </Pressable>
+  );
+}
+
 function SectionHeader({
   icon,
   title,
@@ -449,12 +480,20 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: Brand.white,
-    borderWidth: 1,
-    borderColor: Brand.border,
+    backgroundColor: Brand.blue,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  profilePhotoImage: { width: '100%', height: '100%' },
+  heroBannerWrap: {
+    marginHorizontal: Spacing.three,
+    marginBottom: Spacing.three,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#F8FAFC',
+  },
+  heroBannerImage: { width: '100%', aspectRatio: 1774 / 786 },
   heroCard: {
     marginHorizontal: Spacing.three,
     backgroundColor: Brand.white,
@@ -468,7 +507,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   heroEyebrow: { color: Brand.blue, fontSize: 11, fontWeight: '700' },
-  heroTitle: { color: Brand.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 },
+  heroTitle: { color: Brand.primary, fontSize: 18, fontWeight: '800' },
+  heroSubtitle: { color: Brand.textMuted, fontSize: 12, marginBottom: 4 },
   fieldLabel: { color: Brand.text, fontSize: 12, fontWeight: '700', marginTop: 10, marginBottom: 6 },
   selectorField: {
     flexDirection: 'row',
