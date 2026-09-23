@@ -29,7 +29,19 @@ import { LoadingView } from '@/components/state-views';
 import { CountryFlag } from '@/components/CountryFlag';
 import { CountryPickerModal } from '@/components/CountryPickerModal';
 import { CompactJobCard } from '@/components/CompactJobCard';
+import { NoticeTicker } from '@/components/NoticeTicker';
 import { OptionPickerModal } from '@/components/OptionPickerModal';
+
+/** Same defaults the website falls back to (app/page.tsx's defaultNotice)
+ * until /api/site-settings — the same endpoint the site itself reads —
+ * responds. */
+const DEFAULT_ANNOUNCEMENT = {
+  enabled: true,
+  bangla: 'বিশেষ বিজ্ঞপ্তি: নতুন চাকরির সার্কুলার প্রকাশিত হয়েছে। বিস্তারিত জানতে সার্কুলার দেখুন।',
+  english: 'Special Notice: New overseas job circulars have been published. Check the latest circulars for details.',
+  speed: 25,
+  direction: 'left' as 'left' | 'right',
+};
 
 const VISA_TYPES = [
   { value: 'work', bn: 'ওয়ার্ক ভিসা', en: 'Work Visa' },
@@ -62,10 +74,38 @@ export default function HomeScreen() {
   const featured = useApiQuery(() => api.get<{ circulars: ApiCircular[] }>('/api/circulars?featured=1&limit=5'));
   const pinnedCountries = useApiQuery(() => api.get<{ countries: Country[] }>('/api/popular-countries'));
 
+  // Same site-wide "বিশেষ বিজ্ঞপ্তি" ticker settings the website reads from
+  // /api/site-settings — not a separate/duplicate data source.
+  const [announcement, setAnnouncement] = useState(DEFAULT_ANNOUNCEMENT);
+  async function loadAnnouncement() {
+    try {
+      const data = await api.get<{
+        settings: { noticeEnabled: boolean; noticeBn: string; noticeEn: string; noticeSpeed: number; noticeDirection: string };
+      }>('/api/site-settings');
+      const s = data?.settings;
+      if (!s) return;
+      setAnnouncement({
+        enabled: !!s.noticeEnabled,
+        bangla: s.noticeBn || DEFAULT_ANNOUNCEMENT.bangla,
+        english: s.noticeEn || DEFAULT_ANNOUNCEMENT.english,
+        speed: Number(s.noticeSpeed) || DEFAULT_ANNOUNCEMENT.speed,
+        direction: s.noticeDirection === 'right' ? 'right' : 'left',
+      });
+    } catch {
+      // Keep showing the default announcement — not critical enough to
+      // surface an error for.
+    }
+  }
+  useEffect(() => {
+    void (async () => {
+      await loadAnnouncement();
+    })();
+  }, []);
+
   const [refreshing, setRefreshing] = useState(false);
   async function onRefresh() {
     setRefreshing(true);
-    await Promise.all([notices.refresh(), latestJobs.refresh(), featured.refresh(), pinnedCountries.refresh()]);
+    await Promise.all([notices.refresh(), latestJobs.refresh(), featured.refresh(), pinnedCountries.refresh(), loadAnnouncement()]);
     setRefreshing(false);
   }
 
@@ -178,6 +218,15 @@ export default function HomeScreen() {
             <Text style={styles.primaryButtonText}>🔍 {t('ভিসা চেক করুন এখনই', 'Check Visa Now')}</Text>
           </Pressable>
         </Animated.View>
+
+        {/* বিশেষ বিজ্ঞপ্তি — scrolling announcement ticker */}
+        {announcement.enabled && (
+          <NoticeTicker
+            text={t(announcement.bangla, announcement.english)}
+            speedSeconds={announcement.speed}
+            direction={announcement.direction}
+          />
+        )}
 
         {/* POPULAR COUNTRIES */}
         <SectionHeader
