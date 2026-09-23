@@ -21,9 +21,13 @@ const BANGLA_MONTHS = [
   'চৈত্র',
 ];
 
-const BANGLA_MONTH_LENGTHS = [31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29, 30];
+const BANGLA_WEEKDAYS = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
 
 const BANGLA_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+
+function isGregorianLeapYear(y: number): boolean {
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+}
 
 function toBanglaNumber(n: number): string {
   return n
@@ -33,38 +37,50 @@ function toBanglaNumber(n: number): string {
     .join('');
 }
 
-/** Same Bangla-calendar approximation the website uses (app/page.tsx) —
- * kept in lockstep so the app and site always show the same date. */
+/** Bangladesh's official reformed Bangla calendar (Pohela Boishakh fixed
+ * to April 14 every year): Boishakh–Bhadro (5 months) = 31 days,
+ * Ashwin–Falgun (6 months) = 30 days, Choitro = 30 days, or 31 in a
+ * Gregorian leap year — Choitro always falls in the Jan–Apr stretch of
+ * the *following* Gregorian year, so the leap check must use that year,
+ * not the year Poyla Boishakh started in. Previously Falgun was
+ * hardcoded to 29 and Choitro was never adjusted for leap years, which
+ * silently drifted the month (and eventually the date) wrong every year. */
+function banglaMonthLengths(newYearGregorianYear: number): number[] {
+  const choitroYear = newYearGregorianYear + 1;
+  return [31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 30, isGregorianLeapYear(choitroYear) ? 31 : 30];
+}
+
 function formatBanglaDate(dhakaDate: Date): string {
   const year = dhakaDate.getFullYear();
-  const month = dhakaDate.getMonth();
-  const day = dhakaDate.getDate();
   const bengaliNewYear = new Date(year, 3, 14);
 
   let banglaYear: number;
   let daysFromNewYear: number;
+  let newYearGregorianYear: number;
   if (dhakaDate >= bengaliNewYear) {
     banglaYear = year - 593;
+    newYearGregorianYear = year;
     daysFromNewYear = Math.floor((dhakaDate.getTime() - bengaliNewYear.getTime()) / (1000 * 60 * 60 * 24));
   } else {
     const previousNewYear = new Date(year - 1, 3, 14);
     banglaYear = year - 594;
+    newYearGregorianYear = year - 1;
     daysFromNewYear = Math.floor((dhakaDate.getTime() - previousNewYear.getTime()) / (1000 * 60 * 60 * 24));
   }
-  void month;
-  void day;
 
+  const monthLengths = banglaMonthLengths(newYearGregorianYear);
   let banglaMonthIndex = 0;
   let banglaDay = daysFromNewYear + 1;
-  for (let i = 0; i < BANGLA_MONTH_LENGTHS.length; i++) {
-    if (banglaDay <= BANGLA_MONTH_LENGTHS[i]) {
+  for (let i = 0; i < monthLengths.length; i++) {
+    if (banglaDay <= monthLengths[i]) {
       banglaMonthIndex = i;
       break;
     }
-    banglaDay -= BANGLA_MONTH_LENGTHS[i];
+    banglaDay -= monthLengths[i];
   }
 
-  return `${toBanglaNumber(banglaDay)} ${BANGLA_MONTHS[banglaMonthIndex]}, ${toBanglaNumber(banglaYear)}`;
+  const weekday = BANGLA_WEEKDAYS[dhakaDate.getDay()];
+  return `${weekday}, ${toBanglaNumber(banglaDay)} ${BANGLA_MONTHS[banglaMonthIndex]}, ${toBanglaNumber(banglaYear)}`;
 }
 
 function useLiveDhakaClock(): string {
@@ -109,16 +125,15 @@ export function AppHeader({ rightExtra }: { rightExtra?: ReactNode }) {
       </View>
 
       <View style={styles.mainHeader}>
-        <View style={styles.brandRow}>
-          <Image source={require('@/assets/images/splash-icon.png')} style={styles.logo} contentFit="contain" />
-          <View style={styles.brandTextWrap}>
-            <Text style={styles.brandTitle} numberOfLines={1}>
-              <Text style={styles.brandBlue}>GO INTERNATIONAL</Text> <Text style={styles.brandRed}>BD</Text>
-            </Text>
-            <Text style={styles.brandSubtitle} numberOfLines={1}>
-              {t('অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহায়তা', 'Official Visa Check & Immigration Assistant')}
-            </Text>
-          </View>
+        <Image source={require('@/assets/images/splash-icon.png')} style={styles.logo} contentFit="contain" />
+
+        <View style={styles.brandCenter}>
+          <Text style={styles.brandTitle} numberOfLines={1}>
+            <Text style={styles.brandBlue}>GO INTERNATIONAL</Text> <Text style={styles.brandRed}>BD</Text>
+          </Text>
+          <Text style={styles.brandSubtitle} numberOfLines={1}>
+            {t('অফিসিয়াল ভিসা চেক ও ইমিগ্রেশন সহায়তা', 'Official Visa Check & Immigration Assistant')}
+          </Text>
         </View>
 
         <View style={styles.rightRow}>
@@ -166,13 +181,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Brand.border,
   },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 },
-  logo: { width: 38, height: 38, flexShrink: 0 },
-  brandTextWrap: { flex: 1, minWidth: 0 },
-  brandTitle: { fontSize: 15, fontWeight: '800', letterSpacing: 0.2 },
+  logo: { width: 44, height: 44, flexShrink: 0 },
+  brandCenter: { flex: 1, minWidth: 0, alignItems: 'center' },
+  brandTitle: { fontSize: 15, fontWeight: '800', letterSpacing: 0.2, textAlign: 'center' },
   brandBlue: { color: '#0B4DBB' },
   brandRed: { color: '#EF4444' },
-  brandSubtitle: { fontSize: 9, color: Brand.textMuted, marginTop: 1 },
+  brandSubtitle: { fontSize: 9, color: Brand.textMuted, marginTop: 1, textAlign: 'center' },
   rightRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
   langButton: {
     flexShrink: 0,
