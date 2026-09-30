@@ -1208,22 +1208,21 @@ useEffect(() => {
                   </option>
 
                 </select>
+{/* PASSPORT */}
 
-                {/* PASSPORT */}
-
-                <input
-                  type="text"
-                  value={passportNumber}
-                  onChange={(e) =>
-                    setPassportNumber(e.target.value)
-                  }
-                  placeholder={
-                    isBangla
-                      ? "পাসপোর্ট নম্বর"
-                      : "Passport Number"
-                  }
-                  className="h-14 min-w-[180px] flex-1 rounded-xl border border-gray-200 bg-white px-4 text-gray-700 outline-none placeholder:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
-                />
+<input
+  type="text"
+  value={passportNumber}
+  onChange={(e) =>
+    setPassportNumber(e.target.value.toUpperCase())
+  }
+  placeholder={
+    isBangla
+      ? "পাসপোর্ট নম্বর"
+      : "Passport Number"
+  }
+  className="h-14 min-w-[180px] flex-1 rounded-xl border border-gray-200 bg-white px-4 text-gray-900 outline-none placeholder:text-gray-700 placeholder:opacity-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-md:h-10 max-md:min-w-0 max-md:px-2 max-md:text-[11px]"
+/>
 
                 {/* BUTTON */}
 
