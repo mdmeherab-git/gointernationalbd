@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { dbFirst, dbRun, newId } from "@/lib/cf";
+import {
+  clearRateLimit,
+  clientIp,
+  isRateLimited,
+  rateLimit,
+  tooManyRequests,
+} from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +21,13 @@ type UserRow = {
 };
 
 const SESSION_DAYS = 30;
+
+// Failed-login limits: per (IP + phone) and, against spread-out attacks,
+// per phone number alone.
+const LOGIN_WINDOW_S = 15 * 60;
+const LOGIN_MAX_FAILS = 8;
+const ACCOUNT_WINDOW_S = 60 * 60;
+const ACCOUNT_MAX_FAILS = 25;
 
 function normalizePhone(value: string): string {
   return value.trim().replace(/\s+/g, "");
@@ -46,6 +60,26 @@ export async function POST(req: Request) {
       );
     }
 
+    const ipKey = `user-login:${clientIp(req)}:${phone}`;
+    const accountKey = `user-login-acct:${phone}`;
+
+    const [ipLimited, accountLimited] = await Promise.all([
+      isRateLimited(ipKey, LOGIN_MAX_FAILS, LOGIN_WINDOW_S),
+      isRateLimited(accountKey, ACCOUNT_MAX_FAILS, ACCOUNT_WINDOW_S),
+    ]);
+
+    if (ipLimited.blocked || accountLimited.blocked) {
+      return tooManyRequests(
+        Math.max(ipLimited.retryAfter, accountLimited.retryAfter),
+      );
+    }
+
+    const recordFailure = () =>
+      Promise.all([
+        rateLimit(ipKey, LOGIN_MAX_FAILS, LOGIN_WINDOW_S),
+        rateLimit(accountKey, ACCOUNT_MAX_FAILS, ACCOUNT_WINDOW_S),
+      ]);
+
     const user = await dbFirst<UserRow>(
       `
         SELECT
@@ -63,6 +97,8 @@ export async function POST(req: Request) {
     );
 
     if (!user) {
+      await recordFailure();
+
       return NextResponse.json(
         {
           error:
@@ -88,6 +124,8 @@ export async function POST(req: Request) {
     );
 
     if (!passwordMatches) {
+      await recordFailure();
+
       return NextResponse.json(
         {
           error:
@@ -96,6 +134,8 @@ export async function POST(req: Request) {
         { status: 401 },
       );
     }
+
+    await clearRateLimit(ipKey);
 
     const sessionId = newId("session");
 

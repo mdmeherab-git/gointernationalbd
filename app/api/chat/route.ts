@@ -1,3 +1,4 @@
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { dbAll, dbFirst, dbRun, newId } from "@/lib/cf";
 
@@ -353,6 +354,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const rateLimited = await rateLimit(`chat-message:${clientIp(req)}`, 40, 60);
+  if (rateLimited.blocked) return tooManyRequests(rateLimited.retryAfter);
+
   try {
     const body = (await req.json().catch(() => null)) as {
       message?: unknown;

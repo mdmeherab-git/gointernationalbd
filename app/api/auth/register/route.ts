@@ -1,3 +1,4 @@
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
@@ -21,6 +22,9 @@ function normalizeEmail(value: string): string | null {
 }
 
 export async function POST(req: Request) {
+  const rateLimited = await rateLimit(`register:${clientIp(req)}`, 10, 3600);
+  if (rateLimited.blocked) return tooManyRequests(rateLimited.retryAfter);
+
   try {
     const body = (await req.json()) as {
       name?: unknown;

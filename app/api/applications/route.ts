@@ -1,9 +1,13 @@
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { dbRun, getDb, newId } from "@/lib/cf";
 import { getCurrentUser } from "@/lib/user-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const rateLimited = await rateLimit(`applications:${clientIp(req)}`, 10, 3600);
+  if (rateLimited.blocked) return tooManyRequests(rateLimited.retryAfter);
+
   let body: Record<string, unknown>;
   try {
     body = (await req.json()) as Record<string, unknown>;

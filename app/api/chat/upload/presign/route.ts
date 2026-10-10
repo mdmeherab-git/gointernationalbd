@@ -1,3 +1,4 @@
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { createPresignedUploadUrl, newId } from "@/lib/cf";
 import { classifyAttachment, extensionFor, sizeLimitFor } from "@/lib/chat-upload";
@@ -21,6 +22,9 @@ export const dynamic = "force-dynamic";
  * server-proxied /api/chat/upload route.
  */
 export async function POST(req: Request) {
+  const rateLimited = await rateLimit(`chat-upload:${clientIp(req)}`, 20, 600);
+  if (rateLimited.blocked) return tooManyRequests(rateLimited.retryAfter);
+
   try {
     const body = (await req.json().catch(() => null)) as {
       fileName?: unknown;

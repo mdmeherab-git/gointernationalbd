@@ -297,14 +297,32 @@ export default function CvBuilder({
   };
 
   const handleGenerateCleanPdf = async () => {
-    if (promoCode.trim() !== "327575") {
-      setPromoError(isBangla ? "সঠিক প্রমো কোড দিন।" : "Please enter the correct promo code.");
-      return;
-    }
-
     setPromoError("");
     setGenerating(true);
     try {
+      // The code is checked on the server, never in the browser's JS.
+      const check = await fetch("/api/cv/promo", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim() }),
+      });
+
+      if (check.status === 429) {
+        setPromoError(
+          isBangla
+            ? "অনেক বেশি ভুল চেষ্টা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
+            : "Too many wrong attempts. Please try again later.",
+        );
+        return;
+      }
+
+      const verdict = (await check.json().catch(() => ({}))) as { ok?: boolean };
+
+      if (!verdict.ok) {
+        setPromoError(isBangla ? "সঠিক প্রমো কোড দিন।" : "Please enter the correct promo code.");
+        return;
+      }
+
       const finalBytes = await buildPdfBytes(false);
       downloadPdfBytes(finalBytes, `${cvData.fullName || "cv"}-clean.pdf`);
       trackPixelCustom("CVDownload", { variant: "no_logo" });

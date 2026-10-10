@@ -1,3 +1,4 @@
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { dbFirst, dbRun, getUploads, newId } from "@/lib/cf";
 import { classifyAttachment, extensionFor, sizeLimitFor } from "@/lib/chat-upload";
@@ -133,6 +134,9 @@ function setGuestCookie(response: NextResponse, guestId: string, shouldSet: bool
 }
 
 export async function POST(req: Request) {
+  const rateLimited = await rateLimit(`chat-upload:${clientIp(req)}`, 20, 600);
+  if (rateLimited.blocked) return tooManyRequests(rateLimited.retryAfter);
+
   try {
     const form = await req.formData();
     const file = form.get("file");
