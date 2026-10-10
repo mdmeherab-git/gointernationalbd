@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { usePathname } from "next/navigation";
+import { trackPixel } from "../../lib/meta-pixel";
 
 const HIDDEN_KEY = "gib-office-chat-hidden-v1";
 
@@ -443,6 +444,7 @@ export default function OfficeChatWidget() {
   }, [messages, open]);
 
   function handleIconClick() {
+    if (!open) trackPixel("Contact", { content_name: "Office Chat" });
     setShowWelcome(false);
     setOpen((value) => !value);
   }
@@ -821,6 +823,7 @@ export default function OfficeChatWidget() {
                 type="button"
                 onClick={() => {
                   setShowWelcome(false);
+                  trackPixel("Contact", { content_name: "Office Chat" });
                   setOpen(true);
                 }}
                 className="mt-3 rounded-full bg-[#0B4DBB] px-4 py-2 text-xs font-bold text-white hover:bg-[#093f98]"

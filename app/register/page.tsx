@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { trackPixel } from "../../lib/meta-pixel";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -60,6 +61,8 @@ export default function RegisterPage() {
         );
         return;
       }
+
+      trackPixel("CompleteRegistration");
 
       setSuccess(
         "অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে। এখন Login করুন।",

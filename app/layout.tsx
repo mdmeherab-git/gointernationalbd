@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "./context/LanguageContext";
 import OfficeChatWidget from "../components/chat/OfficeChatWidget";
+import MetaPixel from "../components/MetaPixel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
         <LanguageProvider>
           {children}
           <OfficeChatWidget />
+          <MetaPixel />
         </LanguageProvider>
       </body>
     </html>

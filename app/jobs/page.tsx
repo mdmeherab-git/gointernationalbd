@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { trackPixel } from "../../lib/meta-pixel";
 
 /* =========================================================
    TYPES
@@ -1975,6 +1976,10 @@ export default function JobsPage() {
                       );
                       return;
                     }
+                    trackPixel("Lead", {
+                      content_name: applyJob?.title ?? "",
+                      content_category: applyJob?.country ?? "",
+                    });
                     setApplyDone(true);
                     setApplyForm({ name: "", phone: "", email: "", message: "" });
                   } catch {

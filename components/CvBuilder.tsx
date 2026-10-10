@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackPixelCustom } from "../lib/meta-pixel";
 import type { CvData, Skill, LanguageSkill } from "../types/cv";
 import {
   emptyCvData,
@@ -288,6 +289,7 @@ export default function CvBuilder({
     try {
       const finalBytes = await buildPdfBytes(true);
       downloadPdfBytes(finalBytes, `${cvData.fullName || "cv"}.pdf`);
+      trackPixelCustom("CVDownload");
       await saveCvToAccount();
     } finally {
       setGenerating(false);
@@ -305,6 +307,7 @@ export default function CvBuilder({
     try {
       const finalBytes = await buildPdfBytes(false);
       downloadPdfBytes(finalBytes, `${cvData.fullName || "cv"}-clean.pdf`);
+      trackPixelCustom("CVDownload", { variant: "no_logo" });
       await saveCvToAccount();
       setCleanDownloadOpen(false);
       setPromoCode("");

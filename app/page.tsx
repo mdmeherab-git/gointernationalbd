@@ -6,6 +6,7 @@ import { countries } from "./countries";
 import CvAndNoticeSection from "../components/CvAndNoticeSection";
 import Reveal from "@/components/ui/Reveal";
 import CvBuilder from "../components/CvBuilder";
+import { trackPixel } from "../lib/meta-pixel";
 
 
 /* =========================================================
@@ -443,6 +444,12 @@ export default function Home() {
       );
       return;
     }
+
+    trackPixel("Search", {
+      content_name: "Visa Check",
+      content_category: visaType,
+      search_string: selectedCountry,
+    });
 
     if (selectedCountry === "sa") {
       setSaudiServicesOpen(true);
