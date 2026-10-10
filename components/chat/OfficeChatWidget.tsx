@@ -4,19 +4,18 @@ import {
   useEffect,
   useRef,
   useState,
-  type PointerEvent,
 } from "react";
 import { usePathname } from "next/navigation";
 
-const POSITION_KEY = "gib-office-chat-position-v1";
 const HIDDEN_KEY = "gib-office-chat-hidden-v1";
 
-const SIZE = 54;
-const EDGE = 12;
-const CHAT_WIDTH = 360;
-const CHAT_HEIGHT = 560;
-
-type Position = { x: number; y: number };
+// Scrolled past this many px = "scrolled down" (label stays tucked in).
+const HELP_LABEL_SCROLL_THRESHOLD = 40;
+// Every time "হেল্প" slides out (first load, scrolling up, top of page) it
+// stays out this long, then sinks back into the icon.
+const HELP_LABEL_VISIBLE_MS = 2000;
+// Ignore tiny scroll jitters when deciding the scroll direction.
+const HELP_LABEL_SCROLL_DELTA = 6;
 
 type Message = {
   id: string;
@@ -147,34 +146,60 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
-function getDefaultPosition(): Position {
-  if (typeof window === "undefined") return { x: EDGE, y: EDGE };
-
-  const isMobile = window.innerWidth < 768;
-
-  return {
-    x: Math.max(
-      EDGE,
-      window.innerWidth - (isMobile ? 16 : 192) - SIZE,
-    ),
-    y: 88,
-  };
+/* Glass-look message bubble (3 dots) used directly as the chat head. */
+function ChatGlassIcon({ className = "h-[62px] w-[62px]" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+      className={className}
+      style={{ filter: "drop-shadow(0 6px 9px rgba(16,69,214,0.45))" }}
+    >
+      <defs>
+        <linearGradient id="gib-glass-body" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#4EC1FB" />
+          <stop offset="1" stopColor="#1045D6" />
+        </linearGradient>
+        <linearGradient id="gib-glass-shine" x1="0" y1="8" x2="0" y2="30" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.8" />
+          <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="gib-glass-rim" x1="6" y1="8" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.95" />
+          <stop offset="0.5" stopColor="#FFFFFF" stopOpacity="0.15" />
+          <stop offset="1" stopColor="#FFFFFF" stopOpacity="0.6" />
+        </linearGradient>
+        <radialGradient id="gib-glass-glow" cx="0.5" cy="1" r="0.7">
+          <stop offset="0" stopColor="#8FDCFF" stopOpacity="0.6" />
+          <stop offset="1" stopColor="#8FDCFF" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <path
+        d="M20 8h24a14 14 0 0 1 14 14v10a14 14 0 0 1-14 14H31L17 58l2-12h-1A14 14 0 0 1 6 32V22A14 14 0 0 1 20 8Z"
+        fill="url(#gib-glass-body)"
+      />
+      <path
+        d="M20 8h24a14 14 0 0 1 14 14v10a14 14 0 0 1-14 14H31L17 58l2-12h-1A14 14 0 0 1 6 32V22A14 14 0 0 1 20 8Z"
+        fill="url(#gib-glass-glow)"
+      />
+      <path
+        d="M20 10.5h24a11.5 11.5 0 0 1 11.2 8.9C47 15.4 33 14.4 8.8 19.4A11.5 11.5 0 0 1 20 10.5Z"
+        fill="url(#gib-glass-shine)"
+      />
+      <path
+        d="M20 8h24a14 14 0 0 1 14 14v10a14 14 0 0 1-14 14H31L17 58l2-12h-1A14 14 0 0 1 6 32V22A14 14 0 0 1 20 8Z"
+        fill="none"
+        stroke="url(#gib-glass-rim)"
+        strokeWidth="1.6"
+      />
+      <circle cx="22" cy="27.5" r="3.7" fill="#FFFFFF" />
+      <circle cx="32" cy="27.5" r="3.7" fill="#FFFFFF" />
+      <circle cx="42" cy="27.5" r="3.7" fill="#FFFFFF" />
+      <circle cx="49" cy="14.5" r="1.6" fill="#FFFFFF" fillOpacity="0.9" />
+    </svg>
+  );
 }
 
-function clampPosition(position: Position): Position {
-  if (typeof window === "undefined") return position;
-
-  return {
-    x: Math.min(
-      Math.max(EDGE, position.x),
-      Math.max(EDGE, window.innerWidth - SIZE - EDGE),
-    ),
-    y: Math.min(
-      Math.max(EDGE, position.y),
-      Math.max(EDGE, window.innerHeight - SIZE - EDGE),
-    ),
-  };
-}
 
 function formatTime(value: string) {
   try {
@@ -192,7 +217,8 @@ export default function OfficeChatWidget() {
 
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
+  const [showLabel, setShowLabel] = useState(true);
+  const [siteLang, setSiteLang] = useState<"bn" | "en">("bn");
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -211,34 +237,13 @@ export default function OfficeChatWidget() {
 
   const widgetRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{
-    pointerId: number;
-    offsetX: number;
-    offsetY: number;
-    startX: number;
-    startY: number;
-  } | null>(null);
-  const suppressClickRef = useRef(false);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const savedPosition = window.localStorage.getItem(POSITION_KEY);
     const savedHidden = window.localStorage.getItem(HIDDEN_KEY);
-
-    if (savedPosition) {
-      try {
-        setPosition(
-          clampPosition(JSON.parse(savedPosition) as Position),
-        );
-      } catch {
-        setPosition(getDefaultPosition());
-      }
-    } else {
-      setPosition(getDefaultPosition());
-    }
 
     setHidden(savedHidden === "1");
     setViewport({
@@ -261,12 +266,45 @@ export default function OfficeChatWidget() {
         width: window.innerWidth,
         height: window.innerHeight,
       });
-      setPosition((current) => {
-        const next = clampPosition(current);
-        window.localStorage.setItem(POSITION_KEY, JSON.stringify(next));
-        return next;
-      });
     }
+
+    // Scrolling up (or reaching the top) lets "হেল্প" slide out of the
+    // icon for a couple of seconds; scrolling down tucks it in right away.
+    let lastY = window.scrollY;
+    let hideTimer: number | undefined;
+
+    function revealLabel() {
+      setShowLabel(true);
+      window.clearTimeout(hideTimer);
+      hideTimer = window.setTimeout(
+        () => setShowLabel(false),
+        HELP_LABEL_VISIBLE_MS,
+      );
+    }
+
+    function tuckLabel() {
+      window.clearTimeout(hideTimer);
+      setShowLabel(false);
+    }
+
+    function handleScroll() {
+      const y = window.scrollY;
+
+      if (y <= HELP_LABEL_SCROLL_THRESHOLD) {
+        revealLabel();
+      } else if (y < lastY - HELP_LABEL_SCROLL_DELTA) {
+        revealLabel();
+      } else if (y > lastY + HELP_LABEL_SCROLL_DELTA) {
+        tuckLabel();
+      } else {
+        return;
+      }
+
+      lastY = y;
+    }
+
+    // First visit: show it, then it sinks into the icon.
+    revealLabel();
 
     function handleOutside(event: globalThis.PointerEvent) {
       if (
@@ -282,15 +320,52 @@ export default function OfficeChatWidget() {
     }
 
     window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     document.addEventListener("pointerdown", handleOutside);
     document.addEventListener("keydown", handleEscape);
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
+      window.clearTimeout(hideTimer);
       document.removeEventListener("pointerdown", handleOutside);
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
+
+  // The site's pages keep language in their own state (not a shared
+  // context), so follow it through the header's language switch button:
+  // it reads "English" while the page is in Bangla and "বাংলা" in English.
+  useEffect(() => {
+    function detectLanguage() {
+      const buttons = document.querySelectorAll("header button");
+
+      for (const button of buttons) {
+        const text = button.textContent?.trim();
+
+        if (text === "English") {
+          setSiteLang("bn");
+          return;
+        }
+
+        if (text === "বাংলা") {
+          setSiteLang("en");
+          return;
+        }
+      }
+    }
+
+    detectLanguage();
+
+    const observer = new MutationObserver(detectLanguage);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => observer.disconnect();
+  }, [pathname]);
 
   useEffect(() => {
     return () => {
@@ -367,65 +442,7 @@ export default function OfficeChatWidget() {
     messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
   }, [messages, open]);
 
-  function savePosition(next: Position) {
-    const safe = clampPosition(next);
-    setPosition(safe);
-    window.localStorage.setItem(POSITION_KEY, JSON.stringify(safe));
-  }
-
-  function handlePointerDown(event: PointerEvent<HTMLButtonElement>) {
-    if (event.button !== 0) return;
-
-    const rect = event.currentTarget.getBoundingClientRect();
-
-    dragRef.current = {
-      pointerId: event.pointerId,
-      offsetX: event.clientX - rect.left,
-      offsetY: event.clientY - rect.top,
-      startX: event.clientX,
-      startY: event.clientY,
-    };
-
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function handlePointerMove(event: PointerEvent<HTMLButtonElement>) {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-
-    const distance = Math.hypot(
-      event.clientX - drag.startX,
-      event.clientY - drag.startY,
-    );
-
-    if (distance > 5) suppressClickRef.current = true;
-
-    setPosition(
-      clampPosition({
-        x: event.clientX - drag.offsetX,
-        y: event.clientY - drag.offsetY,
-      }),
-    );
-  }
-
-  function handlePointerUp(event: PointerEvent<HTMLButtonElement>) {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-
-    savePosition({
-      x: event.clientX - drag.offsetX,
-      y: event.clientY - drag.offsetY,
-    });
-
-    dragRef.current = null;
-  }
-
   function handleIconClick() {
-    if (suppressClickRef.current) {
-      suppressClickRef.current = false;
-      return;
-    }
-
     setShowWelcome(false);
     setOpen((value) => !value);
   }
@@ -741,6 +758,12 @@ export default function OfficeChatWidget() {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  // The site's pages use a 192px side margin from md (768px) up, so on
+  // desktop the chat head's right edge lines up with the content edge.
+  const isDesktop = viewport.width >= 768;
+  const sideOffset = isDesktop ? 192 : 16;
+  const bottomOffset = isDesktop ? 24 : 16;
+
   if (hidden) {
     return (
       <button
@@ -748,7 +771,7 @@ export default function OfficeChatWidget() {
         aria-label="Show Chat with Office"
         onClick={restoreWidget}
         className="fixed z-[9999] flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white shadow-lg transition hover:scale-105 hover:shadow-xl"
-        style={{ left: position.x, top: position.y }}
+        style={{ right: sideOffset, bottom: bottomOffset }}
       >
         <img src="/logo.svg" alt="" className="h-7 w-7 object-contain" />
       </button>
@@ -756,8 +779,6 @@ export default function OfficeChatWidget() {
   }
 
   const isMobile = viewport.width > 0 && viewport.width < 640;
-  const chatAbove = position.y > (viewport.height || 800) - CHAT_HEIGHT;
-  const chatOnLeft = position.x < CHAT_WIDTH;
 
   const chatClass = isMobile
     ? "fixed left-3 right-3 z-[10000] flex h-[min(560px,calc(100vh-24px))] flex-col"
@@ -768,22 +789,16 @@ export default function OfficeChatWidget() {
         top: 12,
         bottom: 12,
       }
-    : chatOnLeft
-      ? chatAbove
-        ? { left: 0, bottom: 64 }
-        : { left: 0, top: 64 }
-      : chatAbove
-        ? { right: 0, bottom: 64 }
-        : { right: 0, top: 64 };
+    : { right: 0, bottom: "100%", marginBottom: 8 };
 
   return (
     <div
       ref={widgetRef}
-      className="fixed z-[9999]"
-      style={{ left: position.x, top: position.y }}
+      className="fixed z-[9999] flex flex-col items-end"
+      style={{ right: sideOffset, bottom: bottomOffset }}
     >
       {showWelcome && !open && (
-        <div className="absolute right-0 top-[62px] w-[280px] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
+        <div className="absolute bottom-full right-0 mb-2 w-[280px] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
           <button
             type="button"
             onClick={() => setShowWelcome(false)}
@@ -1145,33 +1160,38 @@ export default function OfficeChatWidget() {
         </div>
       )}
 
-      <button
-        type="button"
-        aria-label="Chat with Office"
-        aria-expanded={open}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onClick={handleIconClick}
-        className="relative flex h-[54px] w-[54px] touch-none select-none items-center justify-center overflow-hidden 
-        rounded-full border-2 border-white bg-white shadow-lg ring-1 ring-gray-200 transition hover:scale-105 hover:shadow-xl"
-      >
-        <img
-          src="/logo.svg"
-          alt="Chat with Office"
-          draggable={false}
-          className="h-[55px] w-[55px] object-contain"
-        />
+      <div className="flex items-center">
+        <button
+          type="button"
+          aria-label="Chat with Office"
+          aria-expanded={open}
+          onClick={handleIconClick}
+          className="relative z-10 flex h-[62px] w-[62px] shrink-0 select-none items-center justify-center transition hover:scale-110 active:scale-95"
+        >
+          <ChatGlassIcon />
 
-        {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
-            {unread > 9 ? "9+" : unread}
-          </span>
-        )}
+          {unread > 0 && (
+            <span className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </button>
 
-        <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white" />
-      </button>
+        {/* Tucked behind the icon, so it slides out of / sinks into it. */}
+        <button
+          type="button"
+          tabIndex={showLabel && !open ? 0 : -1}
+          aria-hidden={!(showLabel && !open)}
+          onClick={handleIconClick}
+          className={`-ml-7 select-none overflow-hidden whitespace-nowrap rounded-full bg-white/90 py-2.5 text-base font-extrabold text-[#1045D6] shadow-[0_6px_16px_rgba(16,69,214,0.28)] ring-1 ring-sky-100 backdrop-blur transition-all duration-500 ease-in-out ${
+            showLabel && !open
+              ? "max-w-[110px] pl-9 pr-5 opacity-100"
+              : "pointer-events-none max-w-0 -translate-x-4 px-0 opacity-0"
+          }`}
+        >
+          {siteLang === "en" ? "Help" : "হেল্প"}
+        </button>
+      </div>
 
       <div className="mt-2 flex justify-end">
         <button
