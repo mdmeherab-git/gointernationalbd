@@ -1334,102 +1334,86 @@ useEffect(() => {
     POPULAR COUNTRIES
 =================================================== */}
 
-<Reveal
-  duration={0.8}
-  y={25}
->
-  <section className="w-full bg-white py-8">
+<section className="w-full bg-white py-8">
 
-    <div className="mx-[165px] px-6 max-md:mx-0">
+  <div className="mx-[165px] px-6 max-md:mx-0">
 
-      <div className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
 
-        {/* TITLE + SEARCH */}
+      {/* TITLE + SEARCH */}
 
-        <Reveal
-          delay={0.15}
-          duration={0.7}
-          y={18}
-        >
-          <div className="mb-5 flex items-center justify-between gap-4 max-md:flex-col max-md:items-start">
+      <div className="mb-5 flex items-center justify-between gap-4 max-md:flex-col max-md:items-start">
 
-            <h2 className="text-xl font-bold text-[#0B2A55]">
-              {isBangla
-                ? "জনপ্রিয় দেশসমূহ"
-                : "Popular Countries"}
-            </h2>
+        <h2 className="text-xl font-bold text-[#0B2A55]">
+          {isBangla
+            ? "জনপ্রিয় দেশসমূহ"
+            : "Popular Countries"}
+        </h2>
 
-            <div className="relative z-20 w-full max-w-[280px]">
+        <div className="relative z-20 w-full max-w-[280px]">
 
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                🔍
-              </span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            🔍
+          </span>
 
-              <input
-                type="text"
-                value={countrySearch}
-                onChange={(e) =>
-                  setCountrySearch(e.target.value)
+          <input
+            type="text"
+            value={countrySearch}
+            onChange={(e) =>
+              setCountrySearch(e.target.value)
+            }
+            placeholder={
+              isBangla
+                ? "দেশ খুঁজুন..."
+                : "Search country..."
+            }
+            className="relative z-20 w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+
+        </div>
+
+      </div>
+
+      {/* COUNTRIES */}
+
+      <div className="overflow-x-auto pb-2">
+
+        <div className="flex min-w-max gap-6">
+
+          {filteredCountries.map((country) => (
+
+            <button
+              key={country.code}
+              type="button"
+              onClick={() => {
+                if (country.code === "my") {
+                  setMalaysiaServicesOpen(true);
                 }
-                placeholder={
-                  isBangla
-                    ? "দেশ খুঁজুন..."
-                    : "Search country..."
+
+                if (country.code === "sa") {
+                  setSaudiServicesOpen(true);
                 }
-                className="relative z-20 w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
+              }}
+              className="group w-[95px] flex-shrink-0 text-center"
+            >
 
-            </div>
+              <div className="mx-auto flex h-14 w-20 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-blue-300 group-hover:shadow-md">
 
-          </div>
-        </Reveal>
+                <img
+                  src={`/flags/${country.code}.svg`}
+                  alt={country.name}
+                  className="h-full w-full object-cover"
+                />
 
-        {/* COUNTRIES */}
+              </div>
 
-        <div className="overflow-x-auto pb-2">
+              <p className="mt-2 whitespace-nowrap text-sm font-medium text-gray-700 group-hover:text-blue-600">
+                {country.name}
+              </p>
 
-          <div className="flex min-w-max gap-6">
+            </button>
 
-            {filteredCountries.map((country, index) => (
-              <Reveal
-                key={country.code}
-                delay={0.25 + index * 0.045}
-                duration={0.55}
-                y={18}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (country.code === "my") {
-                      setMalaysiaServicesOpen(true);
-                    }
-
-                    if (country.code === "sa") {
-                      setSaudiServicesOpen(true);
-                    }
-                  }}
-                  className="group w-[95px] flex-shrink-0 text-center"
-                >
-
-                  <div className="mx-auto flex h-14 w-20 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-blue-300 group-hover:shadow-md">
-
-                    <img
-                      src={`/flags/${country.code}.svg`}
-                      alt={country.name}
-                      className="h-full w-full object-cover"
-                    />
-
-                  </div>
-
-                  <p className="mt-2 whitespace-nowrap text-sm font-medium text-gray-700 group-hover:text-blue-600">
-                    {country.name}
-                  </p>
-
-                </button>
-              </Reveal>
-            ))}
-
-          </div>
+          ))}
 
         </div>
 
@@ -1437,9 +1421,9 @@ useEffect(() => {
 
     </div>
 
-  </section>
-</Reveal>
+  </div>
 
+</section>
      {/* ===================================================
     QUICK SERVICES
 =================================================== */}
