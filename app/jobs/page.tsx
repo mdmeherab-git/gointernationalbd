@@ -573,7 +573,7 @@ export default function JobsPage() {
           HEADER
       ====================================================== */}
 
-      <header className="border-b border-gray-200 bg-white">
+      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
 
         <div className="relative mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4">
 
