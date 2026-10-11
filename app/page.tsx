@@ -273,7 +273,7 @@ export default function Home() {
     requestAnimationFrame(() => {
       document
         .getElementById("cv-builder-section")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        ?.scrollIntoView({ behavior: "auto", block: "start" });
     });
   };
 
@@ -629,7 +629,7 @@ useEffect(() => {
               href="https://www.facebook.com/share/14o1WjfT3XY/"
               target="_blank"
               rel="noopener noreferrer"
-              className="transition hover:text-blue-300"
+              className="hover:text-blue-300"
             >
               Facebook
             </a>
@@ -662,7 +662,7 @@ useEffect(() => {
                 <img
                   src="/logo.svg"
                   alt="GO International BD Logo"
-                  className="h-28 w-auto cursor-pointer object-contain transition-all duration-200 hover:scale-105 hover:opacity-100 max-md:h-25"
+                  className="h-28 w-auto cursor-pointer object-contain hover:opacity-100 max-md:h-25"
                 />
 
               </Link>
@@ -776,7 +776,7 @@ useEffect(() => {
       type="button"
       aria-label="Profile"
       onClick={() => setProfileMenuOpen((v) => !v)}
-      className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-gray-300 bg-gray-100 text-gray-600 transition hover:border-blue-400 hover:bg-gray-50 max-md:h-9 max-md:w-9"
+      className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-gray-300 bg-gray-100 text-gray-600 hover:border-blue-400 hover:bg-gray-50 max-md:h-9 max-md:w-9"
     >
       {currentUser?.profilePhotoKey ? (
   <img
@@ -1236,7 +1236,7 @@ useEffect(() => {
                 <button
                   type="button"
                   onClick={handleVisaCheck}
-                  className="h-14 min-w-[160px] shrink-0 rounded-xl bg-blue-600 px-5 text-sm font-semibold leading-tight text-white transition hover:bg-blue-700 max-md:h-10 max-md:min-w-0 max-md:px-1 max-md:text-[10px] max-md:leading-none"
+                  className="h-14 min-w-[160px] shrink-0 rounded-xl bg-blue-600 px-5 text-sm font-semibold leading-tight text-white hover:bg-blue-700 max-md:h-10 max-md:min-w-0 max-md:px-1 max-md:text-[10px] max-md:leading-none"
                 >
                   🔍{" "}
                   {isBangla
@@ -1297,17 +1297,7 @@ useEffect(() => {
 
           <div
             className="notice-marquee flex min-w-max items-center whitespace-nowrap py-3"
-            style={{
-              animationDuration: `${Math.max(
-                5,
-                notice.speed
-              )}s`,
-              animationDirection:
-                notice.direction === "right"
-                  ? "reverse"
-                  : "normal",
-            }}
-          >
+            >
 
             <span className="mx-8 text-sm font-medium text-[#0B2A55]">
               {isBangla
@@ -1374,7 +1364,7 @@ useEffect(() => {
                 ? "দেশ খুঁজুন..."
                 : "Search country..."
             }
-            className="relative z-20 w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="relative z-20 w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
 
         </div>
@@ -1404,7 +1394,7 @@ useEffect(() => {
               className="group w-[95px] flex-shrink-0 text-center"
             >
 
-              <div className="mx-auto flex h-14 w-20 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 group-hover:-translate-y-1 group-hover:border-blue-300 group-hover:shadow-md">
+              <div className="mx-auto flex h-14 w-20 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm group-hover:border-blue-300 group-hover:shadow-md">
 
                 <img
                   src={`/flags/${country.code}.svg`}
@@ -1454,10 +1444,10 @@ useEffect(() => {
         >
           <Link
             href="/jobs"
-            className="group block h-full rounded-2xl border border-purple-100 bg-purple-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+            className="group block h-full rounded-2xl border border-purple-100 bg-purple-50 p-6 hover:shadow-lg"
           >
 
-            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100 transition-transform duration-300 group-hover:scale-105">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100">
 
               <img
                 src="/technica-bage.svg"
@@ -1479,7 +1469,7 @@ useEffect(() => {
                 : "Find latest overseas jobs from reliable sources."}
             </p>
 
-            <div className="mt-5 font-semibold text-purple-600 transition-colors duration-200 group-hover:text-purple-700">
+            <div className="mt-5 font-semibold text-purple-600 group-hover:text-purple-700">
               {isBangla
                 ? "চাকরি দেখুন →"
                 : "View Jobs →"}
@@ -1496,9 +1486,9 @@ useEffect(() => {
           duration={0.65}
           y={25}
         >
-          <div className="group h-full rounded-2xl border border-blue-100 bg-blue-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div className="group h-full rounded-2xl border border-blue-100 bg-blue-50 p-6 hover:shadow-lg">
 
-            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100 transition-transform duration-300 group-hover:scale-105">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100">
 
               <img
                 src="/technical-training.svg"
@@ -1522,7 +1512,7 @@ useEffect(() => {
 
             <button
               type="button"
-              className="mt-5 font-semibold text-blue-600 transition-colors duration-200 hover:text-blue-700"
+              className="mt-5 font-semibold text-blue-600 hover:text-blue-700"
             >
               {isBangla
                 ? "প্রশিক্ষণ দেখুন →"
@@ -1540,9 +1530,9 @@ useEffect(() => {
           duration={0.65}
           y={25}
         >
-          <div className="group h-full rounded-2xl border border-orange-100 bg-orange-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div className="group h-full rounded-2xl border border-orange-100 bg-orange-50 p-6 hover:shadow-lg">
 
-            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-orange-100 text-3xl transition-transform duration-300 group-hover:scale-105">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-orange-100 text-3xl">
               📋
             </div>
 
@@ -1560,7 +1550,7 @@ useEffect(() => {
 
             <button
               type="button"
-              className="mt-5 font-semibold text-orange-600 transition-colors duration-200 hover:text-orange-700"
+              className="mt-5 font-semibold text-orange-600 hover:text-orange-700"
             >
               {isBangla
                 ? "এখনই ট্র্যাক করুন →"
@@ -1589,10 +1579,10 @@ useEffect(() => {
                 openCvBuilder();
               }
             }}
-            className="group h-full w-full cursor-pointer rounded-2xl border border-green-100 bg-green-50 p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
+            className="group h-full w-full cursor-pointer rounded-2xl border border-green-100 bg-green-50 p-6 text-left hover:border-green-200 hover:shadow-lg"
           >
 
-            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl transition-transform duration-300 group-hover:scale-105">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl">
               📄
             </div>
 
@@ -1608,7 +1598,7 @@ useEffect(() => {
                 : "Create a one-page professional CV for yourself — completely free."}
             </p>
 
-            <div className="mt-5 font-semibold text-green-600 transition-colors duration-200 group-hover:text-green-700">
+            <div className="mt-5 font-semibold text-green-600 group-hover:text-green-700">
               {isBangla
                 ? "সিভি তৈরি করুন →"
                 : "Create CV →"}
@@ -1672,7 +1662,7 @@ useEffect(() => {
 
           <Link
             href="/jobs"
-            className="font-semibold text-blue-600 transition-colors hover:text-blue-700"
+            className="font-semibold text-blue-600 hover:text-blue-700"
           >
             {isBangla
               ? "সব চাকরি দেখুন →"
@@ -1696,7 +1686,7 @@ useEffect(() => {
             y={25}
           >
             <div
-              className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              className="h-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-lg"
             >
 
               {/* COUNTRY + STATUS */}
@@ -1787,7 +1777,7 @@ useEffect(() => {
 
               <Link
                 href="/jobs"
-                className="mt-5 block rounded-xl bg-blue-600 py-3 text-center text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700"
+                className="mt-5 block rounded-xl bg-blue-600 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700"
               >
                 {isBangla
                   ? "বিস্তারিত দেখুন"
@@ -1886,7 +1876,7 @@ useEffect(() => {
               >
 
                 <div
-                  className="group h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                  className="group h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-lg"
                 >
 
                   {/* IMAGE */}
@@ -1896,7 +1886,7 @@ useEffect(() => {
                     <img
                       src={circular.imageUrl}
                       alt={circular.title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      className="h-full w-full object-cover"
                     />
 
                   </div>
@@ -1919,7 +1909,7 @@ useEffect(() => {
                       onClick={() =>
                         setSelectedCircular(circular)
                       }
-                      className="mt-4 w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-md"
+                      className="mt-4 w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 hover:shadow-md"
                     >
                       {isBangla
                         ? "সার্কুলার দেখুন"
@@ -2208,7 +2198,7 @@ useEffect(() => {
 
               <button
                 type="button"
-                className="rounded-xl bg-green-600 px-7 py-4 font-semibold text-white shadow-sm transition hover:bg-green-700"
+                className="rounded-xl bg-green-600 px-7 py-4 font-semibold text-white shadow-sm hover:bg-green-700"
               >
                 {isBangla
                   ? "AI Assistant চালু করুন →"
@@ -2751,7 +2741,7 @@ useEffect(() => {
               href="https://malaysiavisa.imi.gov.my/evisa/check-evisa"
               target="_blank"
               rel="noopener noreferrer"
-              className="mb-3 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 transition hover:border-blue-500 hover:bg-blue-50"
+              className="mb-3 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-500 hover:bg-blue-50"
             >
 
               <div>
@@ -2802,7 +2792,7 @@ useEffect(() => {
                 href="https://rhmcdhk.com/malaysia-medical-report/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 transition hover:border-green-500 hover:bg-green-50"
+                className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 hover:border-green-500 hover:bg-green-50"
               >
 
                 <div>
@@ -2895,31 +2885,6 @@ useEffect(() => {
 
       )}
 
-      {/* ===================================================
-          MARQUEE CSS
-      =================================================== */}
-
-      <style jsx>{`
-        .notice-marquee {
-          animation-name: notice-scroll;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
-        }
-
-        .notice-marquee:hover {
-          animation-play-state: paused;
-        }
-
-        @keyframes notice-scroll {
-          0% {
-            transform: translateX(0);
-          }
-
-          100% {
-            transform: translateX(-33.333%);
-          }
-        }
-      `}</style>
 
     </main>
   );

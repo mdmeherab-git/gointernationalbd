@@ -85,7 +85,7 @@ export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
         key={key}
         onClick={hasImage ? () => setSelected(notice) : undefined}
         className={`flex items-start gap-2 py-3 ${
-          hasImage ? "cursor-pointer rounded-lg transition hover:bg-gray-50" : ""
+          hasImage ? "cursor-pointer rounded-lg hover:bg-gray-50" : ""
         }`}
       >
         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
@@ -137,23 +137,11 @@ export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
 
       {!loading && notices.length > 0 && (
         <div className="relative h-[300px] sm:h-[360px]">
-          {/* Fixed-height window — independent of the CV builder beside it.
-              The repeated track is absolutely positioned and clipped, and
-              scrolls continuously upward inside this box. */}
-          <div className="absolute inset-0 overflow-hidden">
-            {(() => {
-              // Repeat the list enough that one half of the track always
-              // overflows the box, so translateY(-50%) loops seamlessly
-              // even with only a few short notices.
-              const reps = Math.max(4, Math.ceil(10 / notices.length));
-              const half = Array.from({ length: reps }, () => notices).flat();
-              return (
-                <div className="notice-vscroll divide-y divide-gray-100">
-                  {half.map((n, i) => renderNotice(n, `a-${n.id}-${i}`))}
-                  {half.map((n, i) => renderNotice(n, `b-${n.id}-${i}`))}
-                </div>
-              );
-            })()}
+          {/* Fixed-height window — independent of the CV builder beside it. */}
+          <div className="absolute inset-0 overflow-y-auto">
+            <div className="divide-y divide-gray-100">
+              {notices.map((n) => renderNotice(n, `n-${n.id}`))}
+            </div>
           </div>
 
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-5 bg-gradient-to-b from-white to-transparent" />
@@ -163,7 +151,7 @@ export default function NoticeBoardList({ isBangla }: { isBangla: boolean }) {
 
       <button
         type="button"
-        className="mt-4 w-full shrink-0 rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-green-700"
+        className="mt-4 w-full shrink-0 rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white hover:bg-green-700"
       >
         {isBangla ? "সকল নোটিশ দেখুন →" : "View All Notices →"}
       </button>
