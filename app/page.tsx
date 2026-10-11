@@ -595,6 +595,7 @@ useEffect(() => {
           TOP BAR
       =================================================== */}
 
+      <div className="sticky top-0 z-40">
       <div className="bg-[#071B41] text-sm text-white">
         <div className="mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:justify-center max-md:px-4">
 
@@ -1017,6 +1018,7 @@ useEffect(() => {
         </div>
 
       </header>
+      </div>
 
       {/* ===================================================
     HERO SECTION
