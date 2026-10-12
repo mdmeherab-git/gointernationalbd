@@ -25,6 +25,8 @@ type Application = {
   message: string;
   status: string;
   created_at: string;
+  passport_key?: string | null;
+  passport_name?: string | null;
 };
 
 const STATUSES = ["new", "reviewing", "shortlisted", "rejected", "hired"] as const;
@@ -214,7 +216,7 @@ export default function ApplicationsPage() {
               {items.map((a) => (
                 <tr key={a.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                   <td className="px-5 py-3">
-                    <p className="font-bold">{a.applicant_name}</p>
+                    <p className="font-bold">{a.applicant_name}{a.passport_key ? " 📎" : ""}</p>
                     <p className="text-[11px] text-gray-500">{a.phone}</p>
                   </td>
                   <td className="px-5 py-3">
@@ -314,6 +316,38 @@ export default function ApplicationsPage() {
               label={t("তারিখ", "Submitted")}
               value={(detail.created_at || "").slice(0, 19).replace("T", " ")}
             />
+            <div>
+              <p className="mb-1 text-xs font-bold text-gray-600">
+                {t("পাসপোর্ট কপি", "Passport copy")}
+              </p>
+              {detail.passport_key ? (
+                <div className="rounded-xl bg-gray-50 p-3">
+                  <p className="mb-2 truncate text-xs text-gray-500">
+                    📎 {detail.passport_name || detail.passport_key.split("/").pop()}
+                  </p>
+                  <div className="flex gap-2">
+                    <a
+                      href={`/api/admin/applications/${detail.id}/passport`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                    >
+                      👁 {t("দেখুন", "View")}
+                    </a>
+                    <a
+                      href={`/api/admin/applications/${detail.id}/passport?download=1`}
+                      className="rounded-xl bg-[#0B4DBB] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#093f98]"
+                    >
+                      ⬇ {t("ডাউনলোড", "Download")}
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-400">
+                  {t("দেওয়া হয়নি", "Not provided")}
+                </p>
+              )}
+            </div>
             <div>
               <p className="mb-1 text-xs font-bold text-gray-600">{t("বার্তা", "Message")}</p>
               <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-700">

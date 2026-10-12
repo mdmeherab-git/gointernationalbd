@@ -364,6 +364,68 @@ const categories = [
   "Technician",
 ];
 
+/* Optional passport copy on the apply form: PDF / JPG, up to 20 MB. */
+const PASSPORT_MAX_BYTES = 20 * 1024 * 1024;
+const PASSPORT_MIME_BY_EXT: Record<string, string> = {
+  pdf: "application/pdf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+};
+
+function passportMime(file: File): string {
+  if (file.type && Object.values(PASSPORT_MIME_BY_EXT).includes(file.type)) {
+    return file.type;
+  }
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return PASSPORT_MIME_BY_EXT[ext] ?? "";
+}
+
+/* Uploads the file straight to R2 (or via the server in local dev) and
+   returns its storage key. Throws Error(message) with a server message. */
+async function uploadPassport(
+  file: File,
+  mime: string,
+  onProgress: (percent: number) => void,
+): Promise<string> {
+  const pre = await fetch("/api/applications/passport/presign", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ mime, size: file.size }),
+  });
+  const info = (await pre.json().catch(() => ({}))) as {
+    error?: string;
+    mode?: string;
+    uploadUrl?: string;
+    key?: string;
+  };
+  if (!pre.ok) throw new Error(info.error || "");
+
+  if (info.mode === "direct" && info.uploadUrl && info.key) {
+    const { uploadUrl, key } = info;
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl);
+      xhr.setRequestHeader("content-type", mime);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () =>
+        xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(""));
+      xhr.onerror = () => reject(new Error(""));
+      xhr.send(file);
+    });
+    return key;
+  }
+
+  const fd = new FormData();
+  fd.append("file", new File([file], file.name, { type: mime }));
+  const up = await fetch("/api/applications/passport", { method: "POST", body: fd });
+  const data = (await up.json().catch(() => ({}))) as { error?: string; key?: string };
+  if (!up.ok || !data.key) throw new Error(data.error || "");
+  return data.key;
+}
+
 /* Admin-typed country text -> one canonical country (name + flag), so the
    same country is never listed twice. */
 function normalizeCountry(text: string, code: string, flag: string) {
@@ -493,6 +555,8 @@ export default function JobsPage() {
   const [applyBusy, setApplyBusy] = useState(false);
   const [applyDone, setApplyDone] = useState(false);
   const [applyError, setApplyError] = useState("");
+  const [passportFile, setPassportFile] = useState<File | null>(null);
+  const [passportPct, setPassportPct] = useState(0);
 
   const isBangla = language === "bn";
 
@@ -2143,6 +2207,25 @@ export default function JobsPage() {
                   setApplyBusy(true);
                   setApplyError("");
                   try {
+                    let passportKey = "";
+                    if (passportFile) {
+                      try {
+                        setPassportPct(0);
+                        passportKey = await uploadPassport(
+                          passportFile,
+                          passportMime(passportFile),
+                          setPassportPct,
+                        );
+                      } catch (err) {
+                        setApplyError(
+                          (err as Error).message ||
+                            (isBangla
+                              ? "পাসপোর্ট কপি আপলোড করা যায়নি, আবার চেষ্টা করুন"
+                              : "Could not upload the passport copy, please try again"),
+                        );
+                        return;
+                      }
+                    }
                     const res = await fetch("/api/applications", {
                       method: "POST",
                       headers: { "content-type": "application/json" },
@@ -2154,6 +2237,8 @@ export default function JobsPage() {
                         phone: applyForm.phone,
                         email: applyForm.email,
                         message: applyForm.message,
+                        passport_key: passportKey || undefined,
+                        passport_name: passportFile?.name || undefined,
                       }),
                     });
                     const data = (await res.json().catch(() => ({}))) as {
@@ -2172,6 +2257,8 @@ export default function JobsPage() {
                     });
                     setApplyDone(true);
                     setApplyForm({ name: "", phone: "", email: "", message: "" });
+                    setPassportFile(null);
+                    setPassportPct(0);
                   } catch {
                     setApplyError(
                       isBangla ? "সংযোগে সমস্যা" : "Network error",
@@ -2221,6 +2308,74 @@ export default function JobsPage() {
                   placeholder={isBangla ? "বার্তা" : "Message"}
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
                 />
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                    {isBangla
+                      ? "পাসপোর্টের কপি (ঐচ্ছিক)"
+                      : "Passport copy (optional)"}
+                  </label>
+
+                  {passportFile ? (
+                    <div className="flex items-center gap-3 rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm">
+                      <span>📎</span>
+                      <span className="min-w-0 flex-1 truncate text-gray-700">
+                        {passportFile.name}
+                      </span>
+                      <span className="shrink-0 text-xs text-gray-400">
+                        {applyBusy && passportPct > 0 && passportPct < 100
+                          ? `${passportPct}%`
+                          : `${(passportFile.size / (1024 * 1024)).toFixed(1)} MB`}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={applyBusy}
+                        onClick={() => setPassportFile(null)}
+                        className="shrink-0 text-lg leading-none text-gray-400 hover:text-red-600 disabled:opacity-40"
+                        aria-label={isBangla ? "ফাইল সরান" : "Remove file"}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 hover:border-blue-400">
+                      <span className="text-lg">📄</span>
+                      <span>
+                        {isBangla
+                          ? "PDF বা JPG ফাইল বেছে নিন (সর্বোচ্চ ২০ MB)"
+                          : "Choose a PDF or JPG file (max 20 MB)"}
+                      </span>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = "";
+                          if (!file) return;
+                          if (!passportMime(file)) {
+                            setApplyError(
+                              isBangla
+                                ? "শুধু PDF বা JPG ফাইল দিন"
+                                : "Only PDF or JPG files are allowed",
+                            );
+                            return;
+                          }
+                          if (file.size > PASSPORT_MAX_BYTES) {
+                            setApplyError(
+                              isBangla
+                                ? "ফাইল সর্বোচ্চ ২০ MB হতে পারবে"
+                                : "File must be 20 MB or less",
+                            );
+                            return;
+                          }
+                          setApplyError("");
+                          setPassportFile(file);
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
 
                 {applyError && (
                   <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">

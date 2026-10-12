@@ -1,5 +1,10 @@
 import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
-import { dbRun, getDb, newId } from "@/lib/cf";
+import { dbRun, getDb, getUploads, newId } from "@/lib/cf";
+import {
+  MAX_PASSPORT_SIZE,
+  PASSPORT_KEY_PATTERN,
+  ensurePassportColumns,
+} from "@/lib/application-passport";
 import { getCurrentUser } from "@/lib/user-auth";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +27,8 @@ export async function POST(req: Request) {
   const message = str(body.message);
   const jobTitle = str(body.job_title);
   const jobCountry = str(body.job_country);
+  const passportKey = str(body.passport_key);
+  const passportName = str(body.passport_name).slice(0, 200);
   const circularId = body.circular_id ? String(body.circular_id).slice(0, 80) : null;
 
   if (!name || !phone) {
@@ -40,12 +47,40 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, stored: false });
   }
 
+  // Optional passport copy: the key must be one we handed out via presign,
+  // and the object must really exist in R2 and be within the size limit.
+  if (passportKey) {
+    if (!PASSPORT_KEY_PATTERN.test(passportKey)) {
+      return Response.json({ error: "Invalid passport file" }, { status: 400 });
+    }
+    const bucket = await getUploads();
+    const head = bucket ? await bucket.head(passportKey) : null;
+    if (!head) {
+      return Response.json(
+        { error: "পাসপোর্ট ফাইল আপলোড সম্পূর্ণ হয়নি, আবার চেষ্টা করুন / Passport upload incomplete, please retry" },
+        { status: 400 },
+      );
+    }
+    if (head.size > MAX_PASSPORT_SIZE) {
+      try {
+        await bucket?.delete(passportKey);
+      } catch {
+        /* best effort */
+      }
+      return Response.json(
+        { error: "ফাইল সর্বোচ্চ ২০ MB / File must be 20 MB or less" },
+        { status: 413 },
+      );
+    }
+    await ensurePassportColumns();
+  }
+
   const id = newId("app");
   const currentUser = await getCurrentUser(req);
   await dbRun(
     `INSERT INTO applications
-       (id, circular_id, job_title, job_country, applicant_name, phone, email, message, status, user_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`,
+       (id, circular_id, job_title, job_country, applicant_name, phone, email, message, status, user_id${passportKey ? ", passport_key, passport_name" : ""})
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?${passportKey ? ", ?, ?" : ""})`,
     id,
     circularId,
     jobTitle,
@@ -55,6 +90,7 @@ export async function POST(req: Request) {
     email,
     message,
     currentUser?.id ?? null,
+    ...(passportKey ? [passportKey, passportName || null] : []),
   );
   return Response.json({ ok: true, stored: true, id });
 }

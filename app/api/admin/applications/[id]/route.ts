@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
-import { dbFirst, dbRun, getDb } from "@/lib/cf";
+import { dbFirst, dbRun, getDb, getUploads } from "@/lib/cf";
+import { PASSPORT_KEY_PATTERN } from "@/lib/application-passport";
 import { readJson } from "@/lib/crud";
 import { createNotification } from "@/lib/notify";
 import { APPLICATION_STATUS } from "@/lib/schemas";
@@ -65,6 +66,22 @@ export async function DELETE(req: Request, { params }: Ctx) {
     return Response.json({ error: "D1 database is not configured" }, { status: 503 });
 
   const { id } = await params;
+
+  // Also remove the attached passport copy from R2 (column may not exist yet).
+  try {
+    const row = await dbFirst<{ passport_key: string | null }>(
+      "SELECT passport_key FROM applications WHERE id = ?",
+      id,
+    );
+    const key = row?.passport_key || "";
+    if (PASSPORT_KEY_PATTERN.test(key)) {
+      const bucket = await getUploads();
+      await bucket?.delete(key);
+    }
+  } catch {
+    /* no passport column / nothing to clean up */
+  }
+
   await dbRun("DELETE FROM applications WHERE id = ?", id);
   return Response.json({ ok: true });
 }
