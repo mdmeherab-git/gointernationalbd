@@ -1299,7 +1299,13 @@ useEffect(() => {
 
           <div
             className="notice-marquee flex min-w-max items-center whitespace-nowrap py-3"
-            >
+            style={{
+              // Slow, easy-to-read crawl from right to left (admin speed x2).
+              animationDuration: `${Math.max(40, notice.speed * 2)}s`,
+              animationDirection:
+                notice.direction === "right" ? "reverse" : "normal",
+            }}
+          >
 
             <span className="mx-8 text-sm font-medium text-[#0B2A55]">
               {isBangla
@@ -2887,6 +2893,28 @@ useEffect(() => {
 
       )}
 
+
+      <style jsx>{`
+        .notice-marquee {
+          animation-name: notice-scroll;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+
+        .notice-marquee:hover {
+          animation-play-state: paused;
+        }
+
+        @keyframes notice-scroll {
+          0% {
+            transform: translateX(0);
+          }
+
+          100% {
+            transform: translateX(-33.333%);
+          }
+        }
+      `}</style>
 
     </main>
   );
