@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiSend } from "@/components/admin/api";
 import { useAdminLang } from "@/components/admin/AdminShell";
+import CountryPicker from "@/components/admin/CountryPicker";
 import {
   Btn,
   Card,
@@ -371,21 +372,28 @@ export default function CircularsPage() {
         {draft && (
           <div>
             <div className="grid grid-cols-2 gap-x-3">
-              <Field label={t("দেশ", "Country")}>
-                <TextInput
-                  value={draft.country}
-                  onChange={(e) => set("country", e.target.value)}
-                />
-              </Field>
-              <Field label={t("দেশের কোড (flag)", "Country code (flag)")} hint="e.g. sa, my, ae">
-                <TextInput
-                  value={draft.countryCode}
-                  onChange={(e) => set("countryCode", e.target.value.toLowerCase())}
-                />
-              </Field>
-              <Field label={t("পতাকা ইমোজি", "Flag emoji")}>
-                <TextInput value={draft.flag} onChange={(e) => set("flag", e.target.value)} />
-              </Field>
+              <CountryPicker
+                label={t("দেশ", "Country")}
+                value={draft.country}
+                code={draft.countryCode}
+                placeholder={t("দেশের নাম লিখে খুঁজুন…", "Type to search a country…")}
+                legacyHint={t(
+                  "পুরনো লেখা — তালিকা থেকে দেশ বেছে সেভ করুন",
+                  "Old typed text — pick the country from the list and save",
+                )}
+                onPick={(p) =>
+                  setDraft((d) =>
+                    d
+                      ? {
+                          ...d,
+                          country: p.country,
+                          countryCode: p.countryCode,
+                          flag: p.flag,
+                        }
+                      : d,
+                  )
+                }
+              />
               <Field label={t("ক্যাটাগরি", "Category")}>
                 <TextInput
                   value={draft.category}

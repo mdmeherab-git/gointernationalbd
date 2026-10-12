@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { trackPixel } from "../../lib/meta-pixel";
+import {
+  countryNameBn,
+  findCountryByName,
+  flagEmoji,
+  loadCountryNameOverrides,
+  resolveCountry,
+} from "../../lib/country-names";
 
 /* =========================================================
    TYPES
@@ -357,6 +364,14 @@ const categories = [
   "Technician",
 ];
 
+/* Admin-typed country text -> one canonical country (name + flag), so the
+   same country is never listed twice. */
+function normalizeCountry(text: string, code: string, flag: string) {
+  const rc = resolveCountry(text, code);
+  if (!rc) return { country: text, flag };
+  return { country: rc.name, flag: flag || flagEmoji(rc.code) };
+}
+
 /* =========================================================
    MOBILE: one country's circulars as a horizontal swipe row
 ========================================================= */
@@ -440,6 +455,12 @@ export default function JobsPage() {
 
   const [startIndex, setStartIndex] = useState(0);
 
+  // Admin-customised Bangla country names (re-render once they arrive).
+  const [, setNamesVersion] = useState(0);
+  useEffect(() => {
+    loadCountryNameOverrides().then((ok) => ok && setNamesVersion((v) => v + 1));
+  }, []);
+
   // Phone-width screens get a shorter search placeholder (one-line filter row).
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -504,8 +525,7 @@ export default function JobsPage() {
               circularType: "image" | "pdf" | null;
             }): Job => ({
               id: c.id,
-              country: c.country,
-              flag: c.flag,
+              ...normalizeCountry(c.country, c.countryCode, c.flag),
               category: c.category,
               title: c.title,
               sponsor: c.sponsor,
@@ -539,7 +559,9 @@ export default function JobsPage() {
   ======================================================= */
 
   const getCountryName = (value: string) => {
-    return isBangla ? countryBN[value] || value : value;
+    if (!isBangla) return value;
+    const known = findCountryByName(value);
+    return known ? countryNameBn(known) : countryBN[value] || value;
   };
 
   const getCategoryName = (value: string) => {
@@ -575,7 +597,9 @@ export default function JobsPage() {
 
       const searchableText = [
         job.country,
-        countryBN[job.country] || "",
+        findCountryByName(job.country)
+          ? countryNameBn(findCountryByName(job.country)!)
+          : countryBN[job.country] || "",
         job.category,
         categoryBN[job.category] || "",
         job.title,
@@ -605,13 +629,9 @@ export default function JobsPage() {
     return Array.from(seen, ([name, flag]) => ({ name, flag }));
   }, [jobs]);
 
+  // Dropdown lists only countries that actually have circulars.
   const countryOptions = useMemo(
-    () => [
-      ...countries,
-      ...circularCountries
-        .map((c) => c.name)
-        .filter((name) => !countries.includes(name)),
-    ],
+    () => ["All Countries", ...circularCountries.map((c) => c.name)],
     [circularCountries],
   );
 
