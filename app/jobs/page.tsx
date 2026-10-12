@@ -758,13 +758,13 @@ export default function JobsPage() {
 
         <div className="mx-[192px] max-md:mx-0">
 
-          <div className="relative overflow-hidden rounded-b-2xl border-b border-gray-200 bg-[#f8fafc] px-6 py-10 md:px-10 md:py-14">
+          <div className="relative overflow-hidden rounded-b-2xl border-b border-gray-200 bg-[#f8fafc] px-6 py-10 md:px-10 md:py-14 max-md:px-4 max-md:pb-9 max-md:pt-4">
 
             {/* Future background image area */}
 
             <div className="max-w-3xl">
 
-              <span className="mb-4 inline-flex rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
+              <span className="mb-4 inline-flex rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 max-md:mb-2 max-md:px-3 max-md:py-1 max-md:text-xs">
 
                 🌍{" "}
 
@@ -774,7 +774,7 @@ export default function JobsPage() {
 
               </span>
 
-              <h1 className="text-3xl font-bold text-[#0B2A55] md:text-5xl">
+              <h1 className="text-3xl font-bold text-[#0B2A55] md:text-5xl max-md:text-2xl">
 
                 {isBangla
                   ? "বিদেশে চাকরির সার্কুলার"
@@ -782,7 +782,7 @@ export default function JobsPage() {
 
               </h1>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-600 md:text-base">
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-600 md:text-base max-md:mt-1.5 max-md:text-[13px] max-md:leading-5">
 
                 {isBangla
                   ? "বিভিন্ন দেশের সর্বশেষ বিদেশি চাকরির সুযোগ খুঁজুন এবং আপনার জন্য উপযুক্ত পদে সহজেই আবেদন করুন।"
@@ -805,15 +805,15 @@ export default function JobsPage() {
 
       <section className="relative z-10 mx-[192px] -mt-6 max-md:mx-4">
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg md:p-5">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg md:p-5 max-md:p-3">
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-3 max-md:grid-cols-2 max-md:gap-2">
 
             {/* SEARCH */}
 
-            <div className="relative">
+            <div className="relative max-md:col-span-2">
 
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 max-md:left-3 max-md:text-sm">
                 🔍
               </span>
 
@@ -828,7 +828,7 @@ export default function JobsPage() {
                     ? "চাকরি, দেশ বা ক্যাটাগরি খুঁজুন..."
                     : "Search job, country or category..."
                 }
-                className="w-full rounded-xl border border-gray-300 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-xl border border-gray-300 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-blue-500 max-md:py-2 max-md:pl-9"
               />
 
             </div>
@@ -838,7 +838,7 @@ export default function JobsPage() {
 
             <div className="relative">
 
-              <span className="absolute left-4 top-1/2 -translate-y-1/2">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 max-md:left-2.5 max-md:text-sm">
                 🌍
               </span>
 
@@ -848,7 +848,7 @@ export default function JobsPage() {
                   setCountry(e.target.value);
                   setStartIndex(0);
                 }}
-                className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-10 text-sm outline-none transition focus:border-blue-500"
+                className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-10 text-sm outline-none transition focus:border-blue-500 max-md:truncate max-md:py-2 max-md:pl-8 max-md:pr-6 max-md:text-[13px]"
               >
 
                 {countries.map((x) => (
@@ -867,7 +867,7 @@ export default function JobsPage() {
 
               </select>
 
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 max-md:right-2 max-md:text-[10px]">
                 ▼
               </span>
 
@@ -878,7 +878,7 @@ export default function JobsPage() {
 
             <div className="relative">
 
-              <span className="absolute left-4 top-1/2 -translate-y-1/2">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 max-md:left-2.5 max-md:text-sm">
                 💼
               </span>
 
@@ -888,7 +888,7 @@ export default function JobsPage() {
                   setCategory(e.target.value);
                   setStartIndex(0);
                 }}
-                className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-10 text-sm outline-none transition focus:border-blue-500"
+                className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-10 text-sm outline-none transition focus:border-blue-500 max-md:truncate max-md:py-2 max-md:pl-8 max-md:pr-6 max-md:text-[13px]"
               >
 
                 {categories.map((x) => (
@@ -907,7 +907,7 @@ export default function JobsPage() {
 
               </select>
 
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 max-md:right-2 max-md:text-[10px]">
                 ▼
               </span>
 
@@ -918,7 +918,7 @@ export default function JobsPage() {
 
           {/* SEARCH RESULT */}
 
-          <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+          <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4 max-md:mt-2.5 max-md:pt-2.5">
 
             <p className="text-sm text-gray-500">
 
@@ -962,11 +962,11 @@ export default function JobsPage() {
           JOB CIRCULARS
       ====================================================== */}
 
-      <section className="mx-[192px] px-0 py-10 max-md:mx-4">
+      <section className="mx-[192px] px-0 py-10 max-md:mx-4 max-md:py-4">
 
-        <div className="mb-6">
+        <div className="mb-6 max-md:mb-3">
 
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
+          <p className="text-sm font-semibold uppercase tracking-wider text-blue-600 max-md:text-xs">
 
             {isBangla
               ? "সর্বশেষ সুযোগ"
@@ -976,7 +976,7 @@ export default function JobsPage() {
 
           <div className="mt-1 flex items-end justify-between">
 
-            <h2 className="text-2xl font-bold md:text-3xl">
+            <h2 className="text-2xl font-bold md:text-3xl max-md:text-xl">
 
               {isBangla
                 ? "উপলব্ধ চাকরির সার্কুলার"
