@@ -1487,6 +1487,53 @@ useEffect(() => {
         </Reveal>
 
 
+        {/* CV BUILDER */}
+
+        <Reveal
+          delay={0.45}
+          duration={0.65}
+          y={25}
+        >
+          <div
+            id="cv-builder"
+            role="button"
+            tabIndex={0}
+            onClick={openCvBuilder}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openCvBuilder();
+              }
+            }}
+            className="group h-full w-full cursor-pointer rounded-2xl border border-green-100 bg-green-50 p-6 text-left hover:border-green-200 hover:shadow-lg"
+          >
+
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl">
+              📄
+            </div>
+
+            <h3 className="text-lg font-bold text-[#0B2A55]">
+              {isBangla
+                ? "সিভি তৈরি করুন"
+                : "Build Your CV"}
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              {isBangla
+                ? "নিজের জন্য এক পেজের প্রফেশনাল সিভি তৈরি করুন — সম্পূর্ণ ফ্রি।"
+                : "Create a one-page professional CV for yourself — completely free."}
+            </p>
+
+            <div className="mt-5 font-semibold text-green-600 group-hover:text-green-700">
+              {isBangla
+                ? "সিভি তৈরি করুন →"
+                : "Create CV →"}
+            </div>
+
+          </div>
+        </Reveal>
+
+
         {/* SKILL TRAINING */}
 
         <Reveal
@@ -1564,53 +1611,6 @@ useEffect(() => {
                 ? "এখনই ট্র্যাক করুন →"
                 : "Track Now →"}
             </button>
-
-          </div>
-        </Reveal>
-
-
-        {/* CV BUILDER */}
-
-        <Reveal
-          delay={0.45}
-          duration={0.65}
-          y={25}
-        >
-          <div
-            id="cv-builder"
-            role="button"
-            tabIndex={0}
-            onClick={openCvBuilder}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                openCvBuilder();
-              }
-            }}
-            className="group h-full w-full cursor-pointer rounded-2xl border border-green-100 bg-green-50 p-6 text-left hover:border-green-200 hover:shadow-lg"
-          >
-
-            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-green-100 text-3xl">
-              📄
-            </div>
-
-            <h3 className="text-lg font-bold text-[#0B2A55]">
-              {isBangla
-                ? "সিভি তৈরি করুন"
-                : "Build Your CV"}
-            </h3>
-
-            <p className="mt-2 text-sm leading-6 text-gray-600">
-              {isBangla
-                ? "নিজের জন্য এক পেজের প্রফেশনাল সিভি তৈরি করুন — সম্পূর্ণ ফ্রি।"
-                : "Create a one-page professional CV for yourself — completely free."}
-            </p>
-
-            <div className="mt-5 font-semibold text-green-600 group-hover:text-green-700">
-              {isBangla
-                ? "সিভি তৈরি করুন →"
-                : "Create CV →"}
-            </div>
 
           </div>
         </Reveal>
