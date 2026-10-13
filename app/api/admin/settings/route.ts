@@ -3,6 +3,7 @@ import { dbFirst, dbRun, getDb } from "@/lib/cf";
 import { pickUpdate, readJson } from "@/lib/crud";
 import { settingsRowToApi, type SiteSettingsRow } from "@/lib/data";
 import { SETTINGS_FIELDS } from "@/lib/schemas";
+import { ensureSiteSettingsColumns } from "@/lib/site-settings-columns";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,9 @@ export async function PATCH(req: Request) {
   const { setSql, values, count } = pickUpdate(SETTINGS_FIELDS, body);
   if (!count)
     return Response.json({ error: "No valid fields to update" }, { status: 400 });
+
+  // Make sure newer columns (e.g. the WhatsApp message) exist, then update.
+  await ensureSiteSettingsColumns();
 
   // Ensure the row exists, then update.
   await dbRun("INSERT OR IGNORE INTO site_settings (id) VALUES ('main')");

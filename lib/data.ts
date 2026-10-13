@@ -165,6 +165,7 @@ export interface SiteSettingsRow {
   id: string;
   contact_phone: string;
   contact_whatsapp: string;
+  contact_whatsapp_message?: string;
   contact_email: string;
   office_address: string;
   notice_enabled: number;
@@ -291,6 +292,7 @@ export const FALLBACK_POPULAR_COUNTRIES = [
 export const FALLBACK_SETTINGS = {
   contactPhone: "",
   contactWhatsapp: "",
+  contactWhatsappMessage: "",
   contactEmail: "",
   officeAddress: "",
   noticeEnabled: true,
@@ -305,6 +307,7 @@ export function settingsRowToApi(row: SiteSettingsRow | null) {
   return {
     contactPhone: row.contact_phone ?? "",
     contactWhatsapp: row.contact_whatsapp ?? "",
+    contactWhatsappMessage: row.contact_whatsapp_message ?? "",
     contactEmail: row.contact_email ?? "",
     officeAddress: row.office_address ?? "",
     noticeEnabled: !!row.notice_enabled,

@@ -18,6 +18,7 @@ import {
 type Settings = {
   contactPhone: string;
   contactWhatsapp: string;
+  contactWhatsappMessage: string;
   contactEmail: string;
   officeAddress: string;
   noticeEnabled: boolean;
@@ -52,6 +53,7 @@ export default function SettingsPage() {
       await apiSend("/api/admin/settings", "PATCH", {
         contact_phone: s.contactPhone,
         contact_whatsapp: s.contactWhatsapp,
+        contact_whatsapp_message: s.contactWhatsappMessage,
         contact_email: s.contactEmail,
         office_address: s.officeAddress,
         notice_enabled: s.noticeEnabled,
@@ -103,10 +105,30 @@ export default function SettingsPage() {
               onChange={(e) => set("contactPhone", e.target.value)}
             />
           </Field>
-          <Field label={t("হোয়াটসঅ্যাপ নম্বর", "WhatsApp number")}>
+          <Field
+            label={t("হোয়াটসঅ্যাপ নম্বর / লিংক", "WhatsApp number / link")}
+            hint={t(
+              "নম্বর (যেমন +8801872327575) বা wa.me লিংক। চ্যাট আইকনের WhatsApp বোতামে এটাই খুলবে। খালি রাখলে বোতামটি দেখাবে না।",
+              "A number (e.g. +8801872327575) or a wa.me link. Opened by the WhatsApp button on the chat icon. Leave empty to hide the button.",
+            )}
+          >
             <TextInput
               value={s.contactWhatsapp}
               onChange={(e) => set("contactWhatsapp", e.target.value)}
+              placeholder="+8801872327575"
+            />
+          </Field>
+          <Field
+            label={t("হোয়াটসঅ্যাপ প্রথম বার্তা", "WhatsApp pre-filled message")}
+            hint={t(
+              "WhatsApp খুললে এই লেখাটি আগে থেকে বসানো থাকবে। খালি রাখলে সাধারণ শুভেচ্ছা বার্তা যাবে।",
+              "Pre-filled when WhatsApp opens. Leave empty to use the default greeting.",
+            )}
+          >
+            <TextInput
+              value={s.contactWhatsappMessage}
+              onChange={(e) => set("contactWhatsappMessage", e.target.value)}
+              placeholder="হ্যালো, আমি GO International BD থেকে সাহায্য চাই।"
             />
           </Field>
           <Field label={t("ইমেইল", "Email")}>
