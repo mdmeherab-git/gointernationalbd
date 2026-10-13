@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import CvLivePreview from "./CvLivePreview";
 import { trackPixelCustom } from "../lib/meta-pixel";
 import type { CvData, Skill, LanguageSkill } from "../types/cv";
 import {
@@ -134,6 +135,19 @@ export default function CvBuilder({
   const [promoCode, setPromoCode] = useState("");
   const [promoError, setPromoError] = useState("");
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
+  // Height of the site's sticky header (if any), so the live preview sticks
+  // right below it instead of sliding underneath.
+  const [stickyTop, setStickyTop] = useState(0);
+  useEffect(() => {
+    const measure = () => {
+      const el = document.querySelector("[data-sticky-header]");
+      setStickyTop(el ? Math.round(el.getBoundingClientRect().height) : 0);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
   const [attachments, setAttachments] = useState<{ id: string; type: string; file: File | null; fileName: string }[]>([]);
 
   const updateField = <K extends keyof CvData>(key: K, value: CvData[K]) => {
@@ -402,7 +416,27 @@ export default function CvBuilder({
       )}
 
       {step === "form" && (
-        <div className="space-y-8">
+        <div className="lg:grid lg:grid-cols-[400px_minmax(0,1fr)] lg:items-start lg:gap-8">
+
+          {/* LIVE PREVIEW — on phones it stays pinned at the top (40% of the
+              screen) while the form scrolls below; on desktop it sits to the
+              left of the form. */}
+          <aside
+            className="sticky z-20 -mx-6 mb-5 bg-white px-6 pb-3 pt-2 max-lg:border-b max-lg:border-gray-200 md:-mx-8 md:px-8 lg:mx-0 lg:mb-0 lg:p-0"
+            style={{
+              top: stickyTop,
+              ["--cv-top" as string]: `${stickyTop}px`,
+            }}
+          >
+            <CvLivePreview
+              data={cvData}
+              showWatermark
+              isBangla={isBangla}
+              className="h-[40dvh] lg:h-[calc(100dvh-var(--cv-top)-24px)]"
+            />
+          </aside>
+
+        <div className="min-w-0 space-y-8">
 
           {lowConfidenceWarning && (
             <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-700">
@@ -725,6 +759,7 @@ export default function CvBuilder({
               </div>
             </div>
           )}
+        </div>
         </div>
       )}
     </div>
