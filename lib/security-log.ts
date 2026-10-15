@@ -9,7 +9,8 @@ export type SecurityEventType =
   | "login_failed"
   | "login_success"
   | "lockout"
-  | "blocked";
+  | "blocked"
+  | "user_password_reset";
 
 export type SecurityEvent = {
   id: string;

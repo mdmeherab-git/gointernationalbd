@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { dbFirst, dbRun, newId } from "@/lib/cf";
+import { mustChangePassword } from "@/lib/password-reset";
 import {
   clearRateLimit,
   clientIp,
@@ -136,6 +137,20 @@ export async function POST(req: Request) {
     }
 
     await clearRateLimit(ipKey);
+
+    // Admin-issued temporary password: no session until a new one is chosen
+    // (see /api/auth/set-password). 403 so clients that don't know about this
+    // flow show the message instead of treating the login as successful.
+    if (await mustChangePassword(user.id)) {
+      return NextResponse.json(
+        {
+          error:
+            "নতুন Password দিতে হবে / You must set a new password",
+          mustChangePassword: true,
+        },
+        { status: 403 },
+      );
+    }
 
     const sessionId = newId("session");
 

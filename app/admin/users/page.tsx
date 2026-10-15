@@ -67,9 +67,40 @@ export default function AdminUsersPage() {
   const [visaStatus, setVisaStatus] = useState<VisaStatus | null>(null);
   const [savingVisaStatus, setSavingVisaStatus] = useState(false);
 
+  const [resetting, setResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<{ userId: string; tempPassword: string } | null>(null);
+
   const [notifTitle, setNotifTitle] = useState("");
   const [notifMessage, setNotifMessage] = useState("");
   const [sendingNotif, setSendingNotif] = useState(false);
+
+  async function resetPassword(user: AdminUser) {
+    if (
+      !confirm(
+        t(
+          `${user.name} (${user.phone})-এর পাসওয়ার্ড রিসেট করবেন? সে সব ডিভাইস থেকে লগআউট হয়ে যাবে এবং পুরনো পাসওয়ার্ড আর কাজ করবে না।`,
+          `Reset the password for ${user.name} (${user.phone})? They will be signed out everywhere and the old password will stop working.`,
+        ),
+      )
+    )
+      return;
+    setResetting(true);
+    try {
+      const d = await apiSend<{ tempPassword: string }>(
+        `/api/admin/users/${user.id}/reset-password`,
+        "POST",
+      );
+      setResetResult({ userId: user.id, tempPassword: d.tempPassword });
+    } catch (e) {
+      toast.push((e as Error).message, "err");
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  useEffect(() => {
+    setResetResult(null);
+  }, [detail?.id]);
 
   useEffect(() => {
     void (async () => {
@@ -396,6 +427,60 @@ export default function AdminUsersPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* PASSWORD RESET */}
+            <div className="border-t border-gray-100 pt-4">
+              <p className="mb-1 text-xs font-bold text-gray-600">
+                {t("পাসওয়ার্ড রিসেট", "Password reset")}
+              </p>
+              <p className="mb-2 text-xs text-gray-500">
+                {t(
+                  "ইউজার পাসওয়ার্ড ভুলে গেলে (আগে পরিচয় নিশ্চিত করে নিন) অস্থায়ী পাসওয়ার্ড তৈরি করে তাকে জানান। প্রথম লগইনে সে নিজের নতুন পাসওয়ার্ড দেবে।",
+                  "If the user forgot their password (verify who they are first), generate a temporary one and send it to them. They choose their own at first login.",
+                )}
+              </p>
+
+              {resetResult?.userId === detail.id ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs font-bold text-amber-800">
+                    {t(
+                      "অস্থায়ী পাসওয়ার্ড (এই পাতা বন্ধ করলে আর দেখা যাবে না):",
+                      "Temporary password (not shown again once you close this):",
+                    )}
+                  </p>
+                  <p className="my-2 select-all rounded-lg bg-white px-3 py-2 text-center font-mono text-lg font-extrabold tracking-wider text-[#0B2A55]">
+                    {resetResult.tempPassword}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Btn
+                      variant="ghost"
+                      onClick={() => {
+                        void navigator.clipboard
+                          .writeText(resetResult.tempPassword)
+                          .then(() => toast.push(t("কপি হয়েছে", "Copied")))
+                          .catch(() => toast.push(t("কপি করা যায়নি", "Could not copy"), "err"));
+                      }}
+                    >
+                      {t("কপি করুন", "Copy")}
+                    </Btn>
+                    <a
+                      href={`https://wa.me/88${detail.phone.replace(/\D/g, "").replace(/^88/, "")}?text=${encodeURIComponent(
+                        `আপনার GO International BD অ্যাকাউন্টের অস্থায়ী Password: ${resetResult.tempPassword}\nএটি দিয়ে Login করুন, তারপর নিজের নতুন Password দিন।`,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-xl bg-[#25D366] px-4 py-2 text-sm font-bold text-white"
+                    >
+                      {t("WhatsApp-এ পাঠান", "Send on WhatsApp")}
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <Btn variant="ghost" onClick={() => resetPassword(detail)} disabled={resetting}>
+                  {resetting ? "..." : `🔑 ${t("পাসওয়ার্ড রিসেট করুন", "Reset password")}`}
+                </Btn>
+              )}
             </div>
 
             {/* VISA / MEDICAL / FLIGHT STATUS */}

@@ -11,7 +11,12 @@ import {
   useToast,
 } from "@/components/admin/widgets";
 
-type EventType = "login_failed" | "login_success" | "lockout" | "blocked";
+type EventType =
+  | "login_failed"
+  | "login_success"
+  | "lockout"
+  | "blocked"
+  | "user_password_reset";
 
 type SecEvent = {
   id: string;
@@ -48,6 +53,11 @@ const BADGE: Record<EventType, { cls: string; bn: string; en: string }> = {
     cls: "bg-green-50 text-green-700",
     bn: "সফল লগইন",
     en: "Login success",
+  },
+  user_password_reset: {
+    cls: "bg-blue-50 text-blue-700",
+    bn: "ইউজারের পাসওয়ার্ড রিসেট",
+    en: "User password reset",
   },
 };
 
@@ -130,7 +140,7 @@ export default function SecurityLogPage() {
       </div>
 
       <div className="mb-3 flex flex-wrap gap-2">
-        {(["all", "login_failed", "lockout", "blocked", "login_success"] as const).map((f) => (
+        {(["all", "login_failed", "lockout", "blocked", "login_success", "user_password_reset"] as const).map((f) => (
           <button
             key={f}
             type="button"
