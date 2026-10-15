@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { apiGet, apiSend } from "./api";
+import { pagePermission, type StaffPermission } from "@/lib/staff-permissions";
 
 /* ============================ language context ============================ */
 
@@ -21,6 +22,8 @@ type LangCtx = {
   isBn: boolean;
   toggle: () => void;
   t: (bn: string, en: string) => string;
+  /** True only for the owner; staff never see owner-only actions. */
+  isOwner: boolean;
 };
 
 const Ctx = createContext<LangCtx | null>(null);
@@ -33,19 +36,32 @@ export function useAdminLang(): LangCtx {
 
 /* ================================ nav ==================================== */
 
-const NAV: { href: string; icon: string; bn: string; en: string; badge?: "circ" | "notice" | "app" | "chat" }[] = [
-  { href: "/admin", icon: "📊", bn: "ড্যাশবোর্ড", en: "Dashboard" },
-  { href: "/admin/circulars", icon: "📄", bn: "সার্কুলার", en: "Circulars", badge: "circ" },
-  { href: "/admin/notices", icon: "📢", bn: "নোটিশ", en: "Notices", badge: "notice" },
-  { href: "/admin/applications", icon: "👤", bn: "আবেদনসমূহ", en: "Applications", badge: "app" },
-  { href: "/admin/users", icon: "👥", bn: "রেজিস্টার্ড ইউজার", en: "Registered Users" },
-  { href: "/admin/popular-countries", icon: "🌍", bn: "জনপ্রিয় দেশ", en: "Popular Countries" },
-  { href: "/admin/country-names", icon: "🔤", bn: "দেশের বাংলা নাম", en: "Country Names" },
-  { href: "/admin/chat", icon: "💬", bn: "চ্যাট সেন্টার", en: "Chat Center", badge: "chat" },
-  { href: "/admin/broadcast", icon: "📣", bn: "ইউজারদের বার্তা", en: "Message Users" },
-  { href: "/admin/security", icon: "🛡️", bn: "নিরাপত্তা লগ", en: "Security Log" },
-  { href: "/admin/settings", icon: "⚙️", bn: "সেটিংস", en: "Settings" },
+type NavItem = {
+  href: string;
+  icon: string;
+  bn: string;
+  en: string;
+  badge?: "circ" | "notice" | "app" | "chat";
+  /** Section a staff member needs; "owner" = owner only. */
+  perm: StaffPermission | "owner";
+};
+
+const NAV: NavItem[] = [
+  { href: "/admin", icon: "📊", bn: "ড্যাশবোর্ড", en: "Dashboard", perm: "owner" },
+  { href: "/admin/circulars", icon: "📄", bn: "সার্কুলার", en: "Circulars", badge: "circ", perm: "circulars" },
+  { href: "/admin/notices", icon: "📢", bn: "নোটিশ", en: "Notices", badge: "notice", perm: "notices" },
+  { href: "/admin/applications", icon: "👤", bn: "আবেদনসমূহ", en: "Applications", badge: "app", perm: "applications" },
+  { href: "/admin/users", icon: "👥", bn: "রেজিস্টার্ড ইউজার", en: "Registered Users", perm: "users" },
+  { href: "/admin/popular-countries", icon: "🌍", bn: "জনপ্রিয় দেশ", en: "Popular Countries", perm: "countries" },
+  { href: "/admin/country-names", icon: "🔤", bn: "দেশের বাংলা নাম", en: "Country Names", perm: "countries" },
+  { href: "/admin/chat", icon: "💬", bn: "চ্যাট সেন্টার", en: "Chat Center", badge: "chat", perm: "chat" },
+  { href: "/admin/broadcast", icon: "📣", bn: "ইউজারদের বার্তা", en: "Message Users", perm: "broadcast" },
+  { href: "/admin/staff", icon: "👔", bn: "সহকারী ও অনুমতি", en: "Staff & Access", perm: "owner" },
+  { href: "/admin/security", icon: "🛡️", bn: "নিরাপত্তা লগ", en: "Security Log", perm: "owner" },
+  { href: "/admin/settings", icon: "⚙️", bn: "সেটিংস", en: "Settings", perm: "owner" },
 ];
+
+type Me = { role: "owner" | "staff"; name: string; permissions: StaffPermission[] };
 
 type Stats = {
   circularsActive: number;
@@ -65,6 +81,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [dbReady, setDbReady] = useState<boolean | null>(null);
+  const [me, setMe] = useState<Me | null>(null);
 
   useEffect(() => {
     try {
@@ -88,6 +105,36 @@ export default function AdminShell({ children }: { children: ReactNode }) {
       });
   }, [isLogin, pathname]);
 
+  useEffect(() => {
+    if (isLogin) return;
+    apiGet<Me>("/api/admin/me")
+      .then(setMe)
+      .catch(() => {
+        /* 401 handled inside apiGet */
+      });
+  }, [isLogin]);
+
+  const visibleNav = useMemo(
+    () =>
+      NAV.filter(
+        (item) =>
+          me?.role === "owner" ||
+          (me?.role === "staff" && item.perm !== "owner" && me.permissions.includes(item.perm)),
+      ),
+    [me],
+  );
+
+  // Staff only ever see their own sections: if they land on the dashboard or a
+  // section they were not given, send them to the first one they have.
+  useEffect(() => {
+    if (!me || me.role !== "staff" || isLogin) return;
+    const need = pagePermission(pathname);
+    const allowed = need !== "owner" && need !== "any" && me.permissions.includes(need);
+    if (allowed) return;
+    const first = NAV.find((n) => n.perm !== "owner" && me.permissions.includes(n.perm));
+    if (first && first.href !== pathname) router.replace(first.href);
+  }, [me, pathname, isLogin, router]);
+
   const ctx = useMemo<LangCtx>(
     () => ({
       lang,
@@ -103,8 +150,9 @@ export default function AdminShell({ children }: { children: ReactNode }) {
           return next;
         }),
       t: (bn, en) => (lang === "bn" ? bn : en),
+      isOwner: me?.role === "owner",
     }),
-    [lang],
+    [lang, me],
   );
 
   if (isLogin) {
@@ -167,7 +215,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
             <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
               {isBn ? "মূল মেনু" : "Main Menu"}
             </p>
-            {NAV.map((item) => {
+            {visibleNav.map((item) => {
               const active =
                 item.href === "/admin"
                   ? pathname === "/admin"
@@ -234,7 +282,11 @@ export default function AdminShell({ children }: { children: ReactNode }) {
                 ☰
               </button>
               <h1 className="text-base font-extrabold text-[#0B2A55] sm:text-lg">
-                {isBn ? "অ্যাডমিন ড্যাশবোর্ড" : "Admin Dashboard"}
+                {me?.role === "staff"
+                  ? `${isBn ? "সহকারী" : "Staff"}: ${me.name}`
+                  : isBn
+                    ? "অ্যাডমিন ড্যাশবোর্ড"
+                    : "Admin Dashboard"}
               </h1>
             </div>
             <button

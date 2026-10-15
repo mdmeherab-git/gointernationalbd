@@ -57,6 +57,51 @@ export async function verifySessionToken(
   return safeEqual(sig, expected);
 }
 
+/* ------------------------------ staff sessions ------------------------------
+   Employees the owner gives limited access to. The token only proves WHO
+   logged in; what they may do is always read from the database on each
+   request, so disabling a staff account or changing their permissions takes
+   effect immediately.
+   Token format: staff.<staffId>.<expiryMs>.<base64url(HMAC("staff.<id>.<exp>"))> */
+
+export const STAFF_COOKIE = "gib_staff";
+
+export async function createStaffToken(secret: string, staffId: string): Promise<string> {
+  const exp = Date.now() + SESSION_MAX_AGE_SECONDS * 1000;
+  const payload = `staff.${staffId}.${exp}`;
+  return `${payload}.${await hmacSha256(secret, payload)}`;
+}
+
+/** The staff id inside a valid, unexpired staff token, or null. */
+export async function parseStaffToken(
+  token: string | undefined | null,
+  secret: string | undefined | null,
+): Promise<string | null> {
+  if (!token || !secret) return null;
+  const parts = token.split(".");
+  if (parts.length !== 4 || parts[0] !== "staff") return null;
+  const [role, id, expStr, sig] = parts;
+  const exp = Number(expStr);
+  if (!id || !Number.isFinite(exp) || exp < Date.now()) return null;
+  const expected = await hmacSha256(secret, `${role}.${id}.${expStr}`);
+  return safeEqual(sig, expected) ? id : null;
+}
+
+export function serializeStaffCookie(value: string, maxAgeSeconds: number): string {
+  return [
+    `${STAFF_COOKIE}=${encodeURIComponent(value)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Secure",
+    `Max-Age=${maxAgeSeconds}`,
+  ].join("; ");
+}
+
+export function clearStaffCookie(): string {
+  return `${STAFF_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0`;
+}
+
 /** Read a single cookie value from a request's Cookie header. */
 export function readCookie(req: Request, name: string): string | undefined {
   const header = req.headers.get("cookie");

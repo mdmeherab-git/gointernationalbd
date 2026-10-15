@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ADMIN_COOKIE, verifySessionToken } from "@/lib/session";
+import {
+  ADMIN_COOKIE,
+  STAFF_COOKIE,
+  parseStaffToken,
+  verifySessionToken,
+} from "@/lib/session";
+import { pagePermission } from "@/lib/staff-permissions";
 
 /**
  * Optimistic gate for the admin area. Real enforcement also happens in every
@@ -42,6 +48,20 @@ export async function proxy(req: NextRequest) {
     : Boolean(token); // can't verify signature here -> presence check only
 
   if (ok) return NextResponse.next();
+
+  // A staff member (signature checked here; what they may do is checked against
+  // the database in the API routes). Owner-only pages bounce them to /admin,
+  // whose shell then sends them to the first section they have.
+  const staffToken = req.cookies.get(STAFF_COOKIE)?.value;
+  if (secret && staffToken && (await parseStaffToken(staffToken, secret))) {
+    if (pagePermission(pathname) === "owner") {
+      const url = req.nextUrl.clone();
+      url.pathname = "/admin";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
 
   const url = req.nextUrl.clone();
   url.pathname = "/admin/login";

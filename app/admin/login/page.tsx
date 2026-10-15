@@ -8,6 +8,9 @@ function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const [password, setPassword] = useState("");
+  // Staff sign in with a username; the owner leaves it out.
+  const [staffMode, setStaffMode] = useState(false);
+  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -19,11 +22,16 @@ function LoginInner() {
       const res = await fetch("/api/admin/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify(staffMode ? { username, password } : { password }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        setError(data.error || "ভুল পাসওয়ার্ড / Wrong password");
+        setError(
+          data.error ||
+            (staffMode
+              ? "ইউজারনেম বা পাসওয়ার্ড সঠিক নয় / Wrong username or password"
+              : "ভুল পাসওয়ার্ড / Wrong password"),
+        );
         return;
       }
       const next = params.get("next");
@@ -45,14 +53,27 @@ function LoginInner() {
             অ্যাডমিন লগইন
           </h1>
           <p className="mt-1 text-xs text-gray-500">
-            ড্যাশবোর্ডে ঢুকতে পাসওয়ার্ড দিন
+            {staffMode ? "সহকারী লগইন: ইউজারনেম ও পাসওয়ার্ড দিন" : "ড্যাশবোর্ডে ঢুকতে পাসওয়ার্ড দিন"}
           </p>
         </div>
 
         <form onSubmit={submit}>
+          {staffMode && (
+            <input
+              type="text"
+              autoFocus
+              required
+              autoCapitalize="none"
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="ইউজারনেম / Username"
+              className="mb-3 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          )}
           <input
             type="password"
-            autoFocus
+            autoFocus={!staffMode}
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -75,9 +96,20 @@ function LoginInner() {
           </button>
         </form>
 
+        <button
+          type="button"
+          onClick={() => {
+            setStaffMode((v) => !v);
+            setError("");
+          }}
+          className="mt-4 block w-full text-center text-xs font-semibold text-blue-600 hover:underline"
+        >
+          {staffMode ? "← মালিকের লগইন" : "সহকারী হিসেবে লগইন করুন"}
+        </button>
+
         <Link
           href="/"
-          className="mt-4 block text-center text-xs font-semibold text-gray-400 hover:text-blue-600"
+          className="mt-3 block text-center text-xs font-semibold text-gray-400 hover:text-blue-600"
         >
           ← ওয়েবসাইটে ফিরে যান
         </Link>

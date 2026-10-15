@@ -1,13 +1,10 @@
-import { clearSessionCookie } from "@/lib/session";
+import { clearSessionCookie, clearStaffCookie } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: {
-      "content-type": "application/json",
-      "set-cookie": clearSessionCookie(),
-    },
-  });
+  const headers = new Headers({ "content-type": "application/json" });
+  headers.append("set-cookie", clearSessionCookie());
+  headers.append("set-cookie", clearStaffCookie());
+  return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
 }

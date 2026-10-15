@@ -52,7 +52,7 @@ const STATUSES = ["active", "disabled"] as const;
 const LIMIT = 20;
 
 export default function AdminUsersPage() {
-  const { t } = useAdminLang();
+  const { t, isOwner } = useAdminLang();
   const toast = useToast();
 
   const [items, setItems] = useState<AdminUser[]>([]);
@@ -318,13 +318,15 @@ export default function AdminUsersPage() {
                       >
                         {t("দেখুন", "View")}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => removeUser(u)}
-                        className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50"
-                      >
-                        {t("মুছুন", "Delete")}
-                      </button>
+                      {isOwner && (
+                        <button
+                          type="button"
+                          onClick={() => removeUser(u)}
+                          className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50"
+                        >
+                          {t("মুছুন", "Delete")}
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -368,7 +370,8 @@ export default function AdminUsersPage() {
         onClose={() => setDetail(null)}
         title={t("ইউজারের বিস্তারিত", "User detail")}
         footer={
-          detail && (
+          detail &&
+          isOwner && (
             <Btn variant="danger" onClick={() => removeUser(detail)}>
               {t("মুছে ফেলুন", "Delete")}
             </Btn>
@@ -429,7 +432,8 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
-            {/* PASSWORD RESET */}
+            {/* PASSWORD RESET (owner only) */}
+            {isOwner && (
             <div className="border-t border-gray-100 pt-4">
               <p className="mb-1 text-xs font-bold text-gray-600">
                 {t("পাসওয়ার্ড রিসেট", "Password reset")}
@@ -482,6 +486,7 @@ export default function AdminUsersPage() {
                 </Btn>
               )}
             </div>
+            )}
 
             {/* VISA / MEDICAL / FLIGHT STATUS */}
             {visaStatus && (
