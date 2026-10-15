@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { IDENTITY_REQUIRED_RESPONSE, guestNeedsIdentity } from "@/lib/chat-guest";
 import { dbRun, getUploads, newId } from "@/lib/cf";
 import { classifyAttachment, sizeLimitFor } from "@/lib/chat-upload";
 import {
@@ -55,6 +56,9 @@ export async function POST(req: Request) {
     }
 
     const conversation = await getOrCreateConversation(userId, guestId);
+    if (!userId && (await guestNeedsIdentity(conversation.id))) {
+      return NextResponse.json(IDENTITY_REQUIRED_RESPONSE, { status: 403 });
+    }
 
     // The key must belong to THIS caller's own conversation — prevents
     // completing an upload against someone else's conversation.

@@ -32,6 +32,7 @@ type Message = {
 };
 
 type ChatResponse = {
+  needsIdentity?: boolean;
   messages?: Message[];
   unread?: number;
   error?: string;
@@ -229,6 +230,11 @@ export default function OfficeChatWidget() {
   const [unread, setUnread] = useState(0);
   const [showWelcome, setShowWelcome] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Guests give a name + phone before their first message.
+  const [needsIdentity, setNeedsIdentity] = useState(false);
+  const [identity, setIdentity] = useState({ name: "", phone: "", email: "" });
+  const [identityBusy, setIdentityBusy] = useState(false);
+  const [identityError, setIdentityError] = useState("");
   const [waSettings, setWaSettings] = useState({ number: "", message: "" });
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
@@ -406,6 +412,7 @@ export default function OfficeChatWidget() {
 
       setMessages(data.messages || []);
       setUnread(data.unread || 0);
+      setNeedsIdentity(Boolean(data.needsIdentity));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Chat load করা যায়নি।",
@@ -716,6 +723,46 @@ export default function OfficeChatWidget() {
     });
   }
 
+  async function submitIdentity(event: React.FormEvent) {
+    event.preventDefault();
+    if (identityBusy) return;
+
+    setIdentityBusy(true);
+    setIdentityError("");
+
+    try {
+      const res = await fetch("/api/chat/identify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(identity),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+
+      if (!res.ok) {
+        throw new Error(
+          data.error ||
+            (siteLang === "en"
+              ? "Could not save your details."
+              : "তথ্য সংরক্ষণ করা যায়নি।"),
+        );
+      }
+
+      setNeedsIdentity(false);
+      await loadChat(true);
+    } catch (err) {
+      setIdentityError(
+        err instanceof Error
+          ? err.message
+          : siteLang === "en"
+            ? "Could not save your details."
+            : "তথ্য সংরক্ষণ করা যায়নি।",
+      );
+    } finally {
+      setIdentityBusy(false);
+    }
+  }
+
   async function sendMessage(event: React.FormEvent) {
     event.preventDefault();
 
@@ -735,9 +782,11 @@ export default function OfficeChatWidget() {
 
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
+        code?: string;
       };
 
       if (!res.ok) {
+        if (data.code === "identity_required") setNeedsIdentity(true);
         throw new Error(data.error || "Message পাঠানো যায়নি।");
       }
 
@@ -983,9 +1032,79 @@ export default function OfficeChatWidget() {
             </div>
           </div>
 
+          {needsIdentity && (
+            <form
+              onSubmit={submitIdentity}
+              className="flex-1 space-y-3 overflow-y-auto bg-[#f7f9fc] px-5 py-5"
+            >
+              <div className="text-center">
+                <img src="/logo.svg" alt="" className="mx-auto h-12 w-12 object-contain" />
+                <p className="mt-2 text-sm font-extrabold text-[#0B2A55]">
+                  {siteLang === "en"
+                    ? "Tell us who you are"
+                    : "চ্যাট শুরুর আগে আপনার পরিচয় দিন"}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-gray-500">
+                  {siteLang === "en"
+                    ? "So our team can reply to you and call back if needed."
+                    : "যাতে আমাদের টিম আপনাকে উত্তর দিতে এবং প্রয়োজনে ফোন করতে পারে।"}
+                </p>
+              </div>
+
+              <input
+                required
+                value={identity.name}
+                onChange={(e) => setIdentity((v) => ({ ...v, name: e.target.value }))}
+                maxLength={80}
+                autoComplete="name"
+                placeholder={siteLang === "en" ? "Your name *" : "আপনার নাম *"}
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#7C3AED]"
+              />
+              <input
+                required
+                type="tel"
+                value={identity.phone}
+                onChange={(e) => setIdentity((v) => ({ ...v, phone: e.target.value }))}
+                maxLength={25}
+                autoComplete="tel"
+                placeholder={siteLang === "en" ? "Mobile number *" : "মোবাইল নম্বর *"}
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#7C3AED]"
+              />
+              <input
+                type="email"
+                value={identity.email}
+                onChange={(e) => setIdentity((v) => ({ ...v, email: e.target.value }))}
+                maxLength={160}
+                autoComplete="email"
+                placeholder={siteLang === "en" ? "Email (optional)" : "ইমেইল (ঐচ্ছিক)"}
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#7C3AED]"
+              />
+
+              {identityError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
+                  {identityError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={identityBusy}
+                className="w-full rounded-xl bg-[#0B4DBB] px-4 py-3 text-sm font-bold text-white hover:bg-[#093f98] disabled:opacity-60"
+              >
+                {identityBusy
+                  ? "..."
+                  : siteLang === "en"
+                    ? "Start chat"
+                    : "চ্যাট শুরু করুন"}
+              </button>
+            </form>
+          )}
+
           <div
             ref={messagesRef}
-            className="flex-1 space-y-3 overflow-y-auto bg-[#f7f9fc] px-3 py-4"
+            className={`flex-1 space-y-3 overflow-y-auto bg-[#f7f9fc] px-3 py-4 ${
+              needsIdentity ? "hidden" : ""
+            }`}
           >
             {chatLoading ? (
               <div className="flex h-full items-center justify-center text-sm text-gray-400">
@@ -1146,7 +1265,9 @@ export default function OfficeChatWidget() {
 
           <form
             onSubmit={sendMessage}
-            className="flex items-end gap-2 border-t border-gray-200 bg-white p-3"
+            className={`flex items-end gap-2 border-t border-gray-200 bg-white p-3 ${
+              needsIdentity ? "hidden" : ""
+            }`}
           >
             <input
               ref={attachmentInputRef}

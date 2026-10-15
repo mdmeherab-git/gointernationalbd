@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin";
 import { dbAll, dbFirst, dbRun, getDb, newId } from "@/lib/cf";
 import { readJson } from "@/lib/crud";
+import { ensureGuestColumns } from "@/lib/chat-guest";
 
 export const dynamic = "force-dynamic";
 
@@ -37,12 +38,15 @@ type MessageRow = {
 };
 
 async function loadConversation(id: string) {
+  await ensureGuestColumns();
   return dbFirst<ConversationRow>(
     `
       SELECT
         c.id, c.user_id, c.visitor_id, c.status, c.ai_enabled,
         c.admin_deleted_at, c.user_deleted_at, c.created_at, c.updated_at,
-        u.name AS user_name, u.phone AS user_phone, u.email AS user_email
+        COALESCE(u.name, c.guest_name) AS user_name,
+        COALESCE(u.phone, c.guest_phone) AS user_phone,
+        COALESCE(u.email, c.guest_email) AS user_email
       FROM chat_conversations c
       LEFT JOIN users u ON u.id = c.user_id
       WHERE c.id = ?

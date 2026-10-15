@@ -1,6 +1,7 @@
 import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { dbAll, dbFirst, dbRun, newId } from "@/lib/cf";
+import { IDENTITY_REQUIRED_RESPONSE, guestNeedsIdentity } from "@/lib/chat-guest";
 
 export const dynamic = "force-dynamic";
 
@@ -242,6 +243,10 @@ export async function GET(req: Request) {
       guestId,
     );
 
+    const needsIdentity = userId
+      ? false
+      : await guestNeedsIdentity(conversation.id);
+
     /*
      * If user deleted the chat, hide old messages
      * until the user sends a new message.
@@ -249,6 +254,7 @@ export async function GET(req: Request) {
     if (conversation.user_deleted_at) {
       const response = NextResponse.json({
         authenticated: Boolean(userId),
+        needsIdentity,
 
         conversation: {
           id: conversation.id,
@@ -322,6 +328,7 @@ export async function GET(req: Request) {
 
     const response = NextResponse.json({
       authenticated: Boolean(userId),
+      needsIdentity,
 
       conversation: {
         id: conversation.id,
@@ -404,6 +411,10 @@ export async function POST(req: Request) {
       userId,
       guestId,
     );
+
+    if (!userId && (await guestNeedsIdentity(conversation.id))) {
+      return NextResponse.json(IDENTITY_REQUIRED_RESPONSE, { status: 403 });
+    }
 
     await dbRun(
       `

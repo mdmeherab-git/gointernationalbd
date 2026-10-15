@@ -1,5 +1,6 @@
 import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
+import { IDENTITY_REQUIRED_RESPONSE, guestNeedsIdentity } from "@/lib/chat-guest";
 import { createPresignedUploadUrl, newId } from "@/lib/cf";
 import { classifyAttachment, extensionFor, sizeLimitFor } from "@/lib/chat-upload";
 import {
@@ -66,6 +67,9 @@ export async function POST(req: Request) {
     }
 
     const conversation = await getOrCreateConversation(userId, guestId);
+    if (!userId && (await guestNeedsIdentity(conversation.id))) {
+      return NextResponse.json(IDENTITY_REQUIRED_RESPONSE, { status: 403 });
+    }
     const extension = extensionFor(fileName, mime);
     const key = `chat/${conversation.id}/${newId("file")}.${extension}`;
 

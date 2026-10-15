@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { dbAll, getDb } from "@/lib/cf";
+import { ensureGuestColumns } from "@/lib/chat-guest";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,8 @@ export async function GET(req: Request) {
   const db = await getDb();
   if (!db) return Response.json({ conversations: [], dbReady: false });
 
+  await ensureGuestColumns();
+
   const url = new URL(req.url);
   const status = url.searchParams.get("status") || "all";
   const type = url.searchParams.get("type") || "all"; // all | guest | user
@@ -50,9 +53,11 @@ export async function GET(req: Request) {
   }
 
   if (q) {
-    where.push("(u.name LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)");
+    where.push(
+      "(u.name LIKE ? OR u.phone LIKE ? OR u.email LIKE ? OR c.guest_name LIKE ? OR c.guest_phone LIKE ? OR c.guest_email LIKE ?)",
+    );
     const like = `%${q}%`;
-    params.push(like, like, like);
+    params.push(like, like, like, like, like, like);
   }
 
   const whereSql = `WHERE ${where.join(" AND ")}`;
@@ -62,7 +67,9 @@ export async function GET(req: Request) {
       SELECT
         c.id, c.user_id, c.visitor_id, c.status, c.ai_enabled,
         c.admin_deleted_at, c.created_at, c.updated_at,
-        u.name AS user_name, u.phone AS user_phone, u.email AS user_email,
+        COALESCE(u.name, c.guest_name) AS user_name,
+        COALESCE(u.phone, c.guest_phone) AS user_phone,
+        COALESCE(u.email, c.guest_email) AS user_email,
         (SELECT message FROM chat_messages m WHERE m.conversation_id = c.id
           ORDER BY m.created_at DESC LIMIT 1) AS last_message,
         (SELECT created_at FROM chat_messages m WHERE m.conversation_id = c.id
