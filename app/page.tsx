@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { countries } from "./countries";
 import CvAndNoticeSection from "../components/CvAndNoticeSection";
+import ServicesSection from "../components/ServicesSection";
+import { SITE_NAV, SITE_SERVICES } from "../lib/site-nav";
 import Reveal from "@/components/ui/Reveal";
 import CvBuilder from "../components/CvBuilder";
 import { trackPixel } from "../lib/meta-pixel";
@@ -702,54 +704,19 @@ useEffect(() => {
 
           <nav className="flex items-center gap-8 text-[17px] max-lg:hidden">
 
-            <Link
-              href="/"
-              className="text-blue-600"
-            >
-              {isBangla ? "হোম" : "Home"}
-            </Link>
-
-            <a
-              href="#visa-check"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              {isBangla ? "ভিসা চেক" : "Visa Check"}
-            </a>
-
-            <a
-              href="#ai-assistant"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              {isBangla ? "AI সহকারী" : "AI Assistant"}
-            </a>
-
-            <Link
-              href="/jobs"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              {isBangla ? "চাকরি" : "Jobs"}
-            </Link>
-
-            <a
-              href="#news"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              {isBangla ? "নিউজ" : "News"}
-            </a>
-
-            <a
-              href="#about"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              {isBangla ? "আমাদের সম্পর্কে" : "About Us"}
-            </a>
-
-            <a
-              href="#contact"
-              className="text-gray-800 hover:text-blue-600"
-            >
-              {isBangla ? "যোগাযোগ" : "Contact"}
-            </a>
+            {SITE_NAV.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={
+                  item.key === "home"
+                    ? "text-blue-600"
+                    : "text-gray-800 hover:text-blue-600"
+                }
+              >
+                {isBangla ? item.bn : item.en}
+              </Link>
+            ))}
 
           </nav>
 
@@ -1603,14 +1570,14 @@ useEffect(() => {
                 : "Track your visa or application status easily."}
             </p>
 
-            <button
-              type="button"
-              className="mt-5 font-semibold text-orange-600 hover:text-orange-700"
+            <Link
+              href="/account/applications"
+              className="mt-5 inline-block font-semibold text-orange-600 hover:text-orange-700"
             >
               {isBangla
                 ? "এখনই ট্র্যাক করুন →"
                 : "Track Now →"}
-            </button>
+            </Link>
 
           </div>
         </Reveal>
@@ -1621,6 +1588,12 @@ useEffect(() => {
 
   </section>
 </Reveal>
+
+      {/* ===================================================
+          OUR SERVICES (managed from /admin -> Services)
+      =================================================== */}
+
+      <ServicesSection isBangla={isBangla} />
 
       {/* ===================================================
     LATEST JOB CIRCULARS
@@ -2419,26 +2392,15 @@ useEffect(() => {
 
               <div className="mt-4 space-y-2 text-sm text-blue-100">
 
-                <Link
-                  href="/"
-                  className="block hover:text-white"
-                >
-                  {isBangla ? "হোম" : "Home"}
-                </Link>
-
-                <Link
-                  href="/jobs"
-                  className="block hover:text-white"
-                >
-                  {isBangla ? "চাকরি" : "Jobs"}
-                </Link>
-
-                <a
-                  href="#visa-check"
-                  className="block hover:text-white"
-                >
-                  {isBangla ? "ভিসা চেক" : "Visa Check"}
-                </a>
+                {SITE_NAV.map((item) => (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className="block hover:text-white"
+                  >
+                    {isBangla ? item.bn : item.en}
+                  </Link>
+                ))}
 
               </div>
 
@@ -2454,29 +2416,15 @@ useEffect(() => {
 
               <div className="mt-4 space-y-2 text-sm text-blue-100">
 
-                <p>
-                  {isBangla
-                    ? "ভিসা চেক"
-                    : "Visa Check"}
-                </p>
-
-                <p>
-                  {isBangla
-                    ? "চাকরির সার্কুলার"
-                    : "Job Circular"}
-                </p>
-
-                <p>
-                  {isBangla
-                    ? "আবেদন ট্র্যাকিং"
-                    : "Application Tracking"}
-                </p>
-
-                <p>
-                  {isBangla
-                    ? "AI Assistant"
-                    : "AI Assistant"}
-                </p>
+                {SITE_SERVICES.map((item) => (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className="block hover:text-white"
+                  >
+                    {isBangla ? item.bn : item.en}
+                  </Link>
+                ))}
 
               </div>
 

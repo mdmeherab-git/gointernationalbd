@@ -25,6 +25,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Menu links jump to sections ("/#services"); glide there instead. */
+html {
+  scroll-behavior: smooth;
+}
+
 /* Mobile only (<768px): the site is a light-only design, so keep the page
    background white even when the phone is in dark mode, and never allow a
    stray element to create sideways scrolling. Desktop is untouched. */

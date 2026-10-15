@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SITE_NAV } from "../../lib/site-nav";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { trackPixel } from "../../lib/meta-pixel";
 import {
@@ -1049,54 +1050,19 @@ export default function JobsPage() {
 
           <nav className="hidden items-center gap-7 text-[15px] lg:flex">
 
-            <Link
-              href="/"
-              className="text-gray-800 transition hover:text-blue-600"
-            >
-              {isBangla ? "হোম" : "Home"}
-            </Link>
-
-            <a
-              href="#"
-              className="text-gray-800 transition hover:text-blue-600"
-            >
-              {isBangla ? "ভিসা চেক" : "Visa Check"}
-            </a>
-
-            <a
-              href="#"
-              className="text-gray-800 transition hover:text-blue-600"
-            >
-              {isBangla ? "AI সহকারী" : "AI Assistant"}
-            </a>
-
-            <Link
-              href="/jobs"
-              className="font-semibold text-blue-600"
-            >
-              {isBangla ? "চাকরি" : "Jobs"}
-            </Link>
-
-            <a
-              href="#"
-              className="text-gray-800 transition hover:text-blue-600"
-            >
-              {isBangla ? "নিউজ" : "News"}
-            </a>
-
-            <a
-              href="#"
-              className="text-gray-800 transition hover:text-blue-600"
-            >
-              {isBangla ? "আমাদের সম্পর্কে" : "About Us"}
-            </a>
-
-            <a
-              href="#"
-              className="text-gray-800 transition hover:text-blue-600"
-            >
-              {isBangla ? "যোগাযোগ" : "Contact"}
-            </a>
+            {SITE_NAV.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={
+                  item.key === "jobs"
+                    ? "font-semibold text-blue-600"
+                    : "text-gray-800 transition hover:text-blue-600"
+                }
+              >
+                {isBangla ? item.bn : item.en}
+              </Link>
+            ))}
 
           </nav>
 

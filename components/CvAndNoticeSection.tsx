@@ -11,7 +11,7 @@ import NoticeBoardList from "./NoticeBoardList";
 
 export default function CvAndNoticeSection({ isBangla }: { isBangla: boolean }) {
   return (
-    <section className="mx-[165px] px-6 py-10 max-md:mx-0">
+    <section id="news" className="mx-[165px] px-6 py-10 max-md:mx-0">
       <NoticeBoardList isBangla={isBangla} />
     </section>
   );

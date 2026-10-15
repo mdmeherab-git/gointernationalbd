@@ -6,6 +6,7 @@
 export const STAFF_PERMISSIONS = [
   "circulars",
   "notices",
+  "services",
   "applications",
   "users",
   "countries",
@@ -18,6 +19,7 @@ export type StaffPermission = (typeof STAFF_PERMISSIONS)[number];
 export const PERMISSION_LABELS: Record<StaffPermission, { bn: string; en: string; icon: string }> = {
   circulars: { bn: "সার্কুলার", en: "Circulars", icon: "📄" },
   notices: { bn: "নোটিশ", en: "Notices", icon: "📢" },
+  services: { bn: "সেবা (হোম পাতার কার্ড)", en: "Services (home cards)", icon: "🧩" },
   applications: { bn: "আবেদনসমূহ", en: "Applications", icon: "👤" },
   users: { bn: "রেজিস্টার্ড ইউজার", en: "Registered Users", icon: "👥" },
   countries: { bn: "দেশ (জনপ্রিয় ও বাংলা নাম)", en: "Countries", icon: "🌍" },
@@ -43,7 +45,7 @@ export const PERMISSION_PRESETS: {
     key: "content",
     bn: "কনটেন্ট এডিটর",
     en: "Content editor",
-    permissions: ["circulars", "notices", "countries"],
+    permissions: ["circulars", "notices", "services", "countries"],
   },
 ];
 
@@ -72,6 +74,7 @@ export function apiPathRule(pathname: string, method: string): PathRule {
 
   if (p.startsWith("/api/admin/circulars")) return ["circulars"];
   if (p.startsWith("/api/admin/notices")) return ["notices"];
+  if (p.startsWith("/api/admin/services")) return ["services"];
   // Image/PDF uploads are shared by circulars and notices.
   if (p.startsWith("/api/admin/upload")) return ["circulars", "notices"];
   if (p.startsWith("/api/admin/applications")) return ["applications"];
@@ -98,6 +101,7 @@ export function pagePermission(pathname: string): StaffPermission | "any" | "own
   const map: [string, StaffPermission][] = [
     ["/admin/circulars", "circulars"],
     ["/admin/notices", "notices"],
+    ["/admin/services", "services"],
     ["/admin/applications", "applications"],
     ["/admin/users", "users"],
     ["/admin/popular-countries", "countries"],

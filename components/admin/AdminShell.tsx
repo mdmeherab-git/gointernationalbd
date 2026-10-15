@@ -50,6 +50,7 @@ const NAV: NavItem[] = [
   { href: "/admin", icon: "📊", bn: "ড্যাশবোর্ড", en: "Dashboard", perm: "owner" },
   { href: "/admin/circulars", icon: "📄", bn: "সার্কুলার", en: "Circulars", badge: "circ", perm: "circulars" },
   { href: "/admin/notices", icon: "📢", bn: "নোটিশ", en: "Notices", badge: "notice", perm: "notices" },
+  { href: "/admin/services", icon: "🧩", bn: "সেবা", en: "Services", perm: "services" },
   { href: "/admin/applications", icon: "👤", bn: "আবেদনসমূহ", en: "Applications", badge: "app", perm: "applications" },
   { href: "/admin/users", icon: "👥", bn: "রেজিস্টার্ড ইউজার", en: "Registered Users", perm: "users" },
   { href: "/admin/popular-countries", icon: "🌍", bn: "জনপ্রিয় দেশ", en: "Popular Countries", perm: "countries" },
