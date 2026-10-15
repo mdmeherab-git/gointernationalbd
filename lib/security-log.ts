@@ -11,7 +11,8 @@ export type SecurityEventType =
   | "lockout"
   | "blocked"
   | "user_password_reset"
-  | "staff_change";
+  | "staff_change"
+  | "backup";
 
 export type SecurityEvent = {
   id: string;

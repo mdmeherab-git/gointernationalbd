@@ -58,6 +58,7 @@ const NAV: NavItem[] = [
   { href: "/admin/chat", icon: "💬", bn: "চ্যাট সেন্টার", en: "Chat Center", badge: "chat", perm: "chat" },
   { href: "/admin/broadcast", icon: "📣", bn: "ইউজারদের বার্তা", en: "Message Users", perm: "broadcast" },
   { href: "/admin/staff", icon: "👔", bn: "সহকারী ও অনুমতি", en: "Staff & Access", perm: "owner" },
+  { href: "/admin/backup", icon: "💾", bn: "ডাটা ব্যাকআপ", en: "Data Backup", perm: "owner" },
   { href: "/admin/security", icon: "🛡️", bn: "নিরাপত্তা লগ", en: "Security Log", perm: "owner" },
   { href: "/admin/settings", icon: "⚙️", bn: "সেটিংস", en: "Settings", perm: "owner" },
 ];

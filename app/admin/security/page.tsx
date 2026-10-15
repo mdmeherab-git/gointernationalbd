@@ -17,7 +17,8 @@ type EventType =
   | "lockout"
   | "blocked"
   | "user_password_reset"
-  | "staff_change";
+  | "staff_change"
+  | "backup";
 
 type SecEvent = {
   id: string;
@@ -64,6 +65,11 @@ const BADGE: Record<EventType, { cls: string; bn: string; en: string }> = {
     cls: "bg-purple-50 text-purple-700",
     bn: "সহকারী পরিবর্তন",
     en: "Staff change",
+  },
+  backup: {
+    cls: "bg-teal-50 text-teal-700",
+    bn: "ব্যাকআপ",
+    en: "Backup",
   },
 };
 
@@ -146,7 +152,7 @@ export default function SecurityLogPage() {
       </div>
 
       <div className="mb-3 flex flex-wrap gap-2">
-        {(["all", "login_failed", "lockout", "blocked", "login_success", "user_password_reset", "staff_change"] as const).map((f) => (
+        {(["all", "login_failed", "lockout", "blocked", "login_success", "user_password_reset", "staff_change", "backup"] as const).map((f) => (
           <button
             key={f}
             type="button"
