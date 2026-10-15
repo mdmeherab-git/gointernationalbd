@@ -55,6 +55,7 @@ const NAV: NavItem[] = [
   { href: "/admin/users", icon: "👥", bn: "রেজিস্টার্ড ইউজার", en: "Registered Users", perm: "users" },
   { href: "/admin/popular-countries", icon: "🌍", bn: "জনপ্রিয় দেশ", en: "Popular Countries", perm: "countries" },
   { href: "/admin/country-names", icon: "🔤", bn: "দেশের বাংলা নাম", en: "Country Names", perm: "countries" },
+  { href: "/admin/visitors", icon: "👁️", bn: "ভিজিটর", en: "Visitors", perm: "owner" },
   { href: "/admin/chat", icon: "💬", bn: "চ্যাট সেন্টার", en: "Chat Center", badge: "chat", perm: "chat" },
   { href: "/admin/broadcast", icon: "📣", bn: "ইউজারদের বার্তা", en: "Message Users", perm: "broadcast" },
   { href: "/admin/staff", icon: "👔", bn: "সহকারী ও অনুমতি", en: "Staff & Access", perm: "owner" },

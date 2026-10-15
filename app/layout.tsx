@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "./context/LanguageContext";
 import OfficeChatWidget from "../components/chat/OfficeChatWidget";
 import MetaPixel from "../components/MetaPixel";
+import VisitorTracker from "../components/VisitorTracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
           {children}
           <OfficeChatWidget />
           <MetaPixel />
+          <VisitorTracker />
         </LanguageProvider>
       </body>
     </html>
