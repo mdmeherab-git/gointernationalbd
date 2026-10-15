@@ -94,6 +94,22 @@ export async function rateLimit(
 }
 
 /**
+ * Restart the window for `key` from now, so a lockout lasts a full
+ * window from the moment the limit was reached (not from the first failure).
+ */
+export async function restartWindow(key: string): Promise<void> {
+  try {
+    await dbRun(
+      "UPDATE rate_limits SET window_start = ? WHERE key = ?",
+      Date.now(),
+      key,
+    );
+  } catch {
+    /* fail open */
+  }
+}
+
+/**
  * Read-only check: is `key` already at/over `limit` inside the window?
  * Used for login attempts, where only FAILED attempts should count.
  */

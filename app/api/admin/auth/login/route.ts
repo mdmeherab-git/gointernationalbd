@@ -10,13 +10,15 @@ import {
   clearRateLimit,
   clientIp,
   isRateLimited,
+  restartWindow,
   rateLimit,
   tooManyRequests,
 } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-const ADMIN_MAX_FAILS = 5;
+// 3 wrong passwords lock this IP out of the admin login for 15 minutes.
+const ADMIN_MAX_FAILS = 3;
 const ADMIN_WINDOW_S = 15 * 60;
 
 export async function POST(req: Request) {
@@ -50,6 +52,10 @@ export async function POST(req: Request) {
 
   if (!safeEqual(password, ADMIN_PASSWORD)) {
     await rateLimit(limitKey, ADMIN_MAX_FAILS, ADMIN_WINDOW_S);
+
+    // Limit reached: start the full 15-minute lockout from now.
+    const after = await isRateLimited(limitKey, ADMIN_MAX_FAILS, ADMIN_WINDOW_S);
+    if (after.blocked) await restartWindow(limitKey);
 
     return Response.json(
       { error: "ভুল পাসওয়ার্ড / Wrong password" },
