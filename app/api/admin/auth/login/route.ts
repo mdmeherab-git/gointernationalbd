@@ -1,4 +1,5 @@
 import { getEnv } from "@/lib/cf";
+import { logSecurityEvent } from "@/lib/security-log";
 import {
   createSessionToken,
   safeEqual,
@@ -43,19 +44,31 @@ export async function POST(req: Request) {
   }
 
   // Brute-force protection: only FAILED attempts count, per IP.
-  const limitKey = `admin-login:${clientIp(req)}`;
+  const ip = clientIp(req);
+  const userAgent = (req.headers.get("user-agent") || "").slice(0, 120);
+  const limitKey = `admin-login:${ip}`;
   const limited = await isRateLimited(limitKey, ADMIN_MAX_FAILS, ADMIN_WINDOW_S);
 
   if (limited.blocked) {
+    // One entry per IP per 10 minutes, so a flood cannot fill the log.
+    await logSecurityEvent("blocked", ip, userAgent, { dedupeMinutes: 10 });
     return tooManyRequests(limited.retryAfter);
   }
 
   if (!safeEqual(password, ADMIN_PASSWORD)) {
     await rateLimit(limitKey, ADMIN_MAX_FAILS, ADMIN_WINDOW_S);
+    await logSecurityEvent("login_failed", ip, userAgent);
 
     // Limit reached: start the full 15-minute lockout from now.
     const after = await isRateLimited(limitKey, ADMIN_MAX_FAILS, ADMIN_WINDOW_S);
-    if (after.blocked) await restartWindow(limitKey);
+    if (after.blocked) {
+      await restartWindow(limitKey);
+      await logSecurityEvent(
+        "lockout",
+        ip,
+        `Locked for 15 minutes after ${ADMIN_MAX_FAILS} wrong passwords`,
+      );
+    }
 
     return Response.json(
       { error: "ভুল পাসওয়ার্ড / Wrong password" },
@@ -64,6 +77,7 @@ export async function POST(req: Request) {
   }
 
   await clearRateLimit(limitKey);
+  await logSecurityEvent("login_success", ip, userAgent);
 
   const token = await createSessionToken(ADMIN_SESSION_SECRET);
   return new Response(JSON.stringify({ ok: true }), {
