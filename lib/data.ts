@@ -1,4 +1,5 @@
 import "server-only";
+import { DEFAULT_CHAT_WELCOME } from "./chat-welcome-default";
 
 /* ===========================================================================
    Shared row + DTO types and the sample data used as a fallback whenever the
@@ -166,6 +167,7 @@ export interface SiteSettingsRow {
   contact_phone: string;
   contact_whatsapp: string;
   contact_whatsapp_message?: string;
+  chat_welcome_message?: string | null;
   contact_email: string;
   office_address: string;
   notice_enabled: number;
@@ -293,6 +295,7 @@ export const FALLBACK_SETTINGS = {
   contactPhone: "",
   contactWhatsapp: "",
   contactWhatsappMessage: "",
+  chatWelcomeMessage: DEFAULT_CHAT_WELCOME,
   contactEmail: "",
   officeAddress: "",
   noticeEnabled: true,
@@ -308,6 +311,7 @@ export function settingsRowToApi(row: SiteSettingsRow | null) {
     contactPhone: row.contact_phone ?? "",
     contactWhatsapp: row.contact_whatsapp ?? "",
     contactWhatsappMessage: row.contact_whatsapp_message ?? "",
+    chatWelcomeMessage: row.chat_welcome_message ?? DEFAULT_CHAT_WELCOME,
     contactEmail: row.contact_email ?? "",
     officeAddress: row.office_address ?? "",
     noticeEnabled: !!row.notice_enabled,

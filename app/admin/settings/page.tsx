@@ -19,6 +19,7 @@ type Settings = {
   contactPhone: string;
   contactWhatsapp: string;
   contactWhatsappMessage: string;
+  chatWelcomeMessage: string;
   contactEmail: string;
   officeAddress: string;
   noticeEnabled: boolean;
@@ -54,6 +55,7 @@ export default function SettingsPage() {
         contact_phone: s.contactPhone,
         contact_whatsapp: s.contactWhatsapp,
         contact_whatsapp_message: s.contactWhatsappMessage,
+        chat_welcome_message: s.chatWelcomeMessage,
         contact_email: s.contactEmail,
         office_address: s.officeAddress,
         notice_enabled: s.noticeEnabled,
@@ -129,6 +131,20 @@ export default function SettingsPage() {
               value={s.contactWhatsappMessage}
               onChange={(e) => set("contactWhatsappMessage", e.target.value)}
               placeholder="হ্যালো, আমি GO International BD থেকে সাহায্য চাই।"
+            />
+          </Field>
+          <Field
+            label={t("চ্যাটের ওয়েলকাম বার্তা", "Chat welcome message")}
+            hint={t(
+              "নতুন ভিজিটর মেসেজ আইকনে ১টি নোটিফিকেশন দেখবে। রেজিস্টার করার পর এই বার্তাটি Admin চ্যাটে প্রথম বার্তা হিসেবে পাবে। খালি রাখলে নোটিফিকেশন ও বার্তা দুটোই বন্ধ থাকবে।",
+              "New visitors see 1 notification on the chat icon and get this as the first Admin message after registering. Leave empty to turn both off.",
+            )}
+          >
+            <Textarea
+              rows={3}
+              maxLength={500}
+              value={s.chatWelcomeMessage}
+              onChange={(e) => set("chatWelcomeMessage", e.target.value)}
             />
           </Field>
           <Field label={t("ইমেইল", "Email")}>

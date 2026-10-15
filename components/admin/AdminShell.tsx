@@ -42,6 +42,7 @@ const NAV: { href: string; icon: string; bn: string; en: string; badge?: "circ" 
   { href: "/admin/popular-countries", icon: "🌍", bn: "জনপ্রিয় দেশ", en: "Popular Countries" },
   { href: "/admin/country-names", icon: "🔤", bn: "দেশের বাংলা নাম", en: "Country Names" },
   { href: "/admin/chat", icon: "💬", bn: "চ্যাট সেন্টার", en: "Chat Center", badge: "chat" },
+  { href: "/admin/broadcast", icon: "📣", bn: "ইউজারদের বার্তা", en: "Message Users" },
   { href: "/admin/security", icon: "🛡️", bn: "নিরাপত্তা লগ", en: "Security Log" },
   { href: "/admin/settings", icon: "⚙️", bn: "সেটিংস", en: "Settings" },
 ];

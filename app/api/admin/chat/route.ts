@@ -38,7 +38,13 @@ export async function GET(req: Request) {
   const type = url.searchParams.get("type") || "all"; // all | guest | user
   const q = (url.searchParams.get("q") || "").trim();
 
-  const where: string[] = ["c.admin_deleted_at IS NULL"];
+  // Only threads where the visitor/user actually wrote. Broadcasts and the
+  // automatic welcome create admin-only threads that would otherwise flood
+  // the inbox with conversations nobody started.
+  const where: string[] = [
+    "c.admin_deleted_at IS NULL",
+    "EXISTS (SELECT 1 FROM chat_messages um WHERE um.conversation_id = c.id AND um.sender_type = 'user')",
+  ];
   const params: unknown[] = [];
 
   if (STATUSES.includes(status as (typeof STATUSES)[number])) {

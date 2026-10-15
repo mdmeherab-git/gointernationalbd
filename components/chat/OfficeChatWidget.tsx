@@ -32,8 +32,10 @@ type Message = {
 };
 
 type ChatResponse = {
+  authenticated?: boolean;
   needsIdentity?: boolean;
   messages?: Message[];
+  messageCount?: number;
   unread?: number;
   error?: string;
 };
@@ -228,8 +230,13 @@ export default function OfficeChatWidget() {
   const [chatLoading, setChatLoading] = useState(false);
   const [error, setError] = useState("");
   const [unread, setUnread] = useState(0);
-  const [showWelcome, setShowWelcome] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // null until the first answer from the server, so the icon never flashes
+  // a badge that is about to change.
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [messageCount, setMessageCount] = useState(0);
+  const [welcomeText, setWelcomeText] = useState("");
+  const [showRegisterPrompt, setShowRegisterPrompt] = useState(false);
   // Guests give a name + phone before their first message.
   const [needsIdentity, setNeedsIdentity] = useState(false);
   const [identity, setIdentity] = useState({ name: "", phone: "", email: "" });
@@ -260,14 +267,6 @@ export default function OfficeChatWidget() {
       width: window.innerWidth,
       height: window.innerHeight,
     });
-
-    const timer = window.setTimeout(() => {
-      if (!window.localStorage.getItem(HIDDEN_KEY)) {
-        setShowWelcome(true);
-      }
-    }, 5000);
-
-    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -413,6 +412,8 @@ export default function OfficeChatWidget() {
       setMessages(data.messages || []);
       setUnread(data.unread || 0);
       setNeedsIdentity(Boolean(data.needsIdentity));
+      setAuthenticated(Boolean(data.authenticated));
+      setMessageCount(data.messageCount ?? (data.messages || []).length);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Chat load করা যায়নি।",
@@ -422,6 +423,7 @@ export default function OfficeChatWidget() {
 
   useEffect(() => {
     const poll = () => {
+      if (pathname?.startsWith("/admin")) return;
       if (open) {
         loadChat(true);
       } else {
@@ -432,6 +434,8 @@ export default function OfficeChatWidget() {
           .then((res) => res.json())
           .then((data: ChatResponse) => {
             setUnread(data.unread || 0);
+            setAuthenticated(Boolean(data.authenticated));
+            setMessageCount(data.messageCount || 0);
           })
           .catch(() => {
             // Keep the current badge state.
@@ -447,7 +451,6 @@ export default function OfficeChatWidget() {
 
   useEffect(() => {
     if (!open) return;
-    setShowWelcome(false);
     setChatLoading(true);
     loadChat(true).finally(() => setChatLoading(false));
   }, [open, pathname]);
@@ -469,10 +472,23 @@ export default function OfficeChatWidget() {
           number: String(st.contactWhatsapp || ""),
           message: String(st.contactWhatsappMessage || ""),
         });
+        setWelcomeText(String(st.chatWelcomeMessage || "").trim());
       })
       .catch(() => {});
     return () => ac.abort();
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) setShowRegisterPrompt(false);
+  }, [menuOpen]);
+
+  // A visitor with no account and no chat history has one waiting message
+  // from the office (the welcome). It is shown as "1", and reading it needs
+  // an account. Anyone who already has chat history, or an account, sees the
+  // real unread count instead.
+  const guestWelcome =
+    authenticated === false && messageCount === 0 && welcomeText !== "";
+  const badgeCount = unread > 0 ? unread : guestWelcome ? 1 : 0;
 
   const waUrl = buildWhatsappUrl(
     waSettings.number,
@@ -483,14 +499,13 @@ export default function OfficeChatWidget() {
   );
 
   function handleIconClick() {
-    setShowWelcome(false);
     if (open) {
       setOpen(false);
       return;
     }
-    // With a WhatsApp number set, the icon first offers a choice; without
-    // one it opens the chat straight away, exactly as before.
-    if (waUrl) {
+    // With a WhatsApp number set (or a waiting welcome message), the icon
+    // first offers a choice; otherwise it opens the chat straight away.
+    if (waUrl || guestWelcome) {
       setMenuOpen((value) => !value);
       return;
     }
@@ -833,7 +848,6 @@ export default function OfficeChatWidget() {
   function hideWidget() {
     setOpen(false);
     setMenuOpen(false);
-    setShowWelcome(false);
     setHidden(true);
     window.localStorage.setItem(HIDDEN_KEY, "1");
   }
@@ -863,6 +877,10 @@ export default function OfficeChatWidget() {
   const isDesktop = viewport.width >= 768;
   const sideOffset = isDesktop ? 192 : 16;
   const bottomOffset = isDesktop ? 24 : 16;
+
+  // The admin panel has its own Chat Center; the visitor chat icon (and its
+  // "1" badge / register prompt) makes no sense there.
+  if (pathname?.startsWith("/admin")) return null;
 
   if (hidden) {
     return (
@@ -897,21 +915,30 @@ export default function OfficeChatWidget() {
       className="fixed z-[9999] flex flex-col items-end"
       style={{ right: sideOffset, bottom: bottomOffset }}
     >
-      {menuOpen && !open && waUrl && (
+      {menuOpen && !open && !showRegisterPrompt && (waUrl || guestWelcome) && (
         <div className="absolute bottom-full right-0 mb-2 flex gap-1.5 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl">
           <button
             type="button"
-            onClick={openChatFromMenu}
+            onClick={() => {
+              if (guestWelcome) setShowRegisterPrompt(true);
+              else openChatFromMenu();
+            }}
             className="flex w-[96px] flex-col items-center gap-1.5 rounded-xl px-2 py-2.5 hover:bg-blue-50"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white">
+            <span className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white">
               <img src="/logo.svg" alt="" className="h-9 w-9 object-contain" />
+              {badgeCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                  {badgeCount > 9 ? "9+" : badgeCount}
+                </span>
+              )}
             </span>
             <span className="text-center text-[11px] font-bold leading-tight text-[#0B2A55]">
               Chat with Admin
             </span>
           </button>
 
+          {waUrl && (
           <a
             href={waUrl}
             target="_blank"
@@ -931,42 +958,72 @@ export default function OfficeChatWidget() {
               WhatsApp
             </span>
           </a>
+          )}
         </div>
       )}
 
-      {showWelcome && !open && (
-        <div className="absolute bottom-full right-0 mb-2 w-[280px] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
+      {/* A visitor tapped "Admin": the waiting message needs an account. */}
+      {menuOpen && !open && showRegisterPrompt && (
+        <div className="absolute bottom-full right-0 mb-2 w-[290px] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
           <button
             type="button"
-            onClick={() => setShowWelcome(false)}
-            className="absolute right-2 top-2 text-[#7C3AED] hover:text-[#6D28D9]"
+            onClick={() => setMenuOpen(false)}
+            className="absolute right-3 top-2 text-lg leading-none text-gray-400 hover:text-gray-600"
             aria-label="Close"
           >
             ×
           </button>
 
           <div className="flex items-start gap-3">
-            <img src="/logo.svg" alt="" className="mt-0.5 h-9 w-9 shrink-0 object-contain" />
-            <div className="pr-3">
+            <span className="relative mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white">
+              <img src="/logo.svg" alt="" className="h-7 w-7 object-contain" />
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                1
+              </span>
+            </span>
+            <div className="pr-4">
               <p className="text-sm font-bold text-[#0B2A55]">
-                GO International BD
+                {siteLang === "en" ? "1 message from Admin" : "Admin-এর ১টি বার্তা আছে"}
               </p>
               <p className="mt-1 text-xs leading-5 text-gray-600">
-                👋 হ্যালো! কী খুঁজছেন? ভিসা, চাকরি, মেডিকেল বা অন্য কোনো বিষয়ে সাহায্য লাগলে আমাদের সাথে Chat করুন।
+                {siteLang === "en"
+                  ? "Create a free account to read it and chat with the office."
+                  : "বার্তাটি দেখতে এবং অফিসের সাথে চ্যাট করতে বিনামূল্যে রেজিস্ট্রেশন করুন।"}
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowWelcome(false);
-                  trackPixel("Contact", { content_name: "Office Chat" });
-                  setOpen(true);
-                }}
-                className="mt-3 rounded-full bg-[#0B4DBB] px-4 py-2 text-xs font-bold text-white hover:bg-[#093f98]"
-              >
-                💬 Chat with Office
-              </button>
             </div>
           </div>
+
+          <div className="mt-3 flex gap-2">
+            <a
+              href="/register"
+              className="flex-1 rounded-full bg-[#0B4DBB] px-4 py-2 text-center text-xs font-bold text-white hover:bg-[#093f98]"
+            >
+              {siteLang === "en" ? "Register" : "রেজিস্টার করুন"}
+            </a>
+            <a
+              href="/account/login"
+              className="flex-1 rounded-full border border-gray-300 px-4 py-2 text-center text-xs font-bold text-gray-700 hover:bg-gray-50"
+            >
+              Login
+            </a>
+          </div>
+
+          {waUrl && (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                setMenuOpen(false);
+                trackPixel("Contact", { content_name: "WhatsApp" });
+              }}
+              className="mt-3 block text-center text-[11px] font-semibold text-[#128C4A] hover:underline"
+            >
+              {siteLang === "en"
+                ? "Or message us on WhatsApp — free, no account needed"
+                : "অথবা WhatsApp-এ ফ্রি মেসেজ করুন, রেজিস্ট্রেশন লাগবে না"}
+            </a>
+          )}
         </div>
       )}
 
@@ -1044,7 +1101,7 @@ export default function OfficeChatWidget() {
                     ? "Tell us who you are"
                     : "চ্যাট শুরুর আগে আপনার পরিচয় দিন"}
                 </p>
-                <p className="mt-1 text-xs leading-5 text-gray-500">
+                <p className="mt-1 text-xs leading-5 text-gray-700">
                   {siteLang === "en"
                     ? "So our team can reply to you and call back if needed."
                     : "যাতে আমাদের টিম আপনাকে উত্তর দিতে এবং প্রয়োজনে ফোন করতে পারে।"}
@@ -1058,7 +1115,7 @@ export default function OfficeChatWidget() {
                 maxLength={80}
                 autoComplete="name"
                 placeholder={siteLang === "en" ? "Your name *" : "আপনার নাম *"}
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#7C3AED]"
+                className="w-full rounded-xl border border-gray-400 bg-white px-4 py-3 text-sm font-medium text-[#111827] opacity-100 outline-none placeholder:text-gray-600 placeholder:opacity-100 focus:border-[#7C3AED]"
               />
               <input
                 required
@@ -1068,7 +1125,7 @@ export default function OfficeChatWidget() {
                 maxLength={25}
                 autoComplete="tel"
                 placeholder={siteLang === "en" ? "Mobile number *" : "মোবাইল নম্বর *"}
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#7C3AED]"
+                className="w-full rounded-xl border border-gray-400 bg-white px-4 py-3 text-sm font-medium text-[#111827] opacity-100 outline-none placeholder:text-gray-600 placeholder:opacity-100 focus:border-[#7C3AED]"
               />
               <input
                 type="email"
@@ -1077,7 +1134,7 @@ export default function OfficeChatWidget() {
                 maxLength={160}
                 autoComplete="email"
                 placeholder={siteLang === "en" ? "Email (optional)" : "ইমেইল (ঐচ্ছিক)"}
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#7C3AED]"
+                className="w-full rounded-xl border border-gray-400 bg-white px-4 py-3 text-sm font-medium text-[#111827] opacity-100 outline-none placeholder:text-gray-600 placeholder:opacity-100 focus:border-[#7C3AED]"
               />
 
               {identityError && (
@@ -1328,7 +1385,7 @@ export default function OfficeChatWidget() {
               maxLength={2000}
               placeholder={isRecording ? "Recording voice..." : "আপনার message লিখুন..."}
               disabled={isRecording || uploading}
-              className="max-h-24 min-h-[42px] flex-1 resize-none rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-[#0B4DBB] focus:ring-2 focus:ring-blue-100 disabled:bg-red-50 disabled:text-red-500"
+              className="max-h-24 min-h-[42px] flex-1 resize-none rounded-xl border border-gray-400 px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-600 placeholder:opacity-100 focus:border-[#0B4DBB] focus:ring-2 focus:ring-blue-100 disabled:bg-red-50 disabled:text-red-500"
             />
 
             <button
@@ -1380,9 +1437,9 @@ export default function OfficeChatWidget() {
         >
           <ChatGlassIcon />
 
-          {unread > 0 && (
+          {badgeCount > 0 && (
             <span className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
-              {unread > 9 ? "9+" : unread}
+              {badgeCount > 9 ? "9+" : badgeCount}
             </span>
           )}
         </button>

@@ -2,6 +2,7 @@ import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { dbAll, dbFirst, dbRun, newId } from "@/lib/cf";
 import { IDENTITY_REQUIRED_RESPONSE, guestNeedsIdentity } from "@/lib/chat-guest";
+import { seedWelcomeMessage } from "@/lib/chat-welcome";
 
 export const dynamic = "force-dynamic";
 
@@ -130,21 +131,51 @@ async function getOrCreateConversation(
     const id = newId("chat");
 
     if (userId) {
-      await dbRun(
-        `
-          INSERT INTO chat_conversations
-            (
+      // Two requests can race to create the first conversation; the unique
+      // index lets only one win and the loser simply reads the winner's row.
+      let created = false;
+      try {
+        await dbRun(
+          `
+            INSERT INTO chat_conversations
+              (
+                id,
+                user_id,
+                visitor_id,
+                status,
+                ai_enabled
+              )
+            VALUES (?, ?, NULL, 'open', 1)
+          `,
+          id,
+          userId,
+        );
+        created = true;
+      } catch {
+        /* already created by a parallel request */
+      }
+
+      if (created) {
+        await seedWelcomeMessage(id);
+      } else {
+        conversation = await dbFirst<ConversationRow>(
+          `
+            SELECT
               id,
               user_id,
               visitor_id,
               status,
-              ai_enabled
-            )
-          VALUES (?, ?, NULL, 'open', 1)
-        `,
-        id,
-        userId,
-      );
+              ai_enabled,
+              user_deleted_at,
+              admin_deleted_at
+            FROM chat_conversations
+            WHERE user_id = ?
+            LIMIT 1
+          `,
+          userId,
+        );
+        if (conversation) return conversation;
+      }
     } else {
       await dbRun(
         `
@@ -229,6 +260,7 @@ export async function GET(req: Request) {
         authenticated: false,
         conversation: null,
         messages: [],
+        messageCount: 0,
         unread: 0,
       });
     }
@@ -247,6 +279,14 @@ export async function GET(req: Request) {
       ? false
       : await guestNeedsIdentity(conversation.id);
 
+    // Lets the chat icon tell a brand-new visitor (no history) from someone
+    // who has chatted before, even if they deleted the thread.
+    const countRow = await dbFirst<{ count: number }>(
+      "SELECT COUNT(*) AS count FROM chat_messages WHERE conversation_id = ?",
+      conversation.id,
+    );
+    const messageCount = Number(countRow?.count || 0);
+
     /*
      * If user deleted the chat, hide old messages
      * until the user sends a new message.
@@ -263,6 +303,7 @@ export async function GET(req: Request) {
         },
 
         messages: [],
+        messageCount,
         unread: 0,
       });
 
@@ -337,6 +378,7 @@ export async function GET(req: Request) {
       },
 
       messages,
+      messageCount,
 
       unread: markRead ? 0 : unread,
     });

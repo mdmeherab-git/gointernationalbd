@@ -50,6 +50,7 @@ export const SETTINGS_FIELDS: Record<string, Coercer> = {
   contact_phone: asText,
   contact_whatsapp: asText,
   contact_whatsapp_message: asText,
+  chat_welcome_message: asText,
   contact_email: asText,
   office_address: asText,
   notice_enabled: asBool01,
