@@ -598,8 +598,8 @@ useEffect(() => {
       =================================================== */}
 
       <div data-sticky-header className="sticky top-0 z-40">
-      <div className="bg-[#071B41] text-sm text-white">
-        <div className="mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:justify-center max-md:px-4">
+      <div className="bg-[#071B41] text-[13px] whitespace-nowrap text-white min-[1600px]:text-sm">
+        <div className="mx-6 flex items-center justify-between py-2 xl:mx-10 min-[1600px]:mx-[192px] max-md:mx-0 max-md:justify-center max-md:px-4">
 
           <div className="flex items-center gap-5 max-md:hidden">
             <span>
@@ -623,7 +623,7 @@ useEffect(() => {
             </span>
           </div>
 
-          <div className="flex items-center gap-5 max-md:hidden">
+          <div className="flex items-center gap-5 max-xl:hidden">
             <span>
               {isBangla ? "যোগাযোগ :" : "Follow Us :"}
             </span>
@@ -650,7 +650,7 @@ useEffect(() => {
 
       <header className="border-b border-gray-200 bg-white">
 
-        <div className="relative mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4">
+        <div className="relative mx-6 flex items-center justify-between py-2 xl:mx-10 min-[1600px]:mx-[192px] max-md:mx-0 max-md:gap-2 max-md:px-4">
 
           {/* LOGO + COMPANY */}
 
@@ -702,7 +702,7 @@ useEffect(() => {
 
           {/* NAVIGATION */}
 
-          <nav className="flex items-center gap-8 text-[17px] max-lg:hidden">
+          <nav className="flex items-center gap-5 text-[15px] whitespace-nowrap min-[1600px]:gap-8 min-[1600px]:text-[17px] max-xl:hidden">
 
             {SITE_NAV.map((item) => (
               <Link

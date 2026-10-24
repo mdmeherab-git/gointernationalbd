@@ -995,7 +995,7 @@ export default function JobsPage() {
 
       <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
 
-        <div className="relative mx-[192px] flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4">
+        <div className="relative mx-6 flex items-center justify-between py-2 xl:mx-10 min-[1600px]:mx-[192px] max-md:mx-0 max-md:gap-2 max-md:px-4">
 
           {/* LOGO + COMPANY */}
 
@@ -1048,7 +1048,7 @@ export default function JobsPage() {
 
           {/* DESKTOP NAV */}
 
-          <nav className="hidden items-center gap-7 text-[15px] lg:flex">
+          <nav className="hidden items-center gap-5 text-[15px] whitespace-nowrap min-[1600px]:gap-7 xl:flex">
 
             {SITE_NAV.map((item) => (
               <Link
