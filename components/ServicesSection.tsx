@@ -102,7 +102,7 @@ export default function ServicesSection({ isBangla }: { isBangla: boolean }) {
 
   return (
     <section id="services" className="w-full scroll-mt-4 bg-white py-10">
-      <div className="mx-[165px] px-6 max-md:mx-0 max-md:px-4">
+      <div className="site-x max-md:mx-0 max-md:px-4">
         <div className="mb-7 text-center">
           <h2 className="text-2xl font-extrabold text-[#0B2A55] max-md:text-xl">
             {isBangla ? "আমাদের সেবাসমূহ" : "Our Services"}

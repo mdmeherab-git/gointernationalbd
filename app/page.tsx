@@ -599,7 +599,7 @@ useEffect(() => {
 
       <div data-sticky-header className="sticky top-0 z-40">
       <div className="bg-[#071B41] text-[13px] whitespace-nowrap text-white min-[1600px]:text-sm">
-        <div className="mx-6 flex items-center justify-between py-2 xl:mx-10 min-[1600px]:mx-[192px] max-md:mx-0 max-md:justify-center max-md:px-4">
+        <div className="site-x flex items-center justify-between py-2 max-md:mx-0 max-md:justify-center max-md:px-4">
 
           <div className="flex items-center gap-5 max-md:hidden">
             <span>
@@ -650,7 +650,7 @@ useEffect(() => {
 
       <header className="border-b border-gray-200 bg-white">
 
-        <div className="relative mx-6 flex items-center justify-between py-2 xl:mx-10 min-[1600px]:mx-[192px] max-md:mx-0 max-md:gap-2 max-md:px-4">
+        <div className="relative site-x flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4">
 
           {/* LOGO + COMPANY */}
 
@@ -996,7 +996,7 @@ useEffect(() => {
   className="w-full bg-white"
 >
 
-  <div className="mx-[192px] max-md:mx-0">
+  <div className="site-x max-md:mx-0">
 
     {/* IMAGE + TEXT OVERLAY */}
 
@@ -1017,9 +1017,9 @@ useEffect(() => {
 
       <div className="py-8 max-md:py-0 xl:absolute xl:inset-0 xl:z-10 xl:flex xl:items-center xl:py-0">
 
-        <div className="w-full px-12 max-md:px-4">
+        <div className="w-full px-12 max-md:px-4 xl:flex xl:h-full xl:flex-col xl:pt-10 xl:pb-3">
 
-          <div className="max-w-[600px] max-md:absolute max-md:left-4 max-md:top-2.5 max-md:z-10 max-md:max-w-[67%]">
+          <div className="max-w-[600px] xl:my-auto max-md:absolute max-md:left-4 max-md:top-2.5 max-md:z-10 max-md:max-w-[67%]">
 
             {/* BADGE */}
 
@@ -1100,7 +1100,7 @@ useEffect(() => {
             duration={1}
             y={40}
           >
-            <div className="mt-8 w-full max-w-[600px] rounded-2xl bg-white p-2 shadow-xl max-md:mt-3 max-md:p-1.5 xl:relative xl:top-32 xl:max-w-[760px]">
+            <div className="mt-8 w-full max-w-[600px] rounded-2xl bg-white p-2 shadow-xl max-md:mt-3 max-md:p-1.5 xl:mt-0 xl:max-w-[760px]">
 
               <div className="flex flex-wrap items-stretch gap-2 max-md:grid max-md:grid-cols-2 max-md:gap-1.5">
 
@@ -1241,7 +1241,7 @@ useEffect(() => {
   >
     <section className="w-full bg-white py-3">
 
-      <div className="mx-[192px] flex overflow-hidden rounded-xl border border-blue-100 bg-blue-50 shadow-sm max-md:mx-4">
+      <div className="site-x flex overflow-hidden rounded-xl border border-blue-100 bg-blue-50 shadow-sm max-md:mx-4">
 
         {/* NOTICE LABEL */}
 
@@ -1308,7 +1308,7 @@ useEffect(() => {
 
 <section className="w-full bg-white py-8">
 
-  <div className="mx-[165px] px-6 max-md:mx-0">
+  <div className="site-x max-md:mx-0 max-md:px-6">
 
     <div className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
 
@@ -1406,7 +1406,7 @@ useEffect(() => {
 >
   <section className="w-full bg-white pb-8">
 
-    <div className="mx-[165px] px-6 max-md:mx-0">
+    <div className="site-x max-md:mx-0 max-md:px-6">
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
 
@@ -1608,7 +1608,7 @@ useEffect(() => {
     className="w-full bg-[#F8FAFC] py-12"
   >
 
-    <div className="mx-[165px] px-6 max-md:mx-0">
+    <div className="site-x max-md:mx-0 max-md:px-6">
 
       {/* SECTION HEADER */}
 
@@ -1790,7 +1790,7 @@ useEffect(() => {
       {cvOpen && (
         <section
           id="cv-builder-section"
-          className="mx-[165px] scroll-mt-24 px-6 pb-10 max-md:mx-0"
+          className="site-x scroll-mt-24 pb-10 max-md:mx-0 max-md:px-6"
         >
           <CvBuilder isBangla={isBangla} />
         </section>
@@ -1808,7 +1808,7 @@ useEffect(() => {
   >
     <section className="w-full bg-white py-12">
 
-      <div className="mx-[165px] px-6 max-md:mx-0">
+      <div className="site-x max-md:mx-0 max-md:px-6">
 
         {/* SECTION HEADER */}
 
@@ -1920,7 +1920,7 @@ useEffect(() => {
 
       <section className="w-full bg-[#F8FAFC] py-14">
 
-        <div className="mx-[165px] px-6 max-md:mx-0">
+        <div className="site-x max-md:mx-0 max-md:px-6">
 
           <div className="mx-auto max-w-3xl text-center">
 
@@ -2009,7 +2009,7 @@ useEffect(() => {
         className="w-full bg-white py-14"
       >
 
-        <div className="mx-[165px] px-6 max-md:mx-0">
+        <div className="site-x max-md:mx-0 max-md:px-6">
 
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
 
@@ -2093,7 +2093,7 @@ useEffect(() => {
 
       <section className="w-full bg-[#071B41] py-12">
 
-        <div className="mx-[165px] px-6 max-md:mx-0">
+        <div className="site-x max-md:mx-0 max-md:px-6">
 
           <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
 
@@ -2151,7 +2151,7 @@ useEffect(() => {
 
       <section id="ai-assistant" className="w-full bg-white py-14">
 
-        <div className="mx-[165px] px-6 max-md:mx-0">
+        <div className="site-x max-md:mx-0 max-md:px-6">
 
           <div className="rounded-3xl border border-green-100 bg-green-50 p-8 md:p-12">
 
@@ -2285,7 +2285,7 @@ useEffect(() => {
         className="w-full bg-white py-14"
       >
 
-        <div className="mx-[165px] px-6 max-md:mx-0">
+        <div className="site-x max-md:mx-0 max-md:px-6">
 
           <div className="rounded-3xl border border-gray-200 bg-white p-8 shadow-sm md:p-10">
 
@@ -2361,7 +2361,7 @@ useEffect(() => {
 
       <footer className="bg-[#071B41] py-10 text-white">
 
-        <div className="mx-[165px] px-6 max-md:mx-0">
+        <div className="site-x max-md:mx-0 max-md:px-6">
 
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
 

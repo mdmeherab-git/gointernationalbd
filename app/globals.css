@@ -25,6 +25,18 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* One shared page width for the whole public site (top bar, header, every
+   section, footer), so all of them line up on every screen. The content is at
+   most 1440px wide and centred; on smaller screens the side margin is 24px
+   (40px from 1280px). Phones override it with max-md: classes. */
+@utility site-x {
+  margin-inline: max(1.5rem, calc((100% - 1440px) / 2));
+
+  @media (min-width: 1280px) {
+    margin-inline: max(2.5rem, calc((100% - 1440px) / 2));
+  }
+}
+
 /* Menu links jump to sections ("/#services"); glide there instead. */
 html {
   scroll-behavior: smooth;

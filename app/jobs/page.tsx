@@ -995,7 +995,7 @@ export default function JobsPage() {
 
       <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
 
-        <div className="relative mx-6 flex items-center justify-between py-2 xl:mx-10 min-[1600px]:mx-[192px] max-md:mx-0 max-md:gap-2 max-md:px-4">
+        <div className="relative site-x flex items-center justify-between py-2 max-md:mx-0 max-md:gap-2 max-md:px-4">
 
           {/* LOGO + COMPANY */}
 
@@ -1141,7 +1141,7 @@ export default function JobsPage() {
 
       <section className="w-full bg-white">
 
-        <div className="mx-[192px] max-md:mx-0">
+        <div className="site-x max-md:mx-0">
 
           <div className="relative overflow-hidden rounded-b-2xl border-b border-gray-200 bg-[#f8fafc] px-6 py-10 md:px-10 md:py-14 max-md:px-4 max-md:pb-9 max-md:pt-4">
 
@@ -1188,7 +1188,7 @@ export default function JobsPage() {
           SEARCH
       ====================================================== */}
 
-      <section className="relative z-10 mx-[192px] -mt-6 max-md:mx-4">
+      <section className="relative z-10 site-x -mt-6 max-md:mx-4">
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg md:p-5 max-md:p-3">
 
@@ -1386,7 +1386,7 @@ export default function JobsPage() {
           JOB CIRCULARS
       ====================================================== */}
 
-      <section className="mx-[192px] px-0 py-10 max-md:mx-4 max-md:py-4">
+      <section className="site-x px-0 py-10 max-md:mx-4 max-md:py-4">
 
         <div className="mb-6 max-md:mb-3">
 
@@ -1551,7 +1551,7 @@ export default function JobsPage() {
           NOTICE BOARD
       ====================================================== */}
 
-      <section className="mx-[192px] pb-10 max-md:mx-4">
+      <section className="site-x pb-10 max-md:mx-4">
 
         <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
 
@@ -1634,7 +1634,7 @@ export default function JobsPage() {
           TRUST SECTION
       ====================================================== */}
 
-      <section className="mx-[192px] pb-12 max-md:mx-4">
+      <section className="site-x pb-12 max-md:mx-4">
 
         <div className="grid overflow-hidden rounded-2xl border bg-white md:grid-cols-4">
 
