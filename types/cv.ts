@@ -241,7 +241,8 @@ export const MAX_LEN = {
   jobCompany: 30,
   jobDate: 14,
   jobDescription: 110,
-  skillName: 20,
+  skillName: 22,
+  eduLevel: 30,
   languageName: 14,
   hobby: 22,
   personalInfoValue: 32,
@@ -249,3 +250,33 @@ export const MAX_LEN = {
   passportNumber: 18,
   passportDate: 14,
 };
+
+/* ---------------------------------------------------------
+   PROFILE SUMMARY
+   Ready-made summaries (stored as CvData.aboutMe). The form
+   fills in the position / years; a CV with no summary of its
+   own falls back to the general one so every CV has one.
+--------------------------------------------------------- */
+
+export const SUMMARY_MAX = 230;
+
+export type SummaryTemplate = "experienced" | "fresher" | "general";
+
+export function buildSummary(
+  template: SummaryTemplate,
+  position: string,
+  years: string,
+): string {
+  const pos = position.trim() || "skilled worker";
+  const yrs = years.trim() || "several";
+  switch (template) {
+    case "experienced":
+      return `Hardworking and reliable ${pos} with ${yrs} years of experience. Ready to work abroad, follow company rules and safety standards, and complete every task on time with honesty and dedication.`;
+    case "fresher":
+      return `Motivated and hardworking person seeking a ${pos} job abroad. Quick to learn, physically fit, and ready to follow company rules, work in a team, and give my best every day.`;
+    default:
+      return "Honest, disciplined and hardworking worker, ready to work abroad in any suitable position. Committed to following company rules and safety standards, working well in a team, and finishing every task on time.";
+  }
+}
+
+export const DEFAULT_SUMMARY = buildSummary("general", "", "");

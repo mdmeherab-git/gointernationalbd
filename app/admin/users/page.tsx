@@ -48,6 +48,25 @@ type AdminUser = {
   updated_at: string;
 };
 
+type UserDocument = {
+  id: string;
+  document_type: string;
+  file_name: string;
+  content_type: string;
+  file_size: number;
+  created_at: string;
+};
+
+const DOC_TYPE_LABELS: Record<string, [string, string]> = {
+  passport: ["পাসপোর্ট", "Passport"],
+  cv: ["সিভি", "CV"],
+  photo: ["ছবি", "Photo"],
+  nid: ["এনআইডি", "NID"],
+  medical_report: ["মেডিকেল রিপোর্ট", "Medical report"],
+  visa_copy: ["ভিসা কপি", "Visa copy"],
+  other: ["অন্যান্য", "Other"],
+};
+
 const STATUSES = ["active", "disabled"] as const;
 const LIMIT = 20;
 
@@ -66,6 +85,8 @@ export default function AdminUsersPage() {
 
   const [visaStatus, setVisaStatus] = useState<VisaStatus | null>(null);
   const [savingVisaStatus, setSavingVisaStatus] = useState(false);
+  const [docsState, setDocsState] = useState<{ userId: string; docs: UserDocument[] } | null>(null);
+  const documents = docsState && docsState.userId === detail?.id ? docsState.docs : null;
 
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{ userId: string; tempPassword: string } | null>(null);
@@ -100,6 +121,22 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     setResetResult(null);
+  }, [detail?.id]);
+
+  useEffect(() => {
+    const userId = detail?.id;
+    if (!userId) return;
+    let cancelled = false;
+    apiGet<{ documents: UserDocument[] }>(`/api/admin/users/${userId}/documents`)
+      .then((d) => {
+        if (!cancelled) setDocsState({ userId, docs: d.documents || [] });
+      })
+      .catch(() => {
+        if (!cancelled) setDocsState({ userId, docs: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [detail?.id]);
 
   useEffect(() => {
@@ -411,6 +448,55 @@ export default function AdminUsersPage() {
               label={t("সর্বশেষ আপডেট", "Last Updated")}
               value={(detail.updated_at || "").slice(0, 19).replace("T", " ")}
             />
+
+            {/* DOCUMENTS (passport from the CV builder + My Documents) */}
+            <div className="border-t border-gray-100 pt-4">
+              <p className="mb-2 text-xs font-bold text-gray-600">
+                {t("ডকুমেন্টস", "Documents")}
+                {documents && documents.length > 0 ? ` (${documents.length})` : ""}
+              </p>
+              {documents === null ? (
+                <p className="text-xs text-gray-400">{t("লোড হচ্ছে...", "Loading...")}</p>
+              ) : documents.length === 0 ? (
+                <p className="text-xs text-gray-400">{t("কোনো ডকুমেন্ট নেই", "No documents")}</p>
+              ) : (
+                <ul className="space-y-2">
+                  {documents.map((doc) => {
+                    const base = `/api/admin/users/${detail.id}/documents/${doc.id}`;
+                    const label = DOC_TYPE_LABELS[doc.document_type] ?? DOC_TYPE_LABELS.other;
+                    return (
+                      <li
+                        key={doc.id}
+                        className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2"
+                      >
+                        <span className="text-xl">{doc.document_type === "passport" ? "🛂" : "📄"}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-[#0B2A55]">{t(label[0], label[1])}</p>
+                          <p className="truncate text-[11px] text-gray-500">
+                            {doc.file_name} · {Math.max(1, Math.round(doc.file_size / 1024))} KB ·{" "}
+                            {(doc.created_at || "").slice(0, 10)}
+                          </p>
+                        </div>
+                        <a
+                          href={base}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50"
+                        >
+                          {t("দেখুন", "View")}
+                        </a>
+                        <a
+                          href={`${base}?download=1`}
+                          className="rounded-md bg-[#0B4DBB] px-2 py-1 text-[11px] font-bold text-white hover:bg-[#093f98]"
+                        >
+                          {t("ডাউনলোড", "Download")}
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
 
             <div className="pt-2">
               <p className="mb-1.5 text-xs font-bold text-gray-600">{t("অ্যাকাউন্ট স্ট্যাটাস", "Account Status")}</p>

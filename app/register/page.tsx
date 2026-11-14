@@ -99,6 +99,20 @@ export default function RegisterPage() {
           </p>
         </div>
 
+        {/* WHY AN ACCOUNT */}
+        <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+          <p className="mb-2 text-xs font-bold text-[#0B2A55]">
+            ফ্রি অ্যাকাউন্টে যা পাবেন / What you get
+          </p>
+          <ul className="space-y-1.5 text-xs text-gray-700">
+            <li>📋 আবেদনের অবস্থা ট্র্যাকিং</li>
+            <li>🛂 ভিসা স্ট্যাটাস আপডেট</li>
+            <li>📄 সিভি তৈরি ও ডাউনলোড</li>
+            <li>📁 ডকুমেন্ট নিরাপদে সংরক্ষণ</li>
+            <li>🔔 গুরুত্বপূর্ণ নোটিফিকেশন</li>
+          </ul>
+        </div>
+
         <form onSubmit={submit} className="space-y-4">
 
           {/* NAME */}

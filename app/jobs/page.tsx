@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { SITE_NAV } from "../../lib/site-nav";
+import LanguageToggle from "../../components/LanguageToggle";
+import HeaderProfileMenu from "../../components/HeaderProfileMenu";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { trackPixel } from "../../lib/meta-pixel";
 import {
@@ -544,7 +546,6 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>(SAMPLE_JOBS);
 
   /* Mobile header dropdown (⋮) — Login / Register */
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   /* Apply form state */
   const [applyForm, setApplyForm] = useState({
@@ -560,6 +561,23 @@ export default function JobsPage() {
   const [passportPct, setPassportPct] = useState(0);
 
   const isBangla = language === "bn";
+
+  /* Signed-in check: guests see Login / Register, members see "My Account". */
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((r) => r.json().catch(() => ({})))
+      .then((d: { authenticated?: boolean }) => {
+        if (!cancelled) setSignedIn(Boolean(d.authenticated));
+      })
+      .catch(() => {
+        if (!cancelled) setSignedIn(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -1067,68 +1085,15 @@ export default function JobsPage() {
           </nav>
 
 
-          {/* LANGUAGE + REGISTER */}
+          {/* LANGUAGE + PROFILE */}
 
           <div className="flex shrink-0 items-center gap-3 max-md:gap-1.5">
 
-            <button
-              type="button"
-              onClick={() =>
-                setLanguage((current) =>
-                  current === "bn" ? "en" : "bn"
-                )
-              }
-              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:border-blue-300 hover:text-blue-600"
-            >
-              {isBangla ? "English" : "বাংলা"}
-            </button>
+            <LanguageToggle language={language} onChange={setLanguage} />
 
-            <button
-              type="button"
-              className="hidden rounded-lg bg-[#0B4DBB] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#093f98] md:block"
-            >
-              {isBangla ? "রেজিস্টার" : "Register"}
-            </button>
-
-            {/* Mobile only: three-dot menu */}
-            <button
-              type="button"
-              aria-label="Menu"
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              className="hidden h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-xl leading-none text-gray-700 hover:bg-gray-50 max-md:flex"
-            >
-              ⋮
-            </button>
+            <HeaderProfileMenu isBangla={isBangla} />
 
           </div>
-
-          {/* Mobile dropdown: Login / Register */}
-          {mobileMenuOpen && (
-            <>
-              <button
-                type="button"
-                aria-label="Close menu"
-                onClick={() => setMobileMenuOpen(false)}
-                className="fixed inset-0 z-40 hidden max-md:block"
-              />
-              <div className="absolute right-4 top-full z-50 mt-1 hidden w-44 flex-col gap-2 rounded-xl border border-gray-200 bg-white p-2.5 shadow-lg max-md:flex">
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                >
-                  {isBangla ? "লগইন" : "Login"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg bg-[#0B4DBB] px-3 py-2 text-sm font-semibold text-white hover:bg-[#093f98]"
-                >
-                  {isBangla ? "রেজিস্টার" : "Register"}
-                </button>
-              </div>
-            </>
-          )}
 
         </div>
 
@@ -2157,6 +2122,26 @@ export default function JobsPage() {
                     ? "আপনার আবেদন জমা হয়েছে। আমরা শীঘ্রই যোগাযোগ করব।"
                     : "Your application has been submitted. We will contact you soon."}
                 </p>
+                {signedIn === false && (
+                  <div className="mx-auto mt-5 max-w-sm rounded-xl border border-blue-100 bg-blue-50 p-4 text-left">
+                    <p className="text-sm font-bold text-[#0B2A55]">
+                      {isBangla
+                        ? "পরের আবেদনগুলো ট্র্যাক করতে ফ্রি অ্যাকাউন্ট খুলুন"
+                        : "Create a free account to track your next applications"}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-600">
+                      {isBangla
+                        ? "Login করে আবেদন করলে আবেদনের অবস্থা, ভিসা আপডেট ও নোটিফিকেশন এক জায়গায় দেখতে পাবেন।"
+                        : "Apply while logged in to see your application status, visa updates and notifications in one place."}
+                    </p>
+                    <Link
+                      href="/register"
+                      className="mt-3 inline-block rounded-lg bg-[#0B4DBB] px-4 py-2 text-xs font-semibold text-white hover:bg-[#093f98]"
+                    >
+                      {isBangla ? "অ্যাকাউন্ট খুলুন" : "Create Account"}
+                    </Link>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => setApplyJob(null)}
@@ -2404,4 +2389,4 @@ export default function JobsPage() {
 
     </main>
   );
-}
+}

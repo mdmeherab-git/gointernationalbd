@@ -1,0 +1,11 @@
+# Files that must never be uploaded by `vercel` CLI deploys
+.dev.vars
+.env*
+.wrangler
+.open-next
+.claude
+.next
+node_modules
+*.tsbuildinfo
+*.traineddata
+cv-test-download*.pdf

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CvLivePreview from "./CvLivePreview";
 import { trackPixelCustom } from "../lib/meta-pixel";
 import type { CvData, Skill, LanguageSkill } from "../types/cv";
@@ -18,6 +18,9 @@ import {
   MARITAL_STATUS_OPTIONS,
   SEX_OPTIONS,
   BLOOD_GROUP_OPTIONS,
+  SUMMARY_MAX,
+  buildSummary,
+  type SummaryTemplate,
 } from "../types/cv";
 
 /* =========================================================
@@ -35,34 +38,101 @@ const TEXT_INPUT =
   "w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm text-[#111827] placeholder:text-gray-400 outline-none focus:border-teal-500 bg-white";
 const SMALL_INPUT =
   "rounded-lg border border-gray-300 px-3 py-2 text-sm text-[#111827] placeholder:text-gray-400 outline-none focus:border-teal-500 bg-white";
-const SELECT_CLASS =
-  "rounded-lg border border-gray-300 px-3 py-2 text-sm text-[#111827] outline-none focus:border-teal-500 bg-white";
 
 function makeId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-/* A <select> + optional "Other" free-text field. */
-function SelectOrOther({
-  value, onChange, options, placeholder, className = SMALL_INPUT, maxLength,
+/* Type-or-pick field: a text box with a suggestion list underneath.
+   Pick a suggestion, or just type anything that isn't in the list. */
+function ComboInput({
+  value, onChange, options, placeholder, maxLength, wrapperClassName = "w-full",
 }: {
   value: string; onChange: (v: string) => void; options: string[];
-  placeholder: string; className?: string; maxLength?: number;
+  placeholder: string; maxLength?: number; wrapperClassName?: string;
 }) {
-  const isCustom = value !== "" && !options.slice(0, -1).includes(value);
+  const [open, setOpen] = useState(false);
+  const [filtering, setFiltering] = useState(false);
+  const [active, setActive] = useState(-1);
+
+  const choices = options.filter((o) => o !== "Other");
+  const q = value.trim().toLowerCase();
+  const shown = filtering && q ? choices.filter((o) => o.toLowerCase().includes(q)) : choices;
+
+  const pick = (opt: string) => {
+    onChange(maxLength ? opt.slice(0, maxLength) : opt);
+    setOpen(false);
+    setFiltering(false);
+    setActive(-1);
+  };
+
   return (
-    <div className="flex flex-col gap-1.5 sm:flex-row">
-      <select
-        value={isCustom ? "Other" : value}
-        onChange={(e) => onChange(e.target.value === "Other" ? "" : e.target.value)}
-        className={className}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-      </select>
-      {isCustom && (
-        <input value={value} onChange={(e) => onChange(e.target.value)} maxLength={maxLength}
-          placeholder="নিজে লিখুন / Type your own" className={className} />
+    <div className={`relative ${wrapperClassName}`}>
+      <input
+        value={value}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        autoComplete="off"
+        onFocus={() => { setOpen(true); setFiltering(false); setActive(-1); }}
+        onBlur={() => setOpen(false)}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); setFiltering(true); setActive(-1); }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((a) => Math.min(a + 1, shown.length - 1)); }
+          else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
+          else if (e.key === "Enter" && open && active >= 0 && shown[active]) { e.preventDefault(); pick(shown[active]); }
+          else if (e.key === "Escape") setOpen(false);
+        }}
+        className={`${SMALL_INPUT} w-full pr-14`}
+      />
+      <div className="absolute inset-y-0 right-2 flex items-center gap-1 text-gray-400">
+        {value && (
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label="Clear"
+            onMouseDown={(e) => { e.preventDefault(); onChange(""); }}
+            className="flex h-5 w-5 items-center justify-center rounded-full text-xs hover:bg-gray-100 hover:text-gray-600"
+          >
+            ✕
+          </button>
+        )}
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label="Show options"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            const input = e.currentTarget.parentElement?.previousElementSibling as HTMLInputElement | null;
+            if (open) setOpen(false);
+            else { input?.focus(); setOpen(true); setFiltering(false); }
+          }}
+          className="flex h-5 w-5 items-center justify-center rounded text-[10px] hover:text-gray-600"
+        >
+          ▼
+        </button>
+      </div>
+
+      {open && (
+        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg">
+          {shown.map((opt, idx) => (
+            <li key={opt}>
+              <button
+                type="button"
+                tabIndex={-1}
+                onMouseDown={(e) => { e.preventDefault(); pick(opt); }}
+                onMouseEnter={() => setActive(idx)}
+                className={`block w-full px-3 py-1.5 text-left ${
+                  idx === active ? "bg-teal-50 text-teal-800" : opt === value ? "font-semibold text-teal-700" : "text-gray-700"
+                }`}
+              >
+                {opt}
+              </button>
+            </li>
+          ))}
+          <li className="border-t border-gray-100 px-3 py-1.5 text-[11px] text-gray-400">
+            ✍️ তালিকায় না থাকলে নিজে লিখুন / Not listed? Just type it
+          </li>
+        </ul>
       )}
     </div>
   );
@@ -129,12 +199,92 @@ export default function CvBuilder({
   const [extractError, setExtractError] = useState<string | null>(null);
   const [lowConfidenceWarning, setLowConfidenceWarning] = useState<string | null>(null);
   const [cvData, setCvData] = useState<CvData>(initialData ?? emptyCvData);
+  // Profile summary: a ready-made template (position / years filled in) or
+  // the user's own text. A saved CV with its own summary opens as "custom".
+  const [summaryMode, setSummaryMode] = useState<SummaryTemplate | "custom">(
+    initialData?.aboutMe ? "custom" : "general",
+  );
+  const [summaryPos, setSummaryPos] = useState<string | null>(null);
+  const [summaryYears, setSummaryYears] = useState("");
+  const autoSummaryPos = cvData.jobTitle || cvData.workExperience[0]?.position || "";
+  const effectiveSummaryPos = summaryPos ?? autoSummaryPos;
+  const summaryText =
+    summaryMode === "custom"
+      ? cvData.aboutMe || ""
+      : buildSummary(summaryMode, effectiveSummaryPos, summaryYears);
+  const finalCv = useMemo(() => ({ ...cvData, aboutMe: summaryText }), [cvData, summaryText]);
   const [generating, setGenerating] = useState(false);
   const [generatingDocsOnly, setGeneratingDocsOnly] = useState(false);
   const [cleanDownloadOpen, setCleanDownloadOpen] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [promoError, setPromoError] = useState("");
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
+  // Signed-in users get the uploaded passport kept in their My Documents
+  // (admins can view/download it from the user's detail).
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [passportSave, setPassportSave] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((r) => r.json().catch(() => ({})))
+      .then((d: { authenticated?: boolean }) => {
+        if (!cancelled) setSignedIn(!!d.authenticated);
+      })
+      .catch(() => {
+        if (!cancelled) setSignedIn(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** Saves the passport to the user's documents (same flow as My Documents). */
+  async function savePassportToProfile(file: File) {
+    setPassportSave("saving");
+    try {
+      const presignRes = await fetch("/api/account/documents/presign", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mime: file.type, size: file.size, documentType: "passport" }),
+      });
+      const presign = (await presignRes.json().catch(() => ({}))) as {
+        mode?: string;
+        uploadUrl?: string;
+        key?: string;
+      };
+      if (!presignRes.ok) throw new Error("presign");
+
+      if (presign.mode === "direct" && presign.uploadUrl && presign.key) {
+        const putRes = await fetch(presign.uploadUrl, {
+          method: "PUT",
+          headers: { "content-type": file.type },
+          body: file,
+        });
+        if (!putRes.ok) throw new Error("put");
+        const completeRes = await fetch("/api/account/documents/complete", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            key: presign.key,
+            fileName: file.name,
+            mime: file.type,
+            documentType: "passport",
+          }),
+        });
+        if (!completeRes.ok) throw new Error("complete");
+      } else {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("documentType", "passport");
+        const proxyRes = await fetch("/api/account/documents", { method: "POST", body: form });
+        if (!proxyRes.ok) throw new Error("proxy");
+      }
+      setPassportSave("saved");
+    } catch {
+      setPassportSave("failed");
+    }
+  }
   // Height of the site's sticky header (if any), so the live preview sticks
   // right below it instead of sliding underneath.
   const [stickyTop, setStickyTop] = useState(0);
@@ -197,6 +347,7 @@ export default function CvBuilder({
 
       setAutoFilledFields(newlyAutoFilled);
       setStep("form");
+      if (signedIn) void savePassportToProfile(file);
     } catch {
       setExtractError(isBangla ? "প্রসেস করার সময় সমস্যা হয়েছে, আবার চেষ্টা করুন" : "Something went wrong, please try again");
     } finally {
@@ -269,7 +420,7 @@ export default function CvBuilder({
   const buildPdfBytes = async (showWatermark: boolean) => {
     const { pdf } = await import("@react-pdf/renderer");
     const { default: CvPdfDocument } = await import("./CvPdfDocument");
-    const cvBlob = await pdf(<CvPdfDocument data={cvData} showWatermark={showWatermark} />).toBlob();
+    const cvBlob = await pdf(<CvPdfDocument data={finalCv}showWatermark={showWatermark} />).toBlob();
     const cvBytes = await cvBlob.arrayBuffer();
     const validAttachments = attachments.filter((a) => a.file) as { id: string; type: string; file: File }[];
     let finalBytes: Uint8Array = new Uint8Array(cvBytes);
@@ -290,7 +441,7 @@ export default function CvBuilder({
         method: "PUT",
         headers: { "content-type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ data: cvData }),
+        body: JSON.stringify({ data: finalCv }),
       });
       if (res.ok) onSaved?.();
     } catch {
@@ -378,19 +529,69 @@ export default function CvBuilder({
 
       {step === "upload" && (
         <div>
-          <label className="flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-gray-300 bg-[#f8fafc] px-6 py-10 text-center transition hover:border-teal-400">
-            <span className="text-3xl">🛂</span>
-            <span className="mt-3 text-sm font-semibold text-[#0B2A55]">
-              {isBangla ? "পাসপোর্টের ছবি আপলোড করুন" : "Upload your passport photo page"}
-            </span>
-            <span className="mt-1 text-xs text-gray-500">
-              {isBangla ? "নিচের MRZ কোডেড অংশ স্পষ্ট দেখা যায় এমন ছবি দিন" : "Make sure the bottom MRZ code lines are clearly visible"}
-            </span>
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handlePassportUpload(file);
-            }} />
-          </label>
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* LEFT: build by filling the form */}
+            <button
+              type="button"
+              onClick={skipUpload}
+              disabled={extracting}
+              className="flex flex-col items-center rounded-xl border-2 border-dashed border-gray-300 bg-[#f8fafc] px-6 py-10 text-center transition hover:border-[#0B4DBB] hover:bg-blue-50/40 disabled:opacity-60"
+            >
+              <span className="text-3xl">✍️</span>
+              <span className="mt-3 text-sm font-semibold text-[#0B2A55]">
+                {isBangla ? "নিজে তথ্য দিয়ে CV তৈরি করুন" : "Create CV by filling the form"}
+              </span>
+              <span className="mt-1 text-xs text-gray-500">
+                {isBangla ? "ফর্ম পূরণ করে নিজের মতো সিভি বানান" : "Type your details yourself, step by step"}
+              </span>
+              <span className="mt-4 rounded-lg border border-[#0B4DBB] px-4 py-1.5 text-xs font-bold text-[#0B4DBB]">
+                {isBangla ? "ফর্ম শুরু করুন →" : "Start the form →"}
+              </span>
+            </button>
+
+            {/* RIGHT: build by uploading the passport */}
+            <label
+              className={`relative flex flex-col items-center rounded-xl border-2 border-dashed border-teal-400 bg-teal-50/40 px-6 py-10 text-center transition hover:border-teal-500 hover:bg-teal-50 ${
+                extracting ? "pointer-events-none opacity-60" : "cursor-pointer"
+              }`}
+            >
+              <span className="absolute right-3 top-3 rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                {isBangla ? "দ্রুত" : "Fastest"}
+              </span>
+              <span className="text-3xl">🛂</span>
+              <span className="mt-3 text-sm font-semibold text-[#0B2A55]">
+                {isBangla ? "পাসপোর্ট আপলোড করে CV তৈরি করুন" : "Create CV by uploading passport"}
+              </span>
+              <span className="mt-1 text-xs text-gray-500">
+                {isBangla ? "নিচের MRZ কোডেড অংশ স্পষ্ট দেখা যায় এমন ছবি দিন" : "Make sure the bottom MRZ code lines are clearly visible"}
+              </span>
+              <span className="mt-4 rounded-lg bg-teal-600 px-4 py-1.5 text-xs font-bold text-white">
+                {isBangla ? "পাসপোর্টের ছবি দিন" : "Upload passport photo"}
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) handlePassportUpload(file);
+              }} />
+            </label>
+          </div>
+
+          {signedIn === true && (
+            <p className="mt-3 text-center text-xs text-gray-500">
+              📁 {isBangla
+                ? "আপলোড করা পাসপোর্ট আপনার প্রোফাইলের \"আমার ডকুমেন্টস\"-এ সংরক্ষিত থাকবে।"
+                : "The uploaded passport is kept in your profile's My Documents."}
+            </p>
+          )}
+          {signedIn === false && (
+            <p className="mt-3 text-center text-xs text-gray-500">
+              📁 {isBangla ? "পাসপোর্ট আপনার প্রোফাইলে সংরক্ষণ করতে আগে " : "To keep your passport in your profile, "}
+              <a href="/account/login" className="font-bold text-[#0B4DBB] hover:underline">
+                {isBangla ? "লগইন করুন" : "log in"}
+              </a>
+              {isBangla ? "।" : " first."}
+            </p>
+          )}
 
           {extracting && (
             <p className="mt-4 flex items-center justify-center gap-2 text-sm text-teal-600">
@@ -400,18 +601,6 @@ export default function CvBuilder({
           )}
           {extractError && <p className="mt-4 rounded-lg bg-red-50 p-3 text-center text-sm text-red-600">{extractError}</p>}
 
-          <button type="button" onClick={skipUpload} className="mt-4 w-full text-center text-xs font-semibold text-teal-600 hover:text-teal-700">
-            {isBangla ? "পাসপোর্ট ছাড়াই ম্যানুয়ালি তথ্য দিন →" : "Skip and enter details manually →"}
-          </button>
-
-          <p className="mt-6 flex items-start gap-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-500">
-            <span>🛡️</span>
-            <span>
-              {isBangla
-                ? "আপনার পাসপোর্টের ছবি সার্ভারে সংরক্ষণ করা হয় না — শুধু তথ্য বের করার জন্য সাময়িকভাবে প্রসেস হয়ে সাথে সাথে মুছে যায়।"
-                : "Your passport image is never stored — it's processed briefly to extract data and immediately discarded."}
-            </span>
-          </p>
         </div>
       )}
 
@@ -429,7 +618,7 @@ export default function CvBuilder({
             }}
           >
             <CvLivePreview
-              data={cvData}
+              data={finalCv}
               showWatermark
               isBangla={isBangla}
               className="h-[40dvh] lg:h-[calc(100dvh-var(--cv-top)-24px)]"
@@ -437,6 +626,45 @@ export default function CvBuilder({
           </aside>
 
         <div className="min-w-0 space-y-8">
+
+          {passportSave !== "idle" && (
+            <div
+              className={`flex items-start gap-2 rounded-xl p-3 text-sm ${
+                passportSave === "failed" ? "bg-red-50 text-red-600" : "bg-teal-50 text-teal-700"
+              }`}
+            >
+              {passportSave === "saving" && (
+                <>
+                  <Spinner />
+                  <span>{isBangla ? "পাসপোর্ট আপনার প্রোফাইলে সংরক্ষণ হচ্ছে..." : "Saving passport to your profile..."}</span>
+                </>
+              )}
+              {passportSave === "saved" && (
+                <>
+                  <span>✅</span>
+                  <span>
+                    {isBangla
+                      ? "পাসপোর্ট আপনার প্রোফাইলের "
+                      : "Passport saved to your profile — see "}
+                    <a href="/account/documents" className="font-bold underline">
+                      {isBangla ? "আমার ডকুমেন্টস" : "My Documents"}
+                    </a>
+                    {isBangla ? "-এ সংরক্ষিত হয়েছে।" : "."}
+                  </span>
+                </>
+              )}
+              {passportSave === "failed" && (
+                <>
+                  <span>⚠️</span>
+                  <span>
+                    {isBangla
+                      ? "পাসপোর্ট প্রোফাইলে সংরক্ষণ করা যায়নি (JPG, PNG বা PDF, সর্বোচ্চ 10MB)। CV তৈরি চালিয়ে যেতে পারেন।"
+                      : "Couldn't save the passport to your profile (JPG, PNG or PDF, up to 10MB). You can keep building your CV."}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
 
           {lowConfidenceWarning && (
             <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-700">
@@ -484,6 +712,77 @@ export default function CvBuilder({
             </div>
           </div>
 
+          {/* PROFILE SUMMARY */}
+          <div>
+            <h3 className="mb-1 text-sm font-bold text-[#0B2A55]">{isBangla ? "প্রোফাইল সামারি (Profile Summary)" : "Profile Summary"}</h3>
+            <p className="mb-2 text-[11px] text-gray-500">
+              {isBangla ? "একটা তৈরি সামারি বেছে নিন, বা নিজে লিখুন। CV-র উপরে দেখাবে।" : "Pick a ready summary or write your own. It shows at the top of the CV."}
+            </p>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {([
+                ["experienced", "অভিজ্ঞ", "Experienced"],
+                ["fresher", "নতুন (অভিজ্ঞতা নেই)", "Fresher"],
+                ["general", "সবার জন্য", "General"],
+                ["custom", "✍️ নিজে লিখুন", "✍️ Write my own"],
+              ] as const).map(([mode, bn, en]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => {
+                    if (mode === "custom" && summaryMode !== "custom") updateField("aboutMe", summaryText);
+                    setSummaryMode(mode);
+                  }}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                    summaryMode === mode
+                      ? "bg-teal-600 text-white"
+                      : "border border-gray-300 bg-white text-gray-600 hover:border-teal-400"
+                  }`}
+                >
+                  {isBangla ? bn : en}
+                </button>
+              ))}
+            </div>
+
+            {(summaryMode === "experienced" || summaryMode === "fresher") && (
+              <div className="mb-2 grid gap-2 sm:grid-cols-2">
+                <ComboInput
+                  value={effectiveSummaryPos}
+                  onChange={(v) => setSummaryPos(v)}
+                  options={JOB_CATEGORIES}
+                  placeholder={isBangla ? "পদবী (যেমন Electrician)" : "Position (e.g. Electrician)"}
+                  maxLength={MAX_LEN.jobTitle}
+                />
+                {summaryMode === "experienced" && (
+                  <input
+                    value={summaryYears}
+                    onChange={(e) => setSummaryYears(e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
+                    inputMode="numeric"
+                    placeholder={isBangla ? "কত বছরের অভিজ্ঞতা (যেমন 3)" : "Years of experience (e.g. 3)"}
+                    className={SMALL_INPUT}
+                  />
+                )}
+              </div>
+            )}
+
+            {summaryMode === "custom" ? (
+              <>
+                <textarea
+                  value={cvData.aboutMe || ""}
+                  onChange={(e) => updateField("aboutMe", e.target.value)}
+                  rows={3}
+                  maxLength={SUMMARY_MAX}
+                  placeholder={isBangla ? "নিজের সম্পর্কে ইংরেজিতে ২–৩ লাইন লিখুন" : "Write 2–3 lines about yourself"}
+                  className={TEXT_INPUT}
+                />
+                <p className="mt-1 text-right text-[11px] text-gray-400">{(cvData.aboutMe || "").length}/{SUMMARY_MAX}</p>
+              </>
+            ) : (
+              <p className="rounded-xl border border-teal-100 bg-teal-50/50 px-4 py-3 text-sm leading-relaxed text-gray-700">
+                {summaryText}
+              </p>
+            )}
+          </div>
+
           {/* PERSONAL INFORMATION */}
           <div>
             <h3 className="mb-2 text-sm font-bold text-[#0B2A55]">{isBangla ? "ব্যক্তিগত তথ্য (Personal Information)" : "Personal Information"}</h3>
@@ -524,10 +823,7 @@ export default function CvBuilder({
                 maxLength={16}
               />
 
-              <select value={cvData.religion} onChange={(e) => updateField("religion", e.target.value)} className={SELECT_CLASS}>
-                <option value="">{isBangla ? "ধর্ম" : "Religion"}</option>
-                {RELIGION_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
+              <ComboInput value={cvData.religion} onChange={(v) => updateField("religion", v)} options={RELIGION_OPTIONS} placeholder={isBangla ? "ধর্ম" : "Religion"} maxLength={MAX_LEN.personalInfoValue} />
               <input
                 value={cvData.nationality}
                 onChange={(e) => updateField("nationality", e.target.value)}
@@ -536,19 +832,10 @@ export default function CvBuilder({
                 maxLength={MAX_LEN.personalInfoValue}
               />
 
-              <select value={cvData.maritalStatus} onChange={(e) => updateField("maritalStatus", e.target.value)} className={SELECT_CLASS}>
-                <option value="">{isBangla ? "বৈবাহিক অবস্থা" : "Marital Status"}</option>
-                {MARITAL_STATUS_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
-              <select value={cvData.sex} onChange={(e) => updateField("sex", e.target.value)} className={SELECT_CLASS}>
-                <option value="">{isBangla ? "লিঙ্গ" : "Sex"}</option>
-                {SEX_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <ComboInput value={cvData.maritalStatus} onChange={(v) => updateField("maritalStatus", v)} options={MARITAL_STATUS_OPTIONS} placeholder={isBangla ? "বৈবাহিক অবস্থা" : "Marital Status"} maxLength={MAX_LEN.personalInfoValue} />
+              <ComboInput value={cvData.sex} onChange={(v) => updateField("sex", v)} options={SEX_OPTIONS} placeholder={isBangla ? "লিঙ্গ" : "Sex"} maxLength={MAX_LEN.personalInfoValue} />
 
-              <select value={cvData.bloodGroup} onChange={(e) => updateField("bloodGroup", e.target.value)} className={SELECT_CLASS}>
-                <option value="">{isBangla ? "রক্তের গ্রুপ" : "Blood Group"}</option>
-                {BLOOD_GROUP_OPTIONS.map((b) => <option key={b} value={b}>{b}</option>)}
-              </select>
+              <ComboInput value={cvData.bloodGroup} onChange={(v) => updateField("bloodGroup", v)} options={BLOOD_GROUP_OPTIONS} placeholder={isBangla ? "রক্তের গ্রুপ" : "Blood Group"} maxLength={MAX_LEN.personalInfoValue} />
 
               <input
                 value={cvData.passportNumber}
@@ -583,7 +870,7 @@ export default function CvBuilder({
               <div key={job.id} className="mb-3 rounded-xl border border-gray-200 p-4">
                 <p className="mb-2 text-xs font-semibold text-gray-400">{isBangla ? `অভিজ্ঞতা ${i + 1}` : `Experience ${i + 1}`}</p>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <SelectOrOther value={job.position} onChange={(v) => updateJob(i, { position: v })} options={JOB_CATEGORIES} placeholder={isBangla ? "পদবী বেছে নিন" : "Select position"} />
+                  <ComboInput value={job.position} onChange={(v) => updateJob(i, { position: v })} options={JOB_CATEGORIES} placeholder={isBangla ? "পদবী বেছে নিন বা লিখুন" : "Select or type position"} maxLength={MAX_LEN.jobTitle} />
                   <input value={job.company} onChange={(e) => updateJob(i, { company: e.target.value })} placeholder={isBangla ? "কোম্পানি" : "Company"} className={SMALL_INPUT} maxLength={MAX_LEN.jobCompany} />
                   <input value={job.startDate} onChange={(e) => updateJob(i, { startDate: e.target.value })} placeholder={isBangla ? "শুরু" : "Start"} className={SMALL_INPUT} maxLength={MAX_LEN.jobDate} />
                   <input value={job.endDate} onChange={(e) => updateJob(i, { endDate: e.target.value })} placeholder={isBangla ? "শেষ" : "End"} className={SMALL_INPUT} maxLength={MAX_LEN.jobDate} />
@@ -600,7 +887,7 @@ export default function CvBuilder({
             {cvData.education.map((edu, i) => (
               <div key={edu.id} className="mb-3 rounded-xl border border-gray-200 p-4">
                 <div className="grid gap-2 sm:grid-cols-3">
-                  <SelectOrOther value={edu.level} onChange={(v) => updateEdu(i, { level: v })} options={EDUCATION_LEVELS} placeholder={isBangla ? "লেভেল (SSC/HSC)" : "Level"} />
+                  <ComboInput value={edu.level} onChange={(v) => updateEdu(i, { level: v })} options={EDUCATION_LEVELS} placeholder={isBangla ? "লেভেল (SSC/HSC)" : "Level"} maxLength={MAX_LEN.eduLevel} />
                   <input value={edu.institution} onChange={(e) => updateEdu(i, { institution: e.target.value })} placeholder={isBangla ? "প্রতিষ্ঠান" : "Institution"} className={SMALL_INPUT} maxLength={MAX_LEN.eduInstitution} />
                   <input value={edu.year} onChange={(e) => updateEdu(i, { year: e.target.value })} placeholder={isBangla ? "সাল" : "Year"} className={SMALL_INPUT} maxLength={MAX_LEN.eduYear} />
                 </div>
@@ -614,7 +901,7 @@ export default function CvBuilder({
             {cvData.skills.map((skill, i) => (
               <div key={skill.id} className="mb-2 flex items-center gap-2">
                 <div className="flex-1">
-                  <SelectOrOther value={skill.name} onChange={(v) => updateSkill(i, { name: v })} options={SKILL_PRESETS} placeholder={isBangla ? "দক্ষতা বেছে নিন" : "Select skill"} maxLength={MAX_LEN.skillName} />
+                  <ComboInput value={skill.name} onChange={(v) => updateSkill(i, { name: v })} options={SKILL_PRESETS} placeholder={isBangla ? "দক্ষতা বেছে নিন বা লিখুন" : "Select or type skill"} maxLength={MAX_LEN.skillName} />
                 </div>
                 <input type="range" min={1} max={5} value={skill.level} onChange={(e) => updateSkill(i, { level: Number(e.target.value) })} className="w-24" />
                 <span className="w-8 text-center text-xs text-gray-500">{skill.level}/5</span>
@@ -628,12 +915,9 @@ export default function CvBuilder({
             {cvData.languages.map((lang, i) => (
               <div key={lang.id} className="mb-2 flex gap-2">
                 <div className="flex-1">
-                  <SelectOrOther value={lang.name} onChange={(v) => updateLang(i, { name: v })} options={LANGUAGE_PRESETS} placeholder={isBangla ? "ভাষা" : "Language"} maxLength={MAX_LEN.languageName} />
+                  <ComboInput value={lang.name} onChange={(v) => updateLang(i, { name: v })} options={LANGUAGE_PRESETS} placeholder={isBangla ? "ভাষা" : "Language"} maxLength={MAX_LEN.languageName} />
                 </div>
-                <select value={lang.level} onChange={(e) => updateLang(i, { level: e.target.value })} className={SELECT_CLASS}>
-                  <option value="">{isBangla ? "লেভেল" : "Level"}</option>
-                  {LANGUAGE_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
-                </select>
+                <ComboInput value={lang.level} onChange={(v) => updateLang(i, { level: v })} options={LANGUAGE_LEVELS} placeholder={isBangla ? "লেভেল" : "Level"} maxLength={MAX_LEN.languageName} wrapperClassName="w-40 shrink-0" />
               </div>
             ))}
           </div>
@@ -643,7 +927,7 @@ export default function CvBuilder({
             <h3 className="mb-2 text-sm font-bold text-[#0B2A55]">{isBangla ? "শখ (৩টা পর্যন্ত)" : "Hobbies (up to 3)"}</h3>
             {cvData.hobbies.map((hobby, i) => (
               <div key={i} className="mb-2">
-                <SelectOrOther value={hobby} onChange={(v) => updateHobby(i, v)} options={HOBBY_PRESETS} placeholder={isBangla ? "শখ বেছে নিন" : "Select hobby"} maxLength={MAX_LEN.hobby} />
+                <ComboInput value={hobby} onChange={(v) => updateHobby(i, v)} options={HOBBY_PRESETS} placeholder={isBangla ? "শখ বেছে নিন বা লিখুন" : "Select or type hobby"} maxLength={MAX_LEN.hobby} />
               </div>
             ))}
           </div>
@@ -672,10 +956,7 @@ export default function CvBuilder({
             </div>
             {attachments.map((att) => (
               <div key={att.id} className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <select value={att.type} onChange={(e) => updateAttachmentType(att.id, e.target.value)} className={SELECT_CLASS}>
-                  <option value="">{isBangla ? "ডকুমেন্টের ধরন" : "Document type"}</option>
-                  {DOCUMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <ComboInput value={att.type} onChange={(v) => updateAttachmentType(att.id, v)} options={DOCUMENT_TYPES} placeholder={isBangla ? "ডকুমেন্টের ধরন" : "Document type"} maxLength={40} wrapperClassName="w-full sm:w-56" />
                 <label className="flex-1 cursor-pointer rounded-lg border border-dashed border-gray-300 px-3 py-2 text-center text-xs text-gray-500 hover:border-teal-400">
                   {att.fileName || (isBangla ? "ফাইল বেছে নিন" : "Choose file")}
                   <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => {

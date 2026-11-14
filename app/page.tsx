@@ -6,6 +6,7 @@ import { countries } from "./countries";
 import CvAndNoticeSection from "../components/CvAndNoticeSection";
 import ServicesSection from "../components/ServicesSection";
 import { SITE_NAV, SITE_SERVICES } from "../lib/site-nav";
+import LanguageToggle from "../components/LanguageToggle";
 import Reveal from "@/components/ui/Reveal";
 import CvBuilder from "../components/CvBuilder";
 import { trackPixel } from "../lib/meta-pixel";
@@ -725,17 +726,7 @@ useEffect(() => {
 <div className="flex shrink-0 items-center gap-3 max-md:gap-1.5">
 
   {/* LANGUAGE */}
-  <button
-    type="button"
-    onClick={() =>
-      setLanguage((current) =>
-        current === "bn" ? "en" : "bn"
-      )
-    }
-    className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 max-md:px-2.5 max-md:py-1.5 max-md:text-[11px]"
-  >
-    {isBangla ? "English" : "বাংলা"}
-  </button>
+  <LanguageToggle language={language} onChange={setLanguage} />
 
   {/* PROFILE */}
   <div className="relative">
@@ -770,7 +761,7 @@ useEffect(() => {
       className="fixed inset-0 z-40"
     />
 
-    <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+    <div className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
 
       {currentUser ? (
         <>
@@ -938,8 +929,8 @@ useEffect(() => {
 
                 <p className="text-xs text-gray-500">
                   {isBangla
-                    ? "Login করুন অথবা Account তৈরি করুন"
-                    : "Login or create an account"}
+                    ? "লগইন বা রেজিস্ট্রেশন করুন"
+                    : "Login or register"}
                 </p>
 
               </div>
@@ -947,28 +938,40 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* GUEST MENU */}
-          <div className="p-2">
+          {/* GUEST MENU: Login / Registration + why register */}
+          <div className="p-3">
 
-            <Link
-              href="/account/login"
-              onClick={() => setProfileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              <span>🔐</span>
-              {isBangla ? "লগইন" : "Login"}
-            </Link>
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                href="/account/login"
+                onClick={() => setProfileMenuOpen(false)}
+                className="rounded-lg border border-[#0B4DBB] px-3 py-2 text-center text-sm font-semibold text-[#0B4DBB] hover:bg-blue-50"
+              >
+                {isBangla ? "লগইন" : "Login"}
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setProfileMenuOpen(false)}
+                className="rounded-lg bg-[#0B4DBB] px-3 py-2 text-center text-sm font-semibold text-white hover:bg-[#093f98]"
+              >
+                {isBangla ? "রেজিস্ট্রেশন" : "Register"}
+              </Link>
+            </div>
 
-            <Link
-              href="/register"
-              onClick={() => setProfileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              <span>📝</span>
-              {isBangla
-                ? "অ্যাকাউন্ট তৈরি করুন"
-                : "Create Account"}
-            </Link>
+            <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2.5">
+              <p className="mb-1.5 text-xs font-bold text-[#0B2A55]">
+                {isBangla
+                  ? "রেজিস্ট্রেশন করলে যা পাবেন"
+                  : "What you get when you register"}
+              </p>
+              <ul className="space-y-1 text-xs text-gray-700">
+                <li>📋 {isBangla ? "আবেদনের অবস্থা ট্র্যাকিং" : "Application tracking"}</li>
+                <li>🛂 {isBangla ? "ভিসা স্ট্যাটাস আপডেট" : "Visa status updates"}</li>
+                <li>📄 {isBangla ? "সিভি তৈরি ও ডাউনলোড" : "Build and download your CV"}</li>
+                <li>📁 {isBangla ? "ডকুমেন্ট নিরাপদে সংরক্ষণ" : "Keep documents safe"}</li>
+                <li>🔔 {isBangla ? "গুরুত্বপূর্ণ নোটিফিকেশন" : "Important notifications"}</li>
+              </ul>
+            </div>
 
           </div>
         </>
@@ -1216,6 +1219,21 @@ useEffect(() => {
                 </button>
 
               </div>
+
+              {/* Guest nudge: account for visa updates */}
+              {!authLoading && !currentUser && (
+                <p className="mt-2 text-xs text-gray-700 max-md:text-[10px]">
+                  {isBangla
+                    ? "ভিসা ও আবেদনের আপডেট এক জায়গায় পেতে "
+                    : "Get visa and application updates in one place — "}
+                  <Link
+                    href="/register"
+                    className="font-semibold text-blue-600 underline-offset-2 hover:underline"
+                  >
+                    {isBangla ? "ফ্রি অ্যাকাউন্ট খুলুন" : "create a free account"}
+                  </Link>
+                </p>
+              )}
 
             </div>
           </Reveal>

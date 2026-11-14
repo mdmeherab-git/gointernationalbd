@@ -10,8 +10,13 @@ import {
   Path,
   Rect,
   Line,
+  Font,
 } from "@react-pdf/renderer";
-import type { CvData } from "../types/cv";
+import { DEFAULT_SUMMARY, MAX_LEN, SUMMARY_MAX, type CvData } from "../types/cv";
+
+// Never split a word across lines with a hyphen ("experi-ence") — wrap
+// whole words only.
+Font.registerHyphenationCallback((word) => [word]);
 
 /* =========================================================
    GO INTERNATIONAL BD — CV PDF TEMPLATE
@@ -40,8 +45,11 @@ const LEFT = 19;
 const LEFT_W = 215;
 const DIVIDER = 255;
 
-const RIGHT = 265;
-const RIGHT_W = 265;
+// Frame inner width is W - 16 (8pt border) ≈ 579. The right column starts
+// 14pt after the divider and ends 20pt before the frame — the same margin
+// the mint left column keeps on its sides.
+const RIGHT = 270;
+const RIGHT_W = 289;
 
 const styles = StyleSheet.create({
   page: {
@@ -138,6 +146,12 @@ const styles = StyleSheet.create({
   jobCompany: {
     fontSize: 8,
     fontStyle: "italic",
+    color: DARK,
+  },
+
+  summary: {
+    fontSize: 7.8,
+    lineHeight: 1.3,
     color: DARK,
   },
 
@@ -369,22 +383,53 @@ export default function CvPdfDocument({
   const languages = data.languages;
   const hobbies = data.hobbies;
 
-  /* RIGHT COLUMN — fixed sections */
-  const PI_TOP = 49;
-  const PI_ROWS_TOP = 84;
-  const PI_ROW_H = 14.5;
+  /* RIGHT COLUMN — fixed sections, one rhythm for every section:
+     divider → heading +6, heading → first row +37, last row → divider +6.
+     Spacing is sized so the column ends level with the left column (~795pt). */
+  const HEAD_GAP = 6;
+  const ROWS_GAP = 37;
+  const END_GAP = 6;
 
-  const JOB_TOP = 285;
-  const JOB_ROWS_TOP = 322;
-  const JOB_ENTRY_H = 44;
+  const SUMMARY_TOP = 49;
+  const SUMMARY_TEXT_TOP = SUMMARY_TOP + ROWS_GAP;
+  const SUMMARY_TEXT_H = 42;
+  const SUMMARY_LINE = SUMMARY_TEXT_TOP + SUMMARY_TEXT_H + END_GAP;
 
-  const SKILLS_TOP = 482;
-  const SKILLS_ROWS_TOP = 518;
-  const SKILL_ROW_H = 21;
+  const PI_TOP = SUMMARY_LINE + HEAD_GAP;
+  const PI_ROWS_TOP = PI_TOP + ROWS_GAP;
+  const PI_ROW_H = 15.5;
+  const PI_LINE = PI_ROWS_TOP + 13 * PI_ROW_H + END_GAP;
 
-  const BOTTOM_TOP = 625;
-  const BOTTOM_ROWS_TOP = 662;
-  const BOTTOM_ROW_H = 22;
+  const JOB_TOP = PI_LINE + HEAD_GAP;
+  const JOB_ROWS_TOP = JOB_TOP + ROWS_GAP;
+  const JOB_ENTRY_H = 50; // title 14 + company 13 + two lines of description + gap
+  const JOB_LINE = JOB_ROWS_TOP + 3 * JOB_ENTRY_H + END_GAP;
+
+  const SKILLS_TOP = JOB_LINE + HEAD_GAP;
+  const SKILLS_ROWS_TOP = SKILLS_TOP + ROWS_GAP;
+  const SKILL_ROW_H = 24;
+  const SKILLS_LINE = SKILLS_ROWS_TOP + 3 * SKILL_ROW_H + END_GAP;
+
+  const BOTTOM_TOP = SKILLS_LINE + HEAD_GAP;
+  const BOTTOM_ROWS_TOP = BOTTOM_TOP + ROWS_GAP;
+  const BOTTOM_ROW_H = 24;
+
+  const HALF = Math.floor(RIGHT_W / 2); // second column of skills / hobbies
+  // LANGUAGE | HOBBIES: languages are short words, hobbies are often two
+  // words ("Reading Books"), so hobbies get the wider half.
+  const LANG_W = 130; // room for the "LANGUAGE" heading before the HOBBIES icon
+  const LANG_COL = LANG_W / 2;
+  const HOBBY_X = RIGHT + LANG_W;
+  const HOBBY_COL1 = 96; // first hobby column a bit wider ("PLAYING FOOTBALL")
+  const HOBBY_GAP = 8; // a long first hobby wraps instead of touching the second
+  const HOBBY_COL2 = RIGHT_W - LANG_W - HOBBY_COL1;
+
+  /* Skills: two columns, each "name … bar" with the bar flush to the
+     column's right end, and a clear gap between the columns. */
+  const SKILL_BAR_W = 38;
+  const SKILL_COL_GAP = 30;
+  const SKILL_COL1_END = HALF - SKILL_COL_GAP / 2;
+  const SKILL_COL2_X = HALF + SKILL_COL_GAP / 2;
 
   const personalRows: [string, string][] = [
     ["Father's Name", data.fatherName],
@@ -418,7 +463,7 @@ export default function CvPdfDocument({
                 width: 445,
                 height: 350,
                 objectFit: "contain",
-                opacity: 0.02,
+                opacity: 0.07, // logo watermark: 7%
               }}
             />
           )}
@@ -498,30 +543,35 @@ export default function CvPdfDocument({
             )}
           </View>
 
-          <IconBadge name="person" x={61} y={298} />
-          <View style={box(94, 300, 125, 24)}>
+          {/* Left headings share one icon x (60) and one title box (93–221). */}
+          <View style={{ ...styles.line, left: 52, top: 290, width: 149 }} />
+
+          <IconBadge name="person" x={60} y={298} />
+          <View style={box(93, 300, 128, 24)}>
             <Text style={{ ...styles.heading, textAlign: "center" }}>CONTACT ME</Text>
           </View>
 
-          <IconBadge name="phone" x={61} y={337} size={14} />
-          <View style={box(81, 335, 125, 17)}>
-            <Text style={{ ...styles.leftText, textAlign: "center" }}>{clip(data.phone, 18)}</Text>
+          {/* Contact rows: small icons centred under the heading icon,
+              text starting right next to each icon. */}
+          <IconBadge name="phone" x={65.5} y={337} size={14} />
+          <View style={box(86, 339, 140, 12)}>
+            <Text style={styles.leftText}>{clip(data.phone, 18)}</Text>
           </View>
 
-          <IconBadge name="web" x={61} y={360} size={14} />
-          <View style={box(81, 358, 125, 17)}>
-            <Text style={{ ...styles.leftText, textAlign: "center" }}>{clip(data.email, 28)}</Text>
+          <IconBadge name="web" x={65.5} y={360} size={14} />
+          <View style={box(86, 362, 140, 12)}>
+            <Text style={styles.leftText}>{clip(data.email, 28)}</Text>
           </View>
 
-          <IconBadge name="location" x={61} y={383} size={14} />
-          <View style={box(81, 381, 125, 29)}>
-            <Text style={{ ...styles.leftText, textAlign: "center" }}>{clip(data.presentAddress, 32)}</Text>
+          <IconBadge name="location" x={65.5} y={383} size={14} />
+          <View style={box(86, 385, 140, 26)}>
+            <Text style={styles.leftText}>{clip(data.presentAddress, 32)}</Text>
           </View>
 
           <View style={{ ...styles.line, left: 52, top: 435, width: 149 }} />
 
-          <IconBadge name="education" x={64} y={441} />
-          <View style={box(97, 443, 125, 24)}>
+          <IconBadge name="education" x={60} y={441} />
+          <View style={box(93, 443, 128, 24)}>
             <Text style={{ ...styles.heading, textAlign: "center" }}>EDUCATION</Text>
           </View>
 
@@ -532,7 +582,7 @@ export default function CvPdfDocument({
           </View>
           <View style={box(39, 502, 175, 17)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
-              {clip(education[0]?.level, 28)}
+              {clip(education[0]?.level, MAX_LEN.eduLevel)}
             </Text>
           </View>
           <View style={box(39, 520, 175, 17)}>
@@ -548,7 +598,7 @@ export default function CvPdfDocument({
           </View>
           <View style={box(39, 567, 175, 17)}>
             <Text style={{ ...styles.leftSmall, textAlign: "center" }}>
-              {clip(education[1]?.level, 28)}
+              {clip(education[1]?.level, MAX_LEN.eduLevel)}
             </Text>
           </View>
           <View style={box(39, 585, 175, 17)}>
@@ -596,6 +646,24 @@ export default function CvPdfDocument({
             </Text>
           </View>
 
+          {/* ================= RIGHT: PROFILE SUMMARY ================= */}
+
+          <SectionHeading
+            icon="person"
+            title="PROFILE SUMMARY"
+            x={RIGHT}
+            y={SUMMARY_TOP}
+            width={RIGHT_W}
+          />
+
+          <View style={box(RIGHT + 1, SUMMARY_TEXT_TOP, RIGHT_W - 2, SUMMARY_TEXT_H)}>
+            <Text style={styles.summary}>
+              {clip(data.aboutMe || DEFAULT_SUMMARY, SUMMARY_MAX)}
+            </Text>
+          </View>
+
+          <View style={{ ...styles.line, left: RIGHT, top: SUMMARY_LINE, width: RIGHT_W }} />
+
           {/* ================= RIGHT: PERSONAL INFORMATION ================= */}
 
           <SectionHeading
@@ -621,7 +689,7 @@ export default function CvPdfDocument({
             </View>
           ))}
 
-          <View style={{ ...styles.line, left: RIGHT, top: 278, width: RIGHT_W }} />
+          <View style={{ ...styles.line, left: RIGHT, top: PI_LINE, width: RIGHT_W }} />
 
           {/* ================= RIGHT: JOB EXPERIENCE ================= */}
 
@@ -639,25 +707,29 @@ export default function CvPdfDocument({
 
             return (
               <View key={i}>
-                <View style={box(RIGHT + 1, top, 165, 13)}>
+                <View style={box(RIGHT + 1, top, RIGHT_W - 95, 13)}>
                   <Text style={styles.jobTitle}>
                     {clip(job?.position, 29).toUpperCase()}
                   </Text>
                 </View>
 
-                <View style={box(RIGHT + 168, top, 77, 13)}>
+                {/* dates end exactly at the column's right edge */}
+                <View style={box(RIGHT + RIGHT_W - 90, top, 90, 13)}>
                   <Text style={styles.jobDate}>
-                    {clip(job ? `${job.startDate} - ${job.endDate}` : "", 14)}
+                    {clip(
+                      job ? [job.startDate, job.endDate].map((d) => d.trim()).filter(Boolean).join(" - ") : "",
+                      29,
+                    )}
                   </Text>
                 </View>
 
-                <View style={box(RIGHT + 1, top + 14, 238, 13)}>
+                <View style={box(RIGHT + 1, top + 14, RIGHT_W - 2, 13)}>
                   <Text style={styles.jobCompany}>
                     {clip(job?.company, 30)}
                   </Text>
                 </View>
 
-                <View style={box(RIGHT + 1, top + 27, 238, 17)}>
+                <View style={box(RIGHT + 1, top + 27, RIGHT_W - 2, 19)}>
                   <Text style={styles.jobDesc}>
                     {clip(job?.description, 120)}
                   </Text>
@@ -666,7 +738,7 @@ export default function CvPdfDocument({
             );
           })}
 
-          <View style={{ ...styles.line, left: RIGHT, top: 445, width: RIGHT_W }} />
+          <View style={{ ...styles.line, left: RIGHT, top: JOB_LINE, width: RIGHT_W }} />
 
           {/* ================= RIGHT: SKILLS ================= */}
 
@@ -674,7 +746,7 @@ export default function CvPdfDocument({
             icon="skills"
             title="SKILLS"
             x={RIGHT}
-            y={451}
+            y={SKILLS_TOP}
             width={RIGHT_W}
           />
 
@@ -684,21 +756,23 @@ export default function CvPdfDocument({
 
             const col = i % 2;
             const row = Math.floor(i / 2);
-            const x = col === 0 ? RIGHT + 1 : RIGHT + 125;
+            const x = col === 0 ? RIGHT + 1 : RIGHT + SKILL_COL2_X;
+            const colEnd = col === 0 ? RIGHT + SKILL_COL1_END : RIGHT + RIGHT_W;
+            const barX = colEnd - SKILL_BAR_W;
             const y = SKILLS_ROWS_TOP + row * SKILL_ROW_H;
 
             return (
               <View key={skill.id || i}>
-                <View style={box(x, y, 61, 12)}>
-                  <Text style={styles.skill}>{clip(skill.name, 20)}</Text>
+                <View style={box(x, y, barX - 4 - x, 12)}>
+                  <Text style={styles.skill}>{clip(skill.name, MAX_LEN.skillName)}</Text>
                 </View>
 
                 <View
                   style={{
                     position: "absolute",
-                    left: x + 65,
+                    left: barX,
                     top: y + 2,
-                    width: 42,
+                    width: SKILL_BAR_W,
                     height: 7,
                     border: "0.8px solid #60676A",
                     borderRadius: 4,
@@ -721,7 +795,7 @@ export default function CvPdfDocument({
             );
           })}
 
-          <View style={{ ...styles.line, left: RIGHT, top: 619, width: RIGHT_W }} />
+          <View style={{ ...styles.line, left: RIGHT, top: SKILLS_LINE, width: RIGHT_W }} />
 
           {/* ================= RIGHT: LANGUAGE + HOBBIES ================= */}
 
@@ -730,15 +804,15 @@ export default function CvPdfDocument({
             title="LANGUAGE"
             x={RIGHT}
             y={BOTTOM_TOP}
-            width={126}
+            width={LANG_W}
           />
 
           <SectionHeading
             icon="hobbies"
             title="HOBBIES"
-            x={RIGHT + 132}
+            x={HOBBY_X}
             y={BOTTOM_TOP}
-            width={113}
+            width={RIGHT_W - LANG_W}
           />
 
           {[0, 1, 2, 3].map((i) => {
@@ -747,11 +821,11 @@ export default function CvPdfDocument({
 
             const col = i % 2;
             const row = Math.floor(i / 2);
-            const x = col === 0 ? RIGHT : RIGHT + 63;
+            const x = col === 0 ? RIGHT : RIGHT + LANG_COL;
             const y = BOTTOM_ROWS_TOP + row * BOTTOM_ROW_H;
 
             return (
-              <View key={lang.id || i} style={box(x, y, 61, BOTTOM_ROW_H)}>
+              <View key={lang.id || i} style={box(x, y, LANG_COL - 2, BOTTOM_ROW_H)}>
                 <Text style={styles.bullet}>
                   • {clip(lang.name, 14).toUpperCase()}
                 </Text>
@@ -763,10 +837,16 @@ export default function CvPdfDocument({
             const hobby = hobbies[i];
             if (!hobby) return null;
 
+            // two columns, same as LANGUAGE (longer hobbies wrap to 2 lines)
+            const col = i % 2;
+            const row = Math.floor(i / 2);
+            const x = HOBBY_X + (col === 0 ? 0 : HOBBY_COL1);
+            const w = col === 0 ? HOBBY_COL1 - HOBBY_GAP : HOBBY_COL2 - 2;
+
             return (
               <View
                 key={i}
-                style={box(RIGHT + 126, BOTTOM_ROWS_TOP + i * BOTTOM_ROW_H, 118, BOTTOM_ROW_H)}
+                style={box(x, BOTTOM_ROWS_TOP + row * BOTTOM_ROW_H, w, BOTTOM_ROW_H)}
               >
                 <Text style={styles.bullet}>
                   • {clip(hobby, 22).toUpperCase()}
