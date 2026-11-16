@@ -2462,7 +2462,7 @@ useEffect(() => {
                   📞 +88 01872 32 75 75
                 </p>
 
-                <p>
+                <p className="break-all">
                   ✉ info@gointernationalbd.com
                 </p>
 
