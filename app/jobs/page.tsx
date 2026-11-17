@@ -2000,7 +2000,7 @@ export default function JobsPage() {
 
                 </h3>
 
-                <p className="mt-2 text-sm leading-7 text-gray-600">
+                <p className="mt-2 whitespace-pre-line text-sm leading-7 text-gray-600">
 
                   {getDescription(selectedJob.description)}
 
