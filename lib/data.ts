@@ -175,6 +175,8 @@ export interface SiteSettingsRow {
   notice_en: string;
   notice_speed: number;
   notice_direction: "left" | "right";
+  jobs_notice_bn?: string;
+  jobs_notice_en?: string;
   updated_at?: string;
 }
 
@@ -303,6 +305,8 @@ export const FALLBACK_SETTINGS = {
   noticeEn: "Special Notice: New overseas job circulars have been published. Check the latest circulars for details.",
   noticeSpeed: 25,
   noticeDirection: "left" as "left" | "right",
+  jobsNoticeBn: "",
+  jobsNoticeEn: "",
 };
 
 export function settingsRowToApi(row: SiteSettingsRow | null) {
@@ -319,5 +323,7 @@ export function settingsRowToApi(row: SiteSettingsRow | null) {
     noticeEn: row.notice_en ?? "",
     noticeSpeed: Number(row.notice_speed) || 25,
     noticeDirection: row.notice_direction === "right" ? "right" : "left",
+    jobsNoticeBn: row.jobs_notice_bn ?? "",
+    jobsNoticeEn: row.jobs_notice_en ?? "",
   };
 }

@@ -58,6 +58,8 @@ export const SETTINGS_FIELDS: Record<string, Coercer> = {
   notice_en: asText,
   notice_speed: asInt,
   notice_direction: oneOf(["left", "right"] as const, "left"),
+  jobs_notice_bn: asText,
+  jobs_notice_en: asText,
 };
 
 export const APPLICATION_STATUS = [

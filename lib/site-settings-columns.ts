@@ -20,5 +20,12 @@ export async function ensureSiteSettingsColumns(): Promise<void> {
       `ALTER TABLE site_settings ADD COLUMN chat_welcome_message TEXT NOT NULL DEFAULT '${DEFAULT_CHAT_WELCOME}'`,
     );
   }
+  // Jobs page "special notice" lines (one per line). Empty = built-in lines.
+  if (!have.has("jobs_notice_bn")) {
+    await dbRun("ALTER TABLE site_settings ADD COLUMN jobs_notice_bn TEXT NOT NULL DEFAULT ''");
+  }
+  if (!have.has("jobs_notice_en")) {
+    await dbRun("ALTER TABLE site_settings ADD COLUMN jobs_notice_en TEXT NOT NULL DEFAULT ''");
+  }
   ensured = true;
 }

@@ -27,6 +27,8 @@ type Settings = {
   noticeEn: string;
   noticeSpeed: number;
   noticeDirection: "left" | "right";
+  jobsNoticeBn: string;
+  jobsNoticeEn: string;
 };
 
 export default function SettingsPage() {
@@ -63,6 +65,8 @@ export default function SettingsPage() {
         notice_en: s.noticeEn,
         notice_speed: s.noticeSpeed,
         notice_direction: s.noticeDirection,
+        jobs_notice_bn: s.jobsNoticeBn,
+        jobs_notice_en: s.jobsNoticeEn,
       });
       toast.push(t("সেভ হয়েছে", "Saved"));
     } catch (e) {
@@ -86,8 +90,8 @@ export default function SettingsPage() {
       <PageHeader
         title={t("সেটিংস", "Settings")}
         subtitle={t(
-          "যোগাযোগের তথ্য ও হোম পেজের স্ক্রলিং নোটিশ।",
-          "Contact details and the home page scrolling notice.",
+          "যোগাযোগের তথ্য, হোম পেজের স্ক্রলিং নোটিশ ও জবস পেজের নোটিশ।",
+          "Contact details, the home page scrolling notice and the Jobs page notice.",
         )}
         action={
           <Btn onClick={save} disabled={saving}>
@@ -207,6 +211,36 @@ export default function SettingsPage() {
           </div>
         </Card>
       </div>
+
+      <Card className="mt-5 p-5">
+        <h3 className="mb-1 text-sm font-extrabold text-[#0B2A55]">
+          {t("জবস পেজ নোটিশ (বিশেষ নোটিশ)", "Jobs page notice (Special Notice)")}
+        </h3>
+        <p className="mb-4 text-xs leading-5 text-gray-500">
+          {t(
+            "চাকরি পেজের \"বিশেষ নোটিশ\" বক্সে এই লাইনগুলো উপরে-নিচে স্ক্রল করে দেখাবে। প্রতি লাইনে একটি নোটিশ লিখুন। খালি রাখলে আগের ডিফল্ট নোটিশগুলো দেখাবে। ইংরেজি খালি থাকলে English ভিউতেও বাংলা লাইনগুলো দেখাবে।",
+            "These lines scroll in the \"Special Notice\" box on the Jobs page. Write one notice per line. Leave empty to show the default notices. If English is empty, the English view shows the Bangla lines.",
+          )}
+        </p>
+        <div className="grid gap-x-5 lg:grid-cols-2">
+          <Field label={t("বাংলা নোটিশ (প্রতি লাইনে একটি)", "Bangla notices (one per line)")}>
+            <Textarea
+              rows={5}
+              value={s.jobsNoticeBn}
+              onChange={(e) => set("jobsNoticeBn", e.target.value)}
+              placeholder="মালয়েশিয়ার নতুন চাকরির সার্কুলার প্রকাশিত হয়েছে।"
+            />
+          </Field>
+          <Field label={t("ইংরেজি নোটিশ (প্রতি লাইনে একটি)", "English notices (one per line)")}>
+            <Textarea
+              rows={5}
+              value={s.jobsNoticeEn}
+              onChange={(e) => set("jobsNoticeEn", e.target.value)}
+              placeholder="New Malaysia job circulars have been published."
+            />
+          </Field>
+        </div>
+      </Card>
 
       <Card className="mt-5 p-5">
         <h3 className="mb-2 text-sm font-extrabold text-[#0B2A55]">

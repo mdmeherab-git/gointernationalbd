@@ -547,6 +547,32 @@ export default function JobsPage() {
   /* Job list — managed from /admin, falls back to the bundled sample. */
   const [jobs, setJobs] = useState<Job[]>(SAMPLE_JOBS);
 
+  /* "Special Notice" lines — set in Admin → Settings (one per line);
+     the built-in notices are used until the admin writes some. */
+  const [noticeList, setNoticeList] = useState<Notice[]>(notices);
+  useEffect(() => {
+    const ac = new AbortController();
+    fetch("/api/site-settings", { signal: ac.signal })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("bad"))))
+      .then((d: { settings?: { jobsNoticeBn?: string; jobsNoticeEn?: string } }) => {
+        const lines = (s?: string) =>
+          (s || "").split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+        const bn = lines(d.settings?.jobsNoticeBn);
+        const en = lines(d.settings?.jobsNoticeEn);
+        const count = Math.max(bn.length, en.length);
+        if (count === 0) return;
+        setNoticeList(
+          Array.from({ length: count }, (_, i) => ({
+            id: i + 1,
+            bn: bn[i] || en[i] || "",
+            en: en[i] || bn[i] || "",
+          })),
+        );
+      })
+      .catch(() => {});
+    return () => ac.abort();
+  }, []);
+
   /* Mobile header dropdown (⋮) — Login / Register */
 
   /* Apply form state */
@@ -1581,7 +1607,7 @@ export default function JobsPage() {
               }}
             >
 
-              {[...notices, ...notices].map((notice, index) => (
+              {[...noticeList, ...noticeList].map((notice, index) => (
 
                 <div
                   key={`${notice.id}-${index}`}
@@ -2382,23 +2408,23 @@ export default function JobsPage() {
           }
 
           45% {
-            transform: translateY(-92px);
+            transform: translateY(-25%);
           }
 
           50% {
-            transform: translateY(-92px);
+            transform: translateY(-25%);
           }
 
           95% {
-            transform: translateY(-184px);
+            transform: translateY(-50%);
           }
 
           100% {
-            transform: translateY(-184px);
+            transform: translateY(-50%);
           }
         }
       `}</style>
 
     </main>
   );
-}
+}
