@@ -281,6 +281,8 @@ const categoryBN: Record<string, string> = {
   Cleaner: "ক্লিনার",
   "Construction Worker": "নির্মাণ কর্মী",
   Technician: "টেকনিশিয়ান",
+  "Restaurant Worker": "রেস্টুরেন্ট কর্মী",
+  "Plantation Worker": "প্লান্টেশন কর্মী",
 };
 
 /* =========================================================
@@ -663,6 +665,18 @@ export default function JobsPage() {
     return isBangla ? descriptionBN[value] || value : value;
   };
 
+  // Duty / accommodation come from the admin form. Translate only the
+  // common English defaults; anything else is shown exactly as typed.
+  const getDuty = (value: string) => {
+    if (!isBangla) return value;
+    return ({ "8 Hours": "৮ ঘণ্টা", "8 Hours + OT": "৮ ঘণ্টা + ওভারটাইম" } as Record<string, string>)[value.trim()] || value;
+  };
+
+  const getAccommodation = (value: string) => {
+    if (!isBangla) return value;
+    return ({ Provided: "প্রদান করা হবে", Free: "ফ্রি" } as Record<string, string>)[value.trim()] || value;
+  };
+
   /* =======================================================
      FILTER
   ======================================================= */
@@ -944,6 +958,7 @@ export default function JobsPage() {
                     </div>
 
 
+                    {job.vacancy > 0 && (
                     <div className="flex justify-between">
 
                       <span>
@@ -955,6 +970,7 @@ export default function JobsPage() {
                       </strong>
 
                     </div>
+                    )}
 
 
                     <div className="flex justify-between">
@@ -1931,21 +1947,17 @@ export default function JobsPage() {
 
                   [
                     isBangla ? "পদসংখ্যা" : "Vacancy",
-                    String(selectedJob.vacancy),
+                    selectedJob.vacancy > 0 ? String(selectedJob.vacancy) : "",
                   ],
 
                   [
                     isBangla ? "কাজের সময়" : "Duty",
-                    isBangla
-                      ? "৮ ঘণ্টা"
-                      : selectedJob.duty,
+                    getDuty(selectedJob.duty),
                   ],
 
                   [
                     isBangla ? "আবাসন" : "Accommodation",
-                    isBangla
-                      ? "প্রদান করা হবে"
-                      : selectedJob.accommodation,
+                    getAccommodation(selectedJob.accommodation),
                   ],
 
                   [
@@ -1954,7 +1966,7 @@ export default function JobsPage() {
                       : "Deadline",
                     selectedJob.deadline,
                   ],
-                ].map(([label, value]) => (
+                ].filter(([, value]) => value && value.trim() && value.trim() !== "—").map(([label, value]) => (
 
                   <div
                     key={label}
